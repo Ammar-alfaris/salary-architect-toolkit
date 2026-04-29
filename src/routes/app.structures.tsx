@@ -1,0 +1,199 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { PageHeader } from "@/components/app-shell";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useAuth } from "@/lib/auth";
+import { useI18n } from "@/lib/i18n";
+import { supabase } from "@/integrations/supabase/client";
+import { generateGrades } from "@/lib/comp";
+import { fmtCurrency } from "@/lib/format";
+import { toast } from "sonner";
+import { Plus, Layers, Trash2, Eye } from "lucide-react";
+
+export const Route = createFileRoute("/app/structures")({ component: StructuresPage });
+
+function StructuresPage() {
+  const { organizationId, user } = useAuth();
+  const { t, locale } = useI18n();
+  const [structures, setStructures] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [open, setOpen] = useState(false);
+
+  // Builder form state
+  const [name, setName] = useState("Annual Pay Structure 2026");
+  const [currency, setCurrency] = useState("USD");
+  const [country, setCountry] = useState("");
+  const [gradeCount, setGradeCount] = useState(10);
+  const [startingMidpoint, setStartingMidpoint] = useState(30000);
+  const [progressionPercent, setProgressionPercent] = useState(12);
+  const [spreadPercent, setSpreadPercent] = useState(40);
+  const [rounding, setRounding] = useState(100);
+
+  const refresh = async () => {
+    if (!organizationId) return;
+    const { data } = await supabase.from("salary_structures").select("*").eq("organization_id", organizationId).order("created_at", { ascending: false });
+    setStructures(data ?? []);
+    setLoading(false);
+  };
+
+  useEffect(() => { refresh(); }, [organizationId]);
+
+  const preview = generateGrades({ gradeCount, startingMidpoint, progressionPercent, spreadPercent, rounding });
+
+  const handleGenerate = async () => {
+    if (!organizationId || !user) return;
+    const { data: structure, error } = await supabase.from("salary_structures").insert({
+      organization_id: organizationId,
+      name, currency, country: country || null,
+      grade_count: gradeCount,
+      starting_midpoint: startingMidpoint,
+      progression_type: "fixed",
+      default_progression_percent: progressionPercent,
+      spread_type: "fixed",
+      default_spread_percent: spreadPercent,
+      rounding_rule: rounding,
+      created_by: user.id,
+    }).select().single();
+    if (error) return toast.error(error.message);
+
+    const grades = preview.map((g) => ({
+      salary_structure_id: structure.id,
+      grade_code: g.grade_code,
+      grade_name: g.grade_name,
+      sequence: g.sequence,
+      midpoint: g.midpoint,
+      minimum: g.minimum,
+      maximum: g.maximum,
+      spread_percent: g.spread_percent,
+      progression_percent: g.progression_percent,
+    }));
+    const { error: gErr } = await supabase.from("salary_grades").insert(grades);
+    if (gErr) return toast.error(gErr.message);
+    toast.success(`Created "${name}" with ${grades.length} grades`);
+    setOpen(false);
+    refresh();
+  };
+
+  const handleArchive = async (id: string) => {
+    await supabase.from("salary_structures").update({ archived: true }).eq("id", id);
+    refresh();
+  };
+
+  return (
+    <div>
+      <PageHeader
+        title={t("salary_structures")}
+        subtitle="Define grade-based salary ranges"
+        actions={<Button size="sm" onClick={() => setOpen(!open)}><Plus className="w-4 h-4 me-1" />{open ? t("cancel") : t("create_structure")}</Button>}
+      />
+
+      <div className="p-4 md:p-6 space-y-4">
+        {open && (
+          <div className="border rounded-lg bg-card p-5 space-y-5">
+            <h3 className="font-semibold text-sm">{t("structure_basics")}</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="space-y-1.5"><Label>Structure name</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
+              <div className="space-y-1.5">
+                <Label>Currency</Label>
+                <Select value={currency} onValueChange={setCurrency}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {["USD", "EUR", "GBP", "AED", "SAR", "EGP", "JOD", "KWD"].map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5"><Label>Country (optional)</Label><Input value={country} onChange={(e) => setCountry(e.target.value)} /></div>
+            </div>
+
+            <h3 className="font-semibold text-sm pt-2">{t("midpoint_logic")}</h3>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+              <div className="space-y-1.5"><Label>Number of grades</Label><Input type="number" min={2} max={30} value={gradeCount} onChange={(e) => setGradeCount(+e.target.value || 0)} /></div>
+              <div className="space-y-1.5"><Label>Starting midpoint</Label><Input type="number" value={startingMidpoint} onChange={(e) => setStartingMidpoint(+e.target.value || 0)} /></div>
+              <div className="space-y-1.5"><Label>Progression % per grade</Label><Input type="number" step="0.5" value={progressionPercent} onChange={(e) => setProgressionPercent(+e.target.value || 0)} /></div>
+              <div className="space-y-1.5"><Label>Spread % (min↔max)</Label><Input type="number" step="1" value={spreadPercent} onChange={(e) => setSpreadPercent(+e.target.value || 0)} /></div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+              <div className="space-y-1.5">
+                <Label>{t("rounding")}</Label>
+                <Select value={String(rounding)} onValueChange={(v) => setRounding(+v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{[1, 10, 50, 100, 500, 1000].map((r) => <SelectItem key={r} value={String(r)}>{r}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="border-t pt-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-semibold text-sm">Preview</h3>
+                <p className="text-xs text-muted-foreground">Formula: midpoint × (1 ± spread/2), rounded to nearest {rounding}</p>
+              </div>
+              <div className="overflow-x-auto rounded border">
+                <table className="w-full text-sm">
+                  <thead className="bg-muted/40 text-xs uppercase text-muted-foreground">
+                    <tr><th className="text-start px-3 py-2">{t("grade")}</th><th className="text-end px-3 py-2 num">{t("minimum")}</th><th className="text-end px-3 py-2 num">{t("midpoint")}</th><th className="text-end px-3 py-2 num">{t("maximum")}</th><th className="text-end px-3 py-2 num">{t("spread")}</th></tr>
+                  </thead>
+                  <tbody>
+                    {preview.map((g) => (
+                      <tr key={g.sequence} className="border-t">
+                        <td className="px-3 py-2 font-medium">{g.grade_code}</td>
+                        <td className="px-3 py-2 text-end num">{fmtCurrency(g.minimum, currency, locale)}</td>
+                        <td className="px-3 py-2 text-end num font-medium">{fmtCurrency(g.midpoint, currency, locale)}</td>
+                        <td className="px-3 py-2 text-end num">{fmtCurrency(g.maximum, currency, locale)}</td>
+                        <td className="px-3 py-2 text-end num text-muted-foreground">{g.spread_percent}%</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="ghost" onClick={() => setOpen(false)}>{t("cancel")}</Button>
+              <Button onClick={handleGenerate}>{t("generate")} & {t("save")}</Button>
+            </div>
+          </div>
+        )}
+
+        <div className="border rounded-lg bg-card overflow-hidden">
+          {loading ? (
+            <div className="p-6 text-sm text-muted-foreground">{t("loading")}</div>
+          ) : structures.length === 0 ? (
+            <div className="p-12 text-center">
+              <Layers className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
+              <p className="text-sm text-muted-foreground">No salary structures yet.</p>
+              <Button size="sm" className="mt-3" onClick={() => setOpen(true)}><Plus className="w-4 h-4 me-1" />{t("create_structure")}</Button>
+            </div>
+          ) : (
+            <table className="w-full text-sm">
+              <thead className="bg-muted/40 text-xs uppercase text-muted-foreground">
+                <tr><th className="text-start px-4 py-2.5">Name</th><th className="text-start px-4 py-2.5">Currency</th><th className="text-end px-4 py-2.5">Grades</th><th className="text-end px-4 py-2.5">Start mid</th><th className="text-end px-4 py-2.5">Effective</th><th className="text-end px-4 py-2.5">{t("status")}</th><th className="px-4 py-2.5"></th></tr>
+              </thead>
+              <tbody>
+                {structures.map((s) => (
+                  <tr key={s.id} className="border-t hover:bg-muted/20">
+                    <td className="px-4 py-2.5 font-medium">{s.name}</td>
+                    <td className="px-4 py-2.5">{s.currency}</td>
+                    <td className="px-4 py-2.5 text-end num">{s.grade_count}</td>
+                    <td className="px-4 py-2.5 text-end num">{fmtCurrency(Number(s.starting_midpoint), s.currency, locale)}</td>
+                    <td className="px-4 py-2.5 text-end text-muted-foreground">{new Date(s.effective_date).toLocaleDateString()}</td>
+                    <td className="px-4 py-2.5 text-end"><span className={`text-xs px-2 py-0.5 rounded-full ${s.archived ? "bg-muted" : "bg-success/15 text-success"}`}>{s.archived ? "Archived" : "Active"}</span></td>
+                    <td className="px-4 py-2.5 text-end">
+                      <div className="flex gap-1 justify-end">
+                        <Button asChild size="icon" variant="ghost"><Link to="/app/matrix"><Eye className="w-4 h-4" /></Link></Button>
+                        {!s.archived && <Button size="icon" variant="ghost" onClick={() => handleArchive(s.id)}><Trash2 className="w-4 h-4" /></Button>}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
