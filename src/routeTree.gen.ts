@@ -12,6 +12,9 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as AppStructuresRouteImport } from './routes/app.structures'
+import { Route as AppMatrixRouteImport } from './routes/app.matrix'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -28,34 +31,70 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppIndexRoute = AppIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppStructuresRoute = AppStructuresRouteImport.update({
+  id: '/structures',
+  path: '/structures',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMatrixRoute = AppMatrixRouteImport.update({
+  id: '/matrix',
+  path: '/matrix',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/app': typeof AppRoute
+  '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
+  '/app/matrix': typeof AppMatrixRoute
+  '/app/structures': typeof AppStructuresRoute
+  '/app/': typeof AppIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/app': typeof AppRoute
   '/auth': typeof AuthRoute
+  '/app/matrix': typeof AppMatrixRoute
+  '/app/structures': typeof AppStructuresRoute
+  '/app': typeof AppIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/app': typeof AppRoute
+  '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
+  '/app/matrix': typeof AppMatrixRoute
+  '/app/structures': typeof AppStructuresRoute
+  '/app/': typeof AppIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/app' | '/auth'
+  fullPaths:
+    | '/'
+    | '/app'
+    | '/auth'
+    | '/app/matrix'
+    | '/app/structures'
+    | '/app/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/app' | '/auth'
-  id: '__root__' | '/' | '/app' | '/auth'
+  to: '/' | '/auth' | '/app/matrix' | '/app/structures' | '/app'
+  id:
+    | '__root__'
+    | '/'
+    | '/app'
+    | '/auth'
+    | '/app/matrix'
+    | '/app/structures'
+    | '/app/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AppRoute: typeof AppRoute
+  AppRoute: typeof AppRouteWithChildren
   AuthRoute: typeof AuthRoute
 }
 
@@ -82,12 +121,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app/': {
+      id: '/app/'
+      path: '/'
+      fullPath: '/app/'
+      preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/structures': {
+      id: '/app/structures'
+      path: '/structures'
+      fullPath: '/app/structures'
+      preLoaderRoute: typeof AppStructuresRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/matrix': {
+      id: '/app/matrix'
+      path: '/matrix'
+      fullPath: '/app/matrix'
+      preLoaderRoute: typeof AppMatrixRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
+interface AppRouteChildren {
+  AppMatrixRoute: typeof AppMatrixRoute
+  AppStructuresRoute: typeof AppStructuresRoute
+  AppIndexRoute: typeof AppIndexRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppMatrixRoute: AppMatrixRoute,
+  AppStructuresRoute: AppStructuresRoute,
+  AppIndexRoute: AppIndexRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AppRoute: AppRoute,
+  AppRoute: AppRouteWithChildren,
   AuthRoute: AuthRoute,
 }
 export const routeTree = rootRouteImport
