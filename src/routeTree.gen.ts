@@ -9,38 +9,200 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as AppStructuresRouteImport } from './routes/app.structures'
+import { Route as AppSettingsRouteImport } from './routes/app.settings'
+import { Route as AppReportsRouteImport } from './routes/app.reports'
+import { Route as AppMeritRouteImport } from './routes/app.merit'
+import { Route as AppMatrixRouteImport } from './routes/app.matrix'
+import { Route as AppEmployeesRouteImport } from './routes/app.employees'
+import { Route as AppBonusRouteImport } from './routes/app.bonus'
+import { Route as AppAllowancesRouteImport } from './routes/app.allowances'
+import { Route as AppEmployeesIdRouteImport } from './routes/app.employees.$id'
 
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppRoute = AppRouteImport.update({
+  id: '/app',
+  path: '/app',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppIndexRoute = AppIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppStructuresRoute = AppStructuresRouteImport.update({
+  id: '/structures',
+  path: '/structures',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSettingsRoute = AppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppReportsRoute = AppReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMeritRoute = AppMeritRouteImport.update({
+  id: '/merit',
+  path: '/merit',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMatrixRoute = AppMatrixRouteImport.update({
+  id: '/matrix',
+  path: '/matrix',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppEmployeesRoute = AppEmployeesRouteImport.update({
+  id: '/employees',
+  path: '/employees',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppBonusRoute = AppBonusRouteImport.update({
+  id: '/bonus',
+  path: '/bonus',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAllowancesRoute = AppAllowancesRouteImport.update({
+  id: '/allowances',
+  path: '/allowances',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppEmployeesIdRoute = AppEmployeesIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AppEmployeesRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/app': typeof AppRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/app/allowances': typeof AppAllowancesRoute
+  '/app/bonus': typeof AppBonusRoute
+  '/app/employees': typeof AppEmployeesRouteWithChildren
+  '/app/matrix': typeof AppMatrixRoute
+  '/app/merit': typeof AppMeritRoute
+  '/app/reports': typeof AppReportsRoute
+  '/app/settings': typeof AppSettingsRoute
+  '/app/structures': typeof AppStructuresRoute
+  '/app/': typeof AppIndexRoute
+  '/app/employees/$id': typeof AppEmployeesIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/app/allowances': typeof AppAllowancesRoute
+  '/app/bonus': typeof AppBonusRoute
+  '/app/employees': typeof AppEmployeesRouteWithChildren
+  '/app/matrix': typeof AppMatrixRoute
+  '/app/merit': typeof AppMeritRoute
+  '/app/reports': typeof AppReportsRoute
+  '/app/settings': typeof AppSettingsRoute
+  '/app/structures': typeof AppStructuresRoute
+  '/app': typeof AppIndexRoute
+  '/app/employees/$id': typeof AppEmployeesIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/app': typeof AppRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/app/allowances': typeof AppAllowancesRoute
+  '/app/bonus': typeof AppBonusRoute
+  '/app/employees': typeof AppEmployeesRouteWithChildren
+  '/app/matrix': typeof AppMatrixRoute
+  '/app/merit': typeof AppMeritRoute
+  '/app/reports': typeof AppReportsRoute
+  '/app/settings': typeof AppSettingsRoute
+  '/app/structures': typeof AppStructuresRoute
+  '/app/': typeof AppIndexRoute
+  '/app/employees/$id': typeof AppEmployeesIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/app'
+    | '/auth'
+    | '/app/allowances'
+    | '/app/bonus'
+    | '/app/employees'
+    | '/app/matrix'
+    | '/app/merit'
+    | '/app/reports'
+    | '/app/settings'
+    | '/app/structures'
+    | '/app/'
+    | '/app/employees/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/auth'
+    | '/app/allowances'
+    | '/app/bonus'
+    | '/app/employees'
+    | '/app/matrix'
+    | '/app/merit'
+    | '/app/reports'
+    | '/app/settings'
+    | '/app/structures'
+    | '/app'
+    | '/app/employees/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/app'
+    | '/auth'
+    | '/app/allowances'
+    | '/app/bonus'
+    | '/app/employees'
+    | '/app/matrix'
+    | '/app/merit'
+    | '/app/reports'
+    | '/app/settings'
+    | '/app/structures'
+    | '/app/'
+    | '/app/employees/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AppRoute: typeof AppRouteWithChildren
+  AuthRoute: typeof AuthRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app': {
+      id: '/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,21 +210,122 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app/': {
+      id: '/app/'
+      path: '/'
+      fullPath: '/app/'
+      preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/structures': {
+      id: '/app/structures'
+      path: '/structures'
+      fullPath: '/app/structures'
+      preLoaderRoute: typeof AppStructuresRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/settings': {
+      id: '/app/settings'
+      path: '/settings'
+      fullPath: '/app/settings'
+      preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/reports': {
+      id: '/app/reports'
+      path: '/reports'
+      fullPath: '/app/reports'
+      preLoaderRoute: typeof AppReportsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/merit': {
+      id: '/app/merit'
+      path: '/merit'
+      fullPath: '/app/merit'
+      preLoaderRoute: typeof AppMeritRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/matrix': {
+      id: '/app/matrix'
+      path: '/matrix'
+      fullPath: '/app/matrix'
+      preLoaderRoute: typeof AppMatrixRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/employees': {
+      id: '/app/employees'
+      path: '/employees'
+      fullPath: '/app/employees'
+      preLoaderRoute: typeof AppEmployeesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/bonus': {
+      id: '/app/bonus'
+      path: '/bonus'
+      fullPath: '/app/bonus'
+      preLoaderRoute: typeof AppBonusRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/allowances': {
+      id: '/app/allowances'
+      path: '/allowances'
+      fullPath: '/app/allowances'
+      preLoaderRoute: typeof AppAllowancesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/employees/$id': {
+      id: '/app/employees/$id'
+      path: '/$id'
+      fullPath: '/app/employees/$id'
+      preLoaderRoute: typeof AppEmployeesIdRouteImport
+      parentRoute: typeof AppEmployeesRoute
+    }
   }
 }
 
+interface AppEmployeesRouteChildren {
+  AppEmployeesIdRoute: typeof AppEmployeesIdRoute
+}
+
+const AppEmployeesRouteChildren: AppEmployeesRouteChildren = {
+  AppEmployeesIdRoute: AppEmployeesIdRoute,
+}
+
+const AppEmployeesRouteWithChildren = AppEmployeesRoute._addFileChildren(
+  AppEmployeesRouteChildren,
+)
+
+interface AppRouteChildren {
+  AppAllowancesRoute: typeof AppAllowancesRoute
+  AppBonusRoute: typeof AppBonusRoute
+  AppEmployeesRoute: typeof AppEmployeesRouteWithChildren
+  AppMatrixRoute: typeof AppMatrixRoute
+  AppMeritRoute: typeof AppMeritRoute
+  AppReportsRoute: typeof AppReportsRoute
+  AppSettingsRoute: typeof AppSettingsRoute
+  AppStructuresRoute: typeof AppStructuresRoute
+  AppIndexRoute: typeof AppIndexRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppAllowancesRoute: AppAllowancesRoute,
+  AppBonusRoute: AppBonusRoute,
+  AppEmployeesRoute: AppEmployeesRouteWithChildren,
+  AppMatrixRoute: AppMatrixRoute,
+  AppMeritRoute: AppMeritRoute,
+  AppReportsRoute: AppReportsRoute,
+  AppSettingsRoute: AppSettingsRoute,
+  AppStructuresRoute: AppStructuresRoute,
+  AppIndexRoute: AppIndexRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AppRoute: AppRouteWithChildren,
+  AuthRoute: AuthRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}
