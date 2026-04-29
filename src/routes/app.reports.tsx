@@ -36,7 +36,12 @@ function ReportsPage() {
     return { Code: e.employee_code, Name: e.full_name, Department: e.department, Title: e.job_title, Grade: g?.grade_code ?? "", Base: e.base_salary, Compa: compa.toFixed(2), TargetBonus: e.target_bonus_percent };
   });
 
-  const deptBudget = Array.from(employees.reduce((m, e) => { m.set(e.department || "Unassigned", (m.get(e.department || "Unassigned") || 0) + Number(e.base_salary)); return m; }, new Map<string, number>())).map(([dept, value]) => ({ dept, value }));
+  const deptMap = new Map<string, number>();
+  employees.forEach((e) => {
+    const d = e.department || "Unassigned";
+    deptMap.set(d, (deptMap.get(d) || 0) + Number(e.base_salary));
+  });
+  const deptBudget = Array.from(deptMap.entries()).map(([dept, value]) => ({ dept, value }));
 
   const outOfRange = employees.filter((e) => {
     const g = gradeMap.get(e.grade_id);
