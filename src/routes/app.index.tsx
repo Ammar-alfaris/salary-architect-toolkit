@@ -84,7 +84,7 @@ function Dashboard() {
     <div>
       <PageHeader
         title={t("dashboard")}
-        subtitle="Compensation overview at a glance"
+        subtitle={t("dashboard_subtitle")}
         actions={
           <>
             <Button asChild size="sm" variant="outline"><Link to="/app/employees">{t("add_employee")}</Link></Button>
@@ -100,18 +100,18 @@ function Dashboard() {
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
               <Kpi label={t("total_employees")} value={fmtNumber(employees.length, locale)} icon={Users} />
               <Kpi label={t("active_structures")} value={fmtNumber(structures.length, locale)} icon={Layers} />
-              <Kpi label={t("payroll_snapshot")} value={fmtCurrency(totalPayroll, "USD", locale)} icon={DollarSign} hint="Annual base" />
+              <Kpi label={t("payroll_snapshot")} value={fmtCurrency(totalPayroll, "USD", locale)} icon={DollarSign} hint={t("annual_base")} />
               <Kpi label={t("avg_compa_ratio")} value={avgCompa ? avgCompa.toFixed(2) : "—"} icon={BarChart3} />
               <Kpi label={t("bonus_budget")} value={fmtCurrency(bonusBudget, "USD", locale)} icon={Gift} />
-              <Kpi label={t("merit_budget")} value={fmtCurrency(meritBudget, "USD", locale)} icon={TrendingUp} hint="Est. 4%" />
+              <Kpi label={t("merit_budget")} value={fmtCurrency(meritBudget, "USD", locale)} icon={TrendingUp} hint={t("est_4_pct")} />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div className="border rounded-lg bg-card p-4">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-medium text-sm">Headcount by grade</h3>
+                  <h3 className="font-medium text-sm">{t("headcount_by_grade")}</h3>
                 </div>
-                <div className="h-64">
+                <div className="h-64" dir="ltr">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={distData}>
                       <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -125,8 +125,8 @@ function Dashboard() {
               </div>
 
               <div className="border rounded-lg bg-card p-4">
-                <h3 className="font-medium text-sm mb-3">Payroll by department</h3>
-                <div className="h-64">
+                <h3 className="font-medium text-sm mb-3">{t("payroll_by_department")}</h3>
+                <div className="h-64" dir="ltr">
                   {deptData.length ? (
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
@@ -138,7 +138,7 @@ function Dashboard() {
                       </PieChart>
                     </ResponsiveContainer>
                   ) : (
-                    <div className="h-full grid place-items-center text-sm text-muted-foreground">No employee data yet.</div>
+                    <div className="h-full grid place-items-center text-sm text-muted-foreground">{t("no_employee_data")}</div>
                   )}
                 </div>
               </div>
@@ -148,16 +148,16 @@ function Dashboard() {
               <div className="border rounded-lg bg-card p-4">
                 <h3 className="font-medium text-sm mb-3">{t("recent_structures")}</h3>
                 {structures.length === 0 ? (
-                  <div className="text-sm text-muted-foreground py-6 text-center">No structures yet. <Link to="/app/structures" className="text-accent">Create one →</Link></div>
+                  <div className="text-sm text-muted-foreground py-6 text-center">{t("no_structures_yet")} <Link to="/app/structures" className="text-accent">{t("create_one")}</Link></div>
                 ) : (
                   <div className="divide-y">
                     {structures.map((s) => (
                       <Link key={s.id} to="/app/matrix" className="flex items-center justify-between py-2.5 hover:bg-muted/40 -mx-2 px-2 rounded">
                         <div>
                           <div className="text-sm font-medium">{s.name}</div>
-                          <div className="text-xs text-muted-foreground">{s.grade_count} grades • {s.currency}</div>
+                          <div className="text-xs text-muted-foreground">{t("grades_count", { n: s.grade_count })} • {s.currency}</div>
                         </div>
-                        <div className="text-xs text-muted-foreground">{new Date(s.effective_date).toLocaleDateString()}</div>
+                        <div className="text-xs text-muted-foreground">{new Date(s.effective_date).toLocaleDateString(locale === "ar" ? "ar" : "en-US")}</div>
                       </Link>
                     ))}
                   </div>
@@ -165,21 +165,21 @@ function Dashboard() {
               </div>
 
               <div className="border rounded-lg bg-card p-4">
-                <h3 className="font-medium text-sm mb-3">{t("out_of_range")} ({outOfRange.length})</h3>
+                <h3 className="font-medium text-sm mb-3">{t("out_of_range_employees")} ({outOfRange.length})</h3>
                 {outOfRange.length === 0 ? (
-                  <div className="text-sm text-muted-foreground py-6 text-center">All employees within range ✓</div>
+                  <div className="text-sm text-muted-foreground py-6 text-center">{t("all_in_range")}</div>
                 ) : (
                   <div className="divide-y max-h-64 overflow-auto">
                     {outOfRange.slice(0, 8).map((e) => {
                       const g = gradeMap.get(e.grade_id);
-                      const pos = Number(e.base_salary) < Number(g.minimum) ? "below" : "above";
+                      const isBelow = Number(e.base_salary) < Number(g.minimum);
                       return (
                         <div key={e.id} className="flex items-center justify-between py-2.5">
                           <div>
                             <div className="text-sm">{e.full_name}</div>
                             <div className="text-xs text-muted-foreground">{g.grade_code} • {fmtCurrency(Number(e.base_salary), "USD", locale)}</div>
                           </div>
-                          <span className={`text-xs px-2 py-0.5 rounded-full ${pos === "below" ? "bg-warning/15 text-warning-foreground" : "bg-destructive/15 text-destructive"}`}>{pos}</span>
+                          <span className={`text-xs px-2 py-0.5 rounded-full ${isBelow ? "bg-warning/15 text-warning-foreground" : "bg-destructive/15 text-destructive"}`}>{isBelow ? t("below") : t("above")}</span>
                         </div>
                       );
                     })}

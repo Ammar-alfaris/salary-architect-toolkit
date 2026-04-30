@@ -51,11 +51,11 @@ function MatrixPage() {
     <div>
       <PageHeader
         title={t("salary_matrix")}
-        subtitle={structure ? `${structure.name} • ${structure.currency}` : "Visualize salary range bands"}
+        subtitle={structure ? `${structure.name} • ${structure.currency}` : t("matrix_subtitle_default")}
         actions={
           <>
             <Select value={structureId} onValueChange={setStructureId}>
-              <SelectTrigger className="w-full sm:w-64"><SelectValue placeholder="Select structure" /></SelectTrigger>
+              <SelectTrigger className="w-full sm:w-64"><SelectValue placeholder={t("select_structure")} /></SelectTrigger>
               <SelectContent>{structures.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
             </Select>
             <Button size="sm" variant="outline" onClick={handleExport} disabled={!grades.length}><Download className="w-4 h-4 me-1" />{t("export_csv")}</Button>
@@ -66,13 +66,13 @@ function MatrixPage() {
       <div className="p-4 md:p-6 space-y-4">
         {grades.length === 0 ? (
           <div className="border rounded-lg bg-card p-12 text-center text-sm text-muted-foreground">
-            {structures.length === 0 ? "Create a salary structure to see its matrix here." : "Select a structure to view."}
+            {structures.length === 0 ? t("matrix_empty_no_structure") : t("matrix_empty_select")}
           </div>
         ) : (
           <>
             <div className="border rounded-lg bg-card p-4">
-              <h3 className="font-medium text-sm mb-3">Range bands & midpoint trend</h3>
-              <div className="h-72">
+              <h3 className="font-medium text-sm mb-3">{t("range_bands_midpoint_trend")}</h3>
+              <div className="h-72" dir="ltr">
                 <ResponsiveContainer width="100%" height="100%">
                   <ComposedChart data={chartData} stackOffset="none">
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -81,8 +81,8 @@ function MatrixPage() {
                     <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 6, fontSize: 12 }} formatter={(v: any) => fmtCurrency(Number(v), structure?.currency ?? "USD", locale)} />
                     <Legend wrapperStyle={{ fontSize: 11 }} />
                     <Bar dataKey="min" stackId="a" fill="transparent" name="" legendType="none" />
-                    <Bar dataKey="range" stackId="a" fill="var(--chart-1)" name="Range" radius={[4, 4, 0, 0]} />
-                    <Line dataKey="midpoint" stroke="var(--chart-3)" strokeWidth={2} name="Midpoint" dot />
+                    <Bar dataKey="range" stackId="a" fill="var(--chart-1)" name={t("range")} radius={[4, 4, 0, 0]} />
+                    <Line dataKey="midpoint" stroke="var(--chart-3)" strokeWidth={2} name={t("midpoint")} dot />
                   </ComposedChart>
                 </ResponsiveContainer>
               </div>
@@ -94,7 +94,7 @@ function MatrixPage() {
                   <thead className="bg-muted/40 text-xs uppercase text-muted-foreground">
                     <tr>
                       <th className="text-start px-4 py-2.5">{t("grade")}</th>
-                      <th className="text-start px-4 py-2.5">Name</th>
+                      <th className="text-start px-4 py-2.5">{t("name")}</th>
                       <th className="text-end px-4 py-2.5">{t("minimum")}</th>
                       <th className="text-end px-4 py-2.5">{t("midpoint")}</th>
                       <th className="text-end px-4 py-2.5">{t("maximum")}</th>

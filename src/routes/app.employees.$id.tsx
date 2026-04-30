@@ -30,7 +30,7 @@ function EmployeeProfile() {
   }, [id]);
 
   if (loading) return <div className="p-6 text-sm text-muted-foreground">{t("loading")}</div>;
-  if (!emp) return <div className="p-6">Not found.</div>;
+  if (!emp) return <div className="p-6">{t("not_found_short")}</div>;
 
   const compa = grade ? compaRatio(Number(emp.base_salary), Number(grade.midpoint)) : 0;
   const penet = grade ? rangePenetration(Number(emp.base_salary), Number(grade.minimum), Number(grade.maximum)) : 0;
@@ -38,20 +38,21 @@ function EmployeeProfile() {
   const bonus = calculateBonus({ baseSalary: Number(emp.base_salary), targetBonusPercent: Number(emp.target_bonus_percent), performanceMultiplier: 1, businessMultiplier: 1, individualModifier: 1, prorationFactor: 1 });
   const allowances = calculateAllowances({ baseSalary: Number(emp.base_salary), housingPercent: 25, transportPercent: 10, mobileAmount: 50 * 12, educationAmount: 0, shiftPercent: 0, hardshipPercent: 0, customAmount: 0 });
   const tcc = Number(emp.base_salary) + bonus + allowances.total;
+  const posLabel = pos === "in" ? t("pos_in") : pos === "below" ? t("pos_below") : t("pos_above");
 
   return (
     <div>
       <PageHeader
         title={emp.full_name}
         subtitle={`${emp.job_title ?? "—"} • ${emp.department ?? "—"}`}
-        actions={<Button asChild variant="outline" size="sm"><Link to="/app/employees"><ArrowLeft className="w-4 h-4 me-1" />Back</Link></Button>}
+        actions={<Button asChild variant="outline" size="sm"><Link to="/app/employees"><ArrowLeft className="w-4 h-4 me-1" />{t("back")}</Link></Button>}
       />
 
       <div className="p-4 md:p-6 grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="border rounded-lg bg-card p-5">
-          <h3 className="font-semibold text-sm mb-3">Job info</h3>
+          <h3 className="font-semibold text-sm mb-3">{t("job_info")}</h3>
           <dl className="text-sm space-y-2">
-            <Row label="Code" value={emp.employee_code} />
+            <Row label={t("code")} value={emp.employee_code} />
             <Row label={t("department")} value={emp.department} />
             <Row label={t("job_title")} value={emp.job_title} />
             <Row label={t("location")} value={emp.location} />
@@ -61,14 +62,14 @@ function EmployeeProfile() {
         </div>
 
         <div className="border rounded-lg bg-card p-5">
-          <h3 className="font-semibold text-sm mb-3">Salary position</h3>
+          <h3 className="font-semibold text-sm mb-3">{t("salary_position")}</h3>
           <dl className="text-sm space-y-2">
             <Row label={t("base_salary")} value={fmtCurrency(Number(emp.base_salary), "USD", locale)} />
             <Row label={t("grade")} value={grade?.grade_code ?? "—"} />
-            <Row label="Range" value={grade ? `${fmtCurrency(Number(grade.minimum), "USD", locale)} – ${fmtCurrency(Number(grade.maximum), "USD", locale)}` : "—"} />
-            <Row label="Compa-ratio" value={compa.toFixed(2)} />
-            <Row label="Range penetration" value={fmtPercent(penet * 100, locale)} />
-            <Row label="Position" value={<span className={`text-xs px-2 py-0.5 rounded-full ${pos === "in" ? "bg-success/15 text-success" : pos === "below" ? "bg-warning/15 text-warning-foreground" : "bg-destructive/15 text-destructive"}`}>{pos}</span>} />
+            <Row label={t("range_label")} value={grade ? `${fmtCurrency(Number(grade.minimum), "USD", locale)} – ${fmtCurrency(Number(grade.maximum), "USD", locale)}` : "—"} />
+            <Row label={t("compa_ratio_label")} value={compa.toFixed(2)} />
+            <Row label={t("range_penetration")} value={fmtPercent(penet * 100, locale)} />
+            <Row label={t("position")} value={<span className={`text-xs px-2 py-0.5 rounded-full ${pos === "in" ? "bg-success/15 text-success" : pos === "below" ? "bg-warning/15 text-warning-foreground" : "bg-destructive/15 text-destructive"}`}>{posLabel}</span>} />
           </dl>
           {grade && (
             <div className="mt-4 h-2 bg-muted rounded-full relative">
@@ -78,16 +79,16 @@ function EmployeeProfile() {
         </div>
 
         <div className="border rounded-lg bg-card p-5">
-          <h3 className="font-semibold text-sm mb-3">Total rewards</h3>
+          <h3 className="font-semibold text-sm mb-3">{t("total_rewards")}</h3>
           <dl className="text-sm space-y-2">
-            <Row label="Base" value={fmtCurrency(Number(emp.base_salary), "USD", locale)} />
-            <Row label={`Target bonus (${emp.target_bonus_percent}%)`} value={fmtCurrency(bonus, "USD", locale)} />
-            <Row label="Estimated allowances" value={fmtCurrency(allowances.total, "USD", locale)} />
-            <div className="flex justify-between border-t pt-2 mt-2"><span className="font-medium">Total cash comp</span><span className="num font-semibold">{fmtCurrency(tcc, "USD", locale)}</span></div>
+            <Row label={t("base")} value={fmtCurrency(Number(emp.base_salary), "USD", locale)} />
+            <Row label={t("target_bonus_paren", { pct: emp.target_bonus_percent })} value={fmtCurrency(bonus, "USD", locale)} />
+            <Row label={t("estimated_allowances")} value={fmtCurrency(allowances.total, "USD", locale)} />
+            <div className="flex justify-between border-t pt-2 mt-2"><span className="font-medium">{t("total_cash_comp_short")}</span><span className="num font-semibold">{fmtCurrency(tcc, "USD", locale)}</span></div>
           </dl>
           <div className="mt-4 grid grid-cols-2 gap-2">
-            <Button asChild size="sm" variant="outline"><Link to="/app/bonus">Calc bonus</Link></Button>
-            <Button asChild size="sm" variant="outline"><Link to="/app/allowances">Allowances</Link></Button>
+            <Button asChild size="sm" variant="outline"><Link to="/app/bonus">{t("calc_bonus")}</Link></Button>
+            <Button asChild size="sm" variant="outline"><Link to="/app/allowances">{t("go_allowances")}</Link></Button>
           </div>
         </div>
       </div>

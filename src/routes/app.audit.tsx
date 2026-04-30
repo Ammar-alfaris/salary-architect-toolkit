@@ -70,12 +70,12 @@ function AuditPage() {
   return (
     <div>
       <PageHeader
-        title="Audit Log"
-        subtitle={`${rows.length} recent events`}
+        title={t("audit_log")}
+        subtitle={t("audit_subtitle", { n: rows.length })}
         actions={
           <Button size="sm" variant="outline" onClick={handleExport} disabled={!rows.length}>
             <Download className="w-4 h-4 me-1" />
-            Export Excel
+            {t("export_excel")}
           </Button>
         }
       />
@@ -84,7 +84,7 @@ function AuditPage() {
           <div className="relative flex-1 min-w-[200px]">
             <Search className="w-4 h-4 absolute start-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search by actor, entity or action…"
+              placeholder={t("audit_search")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="ps-9"
@@ -95,13 +95,13 @@ function AuditPage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All entities</SelectItem>
-              <SelectItem value="employee">Employees</SelectItem>
-              <SelectItem value="salary_structure">Salary structures</SelectItem>
-              <SelectItem value="bonus_cycle">Bonus cycles</SelectItem>
-              <SelectItem value="merit_cycle">Merit cycles</SelectItem>
-              <SelectItem value="allowance_policy">Allowances</SelectItem>
-              <SelectItem value="organization">Organization</SelectItem>
+              <SelectItem value="all">{t("all_entities")}</SelectItem>
+              <SelectItem value="employee">{t("ent_employee")}</SelectItem>
+              <SelectItem value="salary_structure">{t("ent_salary_structure")}</SelectItem>
+              <SelectItem value="bonus_cycle">{t("ent_bonus_cycle")}</SelectItem>
+              <SelectItem value="merit_cycle">{t("ent_merit_cycle")}</SelectItem>
+              <SelectItem value="allowance_policy">{t("ent_allowance_policy")}</SelectItem>
+              <SelectItem value="organization">{t("ent_organization")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -112,9 +112,9 @@ function AuditPage() {
           ) : rows.length === 0 ? (
             <div className="p-12 text-center">
               <ShieldCheck className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
-              <p className="text-sm text-muted-foreground">No audit events yet.</p>
+              <p className="text-sm text-muted-foreground">{t("no_audit_events")}</p>
               <p className="text-xs text-muted-foreground/70 mt-1">
-                Sensitive changes (salary edits, bulk updates, cycle runs) will appear here.
+                {t("audit_empty_hint")}
               </p>
             </div>
           ) : (
@@ -122,11 +122,11 @@ function AuditPage() {
               <table className="w-full text-sm min-w-[720px]">
                 <thead className="bg-muted/40 text-xs uppercase text-muted-foreground">
                   <tr>
-                    <th className="text-start px-4 py-2.5">When</th>
-                    <th className="text-start px-4 py-2.5">Actor</th>
-                    <th className="text-start px-4 py-2.5">Action</th>
-                    <th className="text-start px-4 py-2.5">Entity</th>
-                    <th className="text-start px-4 py-2.5">Label</th>
+                    <th className="text-start px-4 py-2.5">{t("col_when")}</th>
+                    <th className="text-start px-4 py-2.5">{t("col_actor")}</th>
+                    <th className="text-start px-4 py-2.5">{t("col_action")}</th>
+                    <th className="text-start px-4 py-2.5">{t("col_entity")}</th>
+                    <th className="text-start px-4 py-2.5">{t("col_label")}</th>
                   </tr>
                 </thead>
                 <tbody>

@@ -50,16 +50,16 @@ function ReportsPage() {
   });
 
   const reports = [
-    { icon: Layers, title: "Salary structures", desc: `${structures.length} structures, ${grades.length} grades`, action: () => structures.forEach((s) => exportCSV(`structure-${s.name}.csv`, grades.filter((g) => g.salary_structure_id === s.id).map((g) => ({ Grade: g.grade_code, Min: g.minimum, Mid: g.midpoint, Max: g.maximum })))) },
-    { icon: Users, title: "Employee compensation", desc: `${employees.length} active employees`, action: () => exportCSV("employee-comp.csv", compRows) },
-    { icon: TrendingUp, title: "Merit projection", desc: "4% budget projection", action: () => exportCSV("merit-projection.csv", employees.map((e) => ({ Name: e.full_name, Base: e.base_salary, Increase: Number(e.base_salary) * 0.04, NewSalary: Number(e.base_salary) * 1.04 }))) },
-    { icon: Wallet, title: "Bonus budget", desc: "Sum of target bonuses", action: () => exportCSV("bonus-budget.csv", employees.map((e) => ({ Name: e.full_name, Base: e.base_salary, Target: e.target_bonus_percent, Bonus: Number(e.base_salary) * Number(e.target_bonus_percent) / 100 }))) },
-    { icon: AlertCircle, title: "Out of range employees", desc: `${outOfRange.length} flagged`, action: () => exportCSV("out-of-range.csv", outOfRange.map((e) => { const g = gradeMap.get(e.grade_id); return { Name: e.full_name, Grade: g?.grade_code, Min: g?.minimum, Base: e.base_salary, Max: g?.maximum }; })) },
+    { icon: Layers, title: t("rep_structures_title"), desc: t("rep_structures_desc", { s: structures.length, g: grades.length }), action: () => structures.forEach((s) => exportCSV(`structure-${s.name}.csv`, grades.filter((g) => g.salary_structure_id === s.id).map((g) => ({ Grade: g.grade_code, Min: g.minimum, Mid: g.midpoint, Max: g.maximum })))) },
+    { icon: Users, title: t("rep_emp_comp_title"), desc: t("rep_emp_comp_desc", { n: employees.length }), action: () => exportCSV("employee-comp.csv", compRows) },
+    { icon: TrendingUp, title: t("rep_merit_title"), desc: t("rep_merit_desc"), action: () => exportCSV("merit-projection.csv", employees.map((e) => ({ Name: e.full_name, Base: e.base_salary, Increase: Number(e.base_salary) * 0.04, NewSalary: Number(e.base_salary) * 1.04 }))) },
+    { icon: Wallet, title: t("rep_bonus_title"), desc: t("rep_bonus_desc"), action: () => exportCSV("bonus-budget.csv", employees.map((e) => ({ Name: e.full_name, Base: e.base_salary, Target: e.target_bonus_percent, Bonus: Number(e.base_salary) * Number(e.target_bonus_percent) / 100 }))) },
+    { icon: AlertCircle, title: t("rep_oor_title"), desc: t("rep_oor_desc", { n: outOfRange.length }), action: () => exportCSV("out-of-range.csv", outOfRange.map((e) => { const g = gradeMap.get(e.grade_id); return { Name: e.full_name, Grade: g?.grade_code, Min: g?.minimum, Base: e.base_salary, Max: g?.maximum }; })) },
   ];
 
   return (
     <div>
-      <PageHeader title={t("reports")} subtitle="Export-ready summaries for finance and management" />
+      <PageHeader title={t("reports")} subtitle={t("reports_subtitle")} />
       <div className="p-4 md:p-6 space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {reports.map((r) => {
@@ -78,8 +78,8 @@ function ReportsPage() {
         </div>
 
         <div className="border rounded-lg bg-card p-4">
-          <h3 className="font-medium text-sm mb-3 flex items-center gap-2"><FileBarChart className="w-4 h-4" /> Payroll by department</h3>
-          <div className="h-72">
+          <h3 className="font-medium text-sm mb-3 flex items-center gap-2"><FileBarChart className="w-4 h-4" /> {t("payroll_by_department")}</h3>
+          <div className="h-72" dir="ltr">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={deptBudget}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />

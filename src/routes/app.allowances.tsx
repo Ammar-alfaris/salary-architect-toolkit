@@ -47,50 +47,50 @@ function AllowancesPage() {
   const monthly = result.total / 12;
 
   const breakdown = [
-    { label: "Housing", value: result.housing }, { label: "Transportation", value: result.transport },
-    { label: "Mobile", value: result.mobile }, { label: "Education", value: result.education },
-    { label: "Shift", value: result.shift }, { label: "Hardship", value: result.hardship },
-    { label: "Custom", value: result.custom },
+    { label: t("housing"), value: result.housing }, { label: t("transportation"), value: result.transport },
+    { label: t("mobile"), value: result.mobile }, { label: t("education"), value: result.education },
+    { label: t("shift"), value: result.shift }, { label: t("hardship"), value: result.hardship },
+    { label: t("custom"), value: result.custom },
   ].filter((x) => x.value > 0);
 
   return (
     <div>
       <PageHeader
         title={t("allowances")}
-        subtitle="Apply allowance policies and recommend amounts"
+        subtitle={t("allowances_subtitle")}
         actions={<Button variant="outline" size="sm" onClick={() => exportCSV("allowances.csv", breakdown)}><Download className="w-4 h-4 me-1" />{t("export_csv")}</Button>}
       />
 
       <div className="p-4 md:p-6 grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2 border rounded-lg bg-card p-5 space-y-4">
-          <h3 className="font-semibold text-sm">Policy & employee</h3>
+          <h3 className="font-semibold text-sm">{t("policy_and_employee")}</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label>Employee</Label>
+              <Label>{t("employee")}</Label>
               <Select value={employeeId} onValueChange={setEmployeeId}>
-                <SelectTrigger><SelectValue placeholder="Select employee or enter manually" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t("select_employee_or_manual")} /></SelectTrigger>
                 <SelectContent>{employees.map((e) => <SelectItem key={e.id} value={e.id}>{e.full_name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5"><Label>{t("base_salary")}</Label><Input type="number" value={base} onChange={(e) => setBase(+e.target.value || 0)} /></div>
           </div>
-          <h3 className="font-semibold text-sm pt-2">Allowance components</h3>
+          <h3 className="font-semibold text-sm pt-2">{t("allowance_components")}</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div className="space-y-1.5"><Label>Housing % of base</Label><Input type="number" step="1" value={housingPct} onChange={(e) => setHousingPct(+e.target.value || 0)} /></div>
-            <div className="space-y-1.5"><Label>Transportation % of base</Label><Input type="number" step="1" value={transportPct} onChange={(e) => setTransportPct(+e.target.value || 0)} /></div>
-            <div className="space-y-1.5"><Label>Mobile (fixed monthly)</Label><Input type="number" value={mobile} onChange={(e) => setMobile(+e.target.value || 0)} /></div>
-            <div className="space-y-1.5"><Label>Education (annual)</Label><Input type="number" value={education} onChange={(e) => setEducation(+e.target.value || 0)} /></div>
-            <div className="space-y-1.5"><Label>Shift %</Label><Input type="number" step="1" value={shiftPct} onChange={(e) => setShiftPct(+e.target.value || 0)} /></div>
-            <div className="space-y-1.5"><Label>Hardship %</Label><Input type="number" step="1" value={hardshipPct} onChange={(e) => setHardshipPct(+e.target.value || 0)} /></div>
-            <div className="space-y-1.5 md:col-span-2"><Label>Custom (annual)</Label><Input type="number" value={custom} onChange={(e) => setCustom(+e.target.value || 0)} /></div>
+            <div className="space-y-1.5"><Label>{t("housing_pct_base")}</Label><Input type="number" step="1" value={housingPct} onChange={(e) => setHousingPct(+e.target.value || 0)} /></div>
+            <div className="space-y-1.5"><Label>{t("transportation_pct_base")}</Label><Input type="number" step="1" value={transportPct} onChange={(e) => setTransportPct(+e.target.value || 0)} /></div>
+            <div className="space-y-1.5"><Label>{t("mobile_fixed_monthly")}</Label><Input type="number" value={mobile} onChange={(e) => setMobile(+e.target.value || 0)} /></div>
+            <div className="space-y-1.5"><Label>{t("education_annual")}</Label><Input type="number" value={education} onChange={(e) => setEducation(+e.target.value || 0)} /></div>
+            <div className="space-y-1.5"><Label>{t("shift_pct")}</Label><Input type="number" step="1" value={shiftPct} onChange={(e) => setShiftPct(+e.target.value || 0)} /></div>
+            <div className="space-y-1.5"><Label>{t("hardship_pct")}</Label><Input type="number" step="1" value={hardshipPct} onChange={(e) => setHardshipPct(+e.target.value || 0)} /></div>
+            <div className="space-y-1.5 md:col-span-2"><Label>{t("custom_annual")}</Label><Input type="number" value={custom} onChange={(e) => setCustom(+e.target.value || 0)} /></div>
           </div>
         </div>
 
         <div className="space-y-4">
           <div className="border rounded-lg bg-card p-5">
-            <div className="flex items-center gap-2 mb-2"><Wallet className="w-4 h-4 text-accent" /><h3 className="font-semibold text-sm">Total allowances</h3></div>
+            <div className="flex items-center gap-2 mb-2"><Wallet className="w-4 h-4 text-accent" /><h3 className="font-semibold text-sm">{t("total_allowances")}</h3></div>
             <div className="text-3xl font-semibold num">{fmtCurrency(result.total, "USD", locale)}</div>
-            <p className="text-xs text-muted-foreground mt-1">Annual • {fmtCurrency(monthly, "USD", locale)}/mo</p>
+            <p className="text-xs text-muted-foreground mt-1">{t("annual")} • {fmtCurrency(monthly, "USD", locale)}{t("monthly_equiv_short")}</p>
             <div className="mt-4 pt-4 border-t space-y-1.5 text-sm">
               {breakdown.map((b) => (
                 <div key={b.label} className="flex justify-between"><span className="text-muted-foreground">{b.label}</span><span className="num font-medium">{fmtCurrency(b.value, "USD", locale)}</span></div>
@@ -98,11 +98,11 @@ function AllowancesPage() {
             </div>
           </div>
           <div className="border rounded-lg bg-card p-5">
-            <h3 className="font-semibold text-sm">Total cash compensation</h3>
+            <h3 className="font-semibold text-sm">{t("total_cash_compensation")}</h3>
             <div className="mt-2 space-y-1 text-sm">
-              <div className="flex justify-between"><span className="text-muted-foreground">Base</span><span className="num">{fmtCurrency(base, "USD", locale)}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Allowances</span><span className="num">{fmtCurrency(result.total, "USD", locale)}</span></div>
-              <div className="flex justify-between border-t pt-2 mt-2"><span className="font-medium">Total</span><span className="num font-semibold">{fmtCurrency(base + result.total, "USD", locale)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">{t("base")}</span><span className="num">{fmtCurrency(base, "USD", locale)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">{t("allowances")}</span><span className="num">{fmtCurrency(result.total, "USD", locale)}</span></div>
+              <div className="flex justify-between border-t pt-2 mt-2"><span className="font-medium">{t("total")}</span><span className="num font-semibold">{fmtCurrency(base + result.total, "USD", locale)}</span></div>
             </div>
           </div>
         </div>

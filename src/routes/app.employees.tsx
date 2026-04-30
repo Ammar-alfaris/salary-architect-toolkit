@@ -108,7 +108,7 @@ function EmployeesPage() {
 
   const handleAdd = async () => {
     if (!organizationId) return;
-    if (!perms.canEdit) return toast.error("Insufficient permissions");
+    if (!perms.canEdit) return toast.error(t("insufficient_permissions"));
     const code = form.employee_code || `EMP-${Date.now().toString().slice(-5)}`;
     const { data, error } = await supabase
       .from("employees")
@@ -128,7 +128,7 @@ function EmployeesPage() {
       .select()
       .single();
     if (error) return toast.error(error.message);
-    toast.success("Employee added");
+    toast.success(t("employee_added"));
     await logAudit({
       organizationId,
       action: "create",
@@ -153,7 +153,7 @@ function EmployeesPage() {
     }));
     const { error } = await supabase.from("employees").insert(rows);
     if (error) return toast.error(error.message);
-    toast.success("Loaded 10 sample employees");
+    toast.success(t("loaded_sample_n", { n: 10 }));
     await logAudit({ organizationId, action: "create", entityType: "employee", entityLabel: "10 sample employees", metadata: { count: rows.length } });
     refresh();
   };
@@ -168,7 +168,7 @@ function EmployeesPage() {
         Title: e.job_title,
         Location: e.location,
         Grade: g?.grade_code,
-        BaseSalary: perms.canViewSalary ? Number(e.base_salary) : "Restricted",
+        BaseSalary: perms.canViewSalary ? Number(e.base_salary) : t("restricted"),
         Compa: g && perms.canViewSalary ? compaRatio(Number(e.base_salary), Number(g.midpoint)).toFixed(2) : "",
         TargetBonusPct: e.target_bonus_percent,
         Performance: e.performance_rating,
@@ -189,7 +189,7 @@ function EmployeesPage() {
     const ids = Array.from(selected);
     const { error } = await supabase.from("employees").update({ archived: true }).in("id", ids);
     if (error) return toast.error(error.message);
-    toast.success(`${ids.length} employees archived`);
+    toast.success(t("n_employees_archived", { n: ids.length }));
     await logAudit({ organizationId, action: "bulk_delete", entityType: "employee", entityLabel: `${ids.length} employees archived`, metadata: { ids } });
     setSelected(new Set());
     refresh();
@@ -199,22 +199,22 @@ function EmployeesPage() {
     <div>
       <PageHeader
         title={t("employees")}
-        subtitle={`${employees.length} active${perms.role ? ` · role: ${perms.role}` : ""}`}
+        subtitle={perms.role ? t("employees_subtitle_role", { n: employees.length, role: perms.role }) : t("employees_subtitle_norole", { n: employees.length })}
         actions={
           <>
             {employees.length === 0 && perms.canEdit && (
               <Button size="sm" variant="outline" onClick={seedSample}>
                 <Sparkles className="w-4 h-4 me-1" />
-                Load sample
+                {t("load_sample")}
               </Button>
             )}
             <Button size="sm" variant="outline" onClick={handleExportCSV}>
               <Download className="w-4 h-4 me-1" />
-              CSV
+              {t("csv")}
             </Button>
             <Button size="sm" variant="outline" onClick={handleExportXLSX}>
               <FileSpreadsheet className="w-4 h-4 me-1" />
-              Excel
+              {t("excel")}
             </Button>
             {perms.canEdit && (
               <Dialog open={open} onOpenChange={setOpen}>
@@ -226,12 +226,12 @@ function EmployeesPage() {
                 </DialogTrigger>
                 <DialogContent className="max-w-2xl">
                   <DialogHeader>
-                    <DialogTitle>Add employee</DialogTitle>
+                    <DialogTitle>{t("add_employee_title")}</DialogTitle>
                   </DialogHeader>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div className="space-y-1.5"><Label>First name</Label><Input value={form.first_name} onChange={(e) => setForm({ ...form, first_name: e.target.value })} /></div>
-                    <div className="space-y-1.5"><Label>Last name</Label><Input value={form.last_name} onChange={(e) => setForm({ ...form, last_name: e.target.value })} /></div>
-                    <div className="space-y-1.5"><Label>Employee code</Label><Input placeholder="auto" value={form.employee_code} onChange={(e) => setForm({ ...form, employee_code: e.target.value })} /></div>
+                    <div className="space-y-1.5"><Label>{t("first_name")}</Label><Input value={form.first_name} onChange={(e) => setForm({ ...form, first_name: e.target.value })} /></div>
+                    <div className="space-y-1.5"><Label>{t("last_name")}</Label><Input value={form.last_name} onChange={(e) => setForm({ ...form, last_name: e.target.value })} /></div>
+                    <div className="space-y-1.5"><Label>{t("employee_code")}</Label><Input placeholder={t("auto")} value={form.employee_code} onChange={(e) => setForm({ ...form, employee_code: e.target.value })} /></div>
                     <div className="space-y-1.5"><Label>{t("department")}</Label><Input value={form.department} onChange={(e) => setForm({ ...form, department: e.target.value })} /></div>
                     <div className="space-y-1.5"><Label>{t("job_title")}</Label><Input value={form.job_title} onChange={(e) => setForm({ ...form, job_title: e.target.value })} /></div>
                     <div className="space-y-1.5"><Label>{t("location")}</Label><Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} /></div>
@@ -240,11 +240,11 @@ function EmployeesPage() {
                     <div className="space-y-1.5">
                       <Label>{t("grade")}</Label>
                       <Select value={form.grade_id} onValueChange={(v) => setForm({ ...form, grade_id: v })}>
-                        <SelectTrigger><SelectValue placeholder="Pick grade" /></SelectTrigger>
+                        <SelectTrigger><SelectValue placeholder={t("pick_grade")} /></SelectTrigger>
                         <SelectContent>
                           {grades.map((g: any) => (
                             <SelectItem key={g.id} value={g.id}>
-                              {g.grade_code} — mid {fmtCurrency(Number(g.midpoint), "USD", locale)}
+                              {g.grade_code} — {t("midpoint")} {fmtCurrency(Number(g.midpoint), "USD", locale)}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -273,7 +273,7 @@ function EmployeesPage() {
         {!perms.canViewSalary && !perms.loading && (
           <div className="flex items-start gap-2 rounded-md border border-warning/30 bg-warning/5 p-3 text-xs">
             <ShieldAlert className="w-4 h-4 text-warning mt-0.5" />
-            <span>Your role ({perms.role ?? "viewer"}) hides salary numbers. Contact an admin for full access.</span>
+            <span>{t("role_hides_salary", { role: perms.role ?? t("viewer") })}</span>
           </div>
         )}
 
@@ -281,7 +281,7 @@ function EmployeesPage() {
           <div className="relative flex-1 min-w-[200px]">
             <Search className="w-4 h-4 absolute start-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search by name or code…"
+              placeholder={t("search_by_name_code")}
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
               className="ps-9"
@@ -290,7 +290,7 @@ function EmployeesPage() {
           <Select value={deptFilter} onValueChange={(v) => { setDeptFilter(v); setPage(1); }}>
             <SelectTrigger className="w-full sm:w-48"><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All departments</SelectItem>
+              <SelectItem value="all">{t("all_departments")}</SelectItem>
               {departments.map((d) => <SelectItem key={d as string} value={d as string}>{d as string}</SelectItem>)}
             </SelectContent>
           </Select>
@@ -298,11 +298,11 @@ function EmployeesPage() {
 
         {selected.size > 0 && perms.canDelete && (
           <div className="flex items-center justify-between rounded-md border bg-muted/40 px-3 py-2 text-sm">
-            <span>{selected.size} selected</span>
+            <span>{t("selected_n", { n: selected.size })}</span>
             <div className="flex gap-2">
-              <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>Clear</Button>
+              <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>{t("clear")}</Button>
               <Button size="sm" variant="destructive" onClick={handleBulkArchive}>
-                <Trash2 className="w-4 h-4 me-1" /> Archive selected
+                <Trash2 className="w-4 h-4 me-1" /> {t("archive_selected")}
               </Button>
             </div>
           </div>
@@ -312,7 +312,7 @@ function EmployeesPage() {
           {isLoading ? (
             <div className="p-6 text-sm text-muted-foreground">{t("loading")}</div>
           ) : filtered.length === 0 ? (
-            <div className="p-12 text-center text-sm text-muted-foreground">No employees match your filters.</div>
+            <div className="p-12 text-center text-sm text-muted-foreground">{t("no_employees_match")}</div>
           ) : (
             <>
               <div className="overflow-x-auto">
@@ -321,17 +321,17 @@ function EmployeesPage() {
                     <tr>
                       {perms.canDelete && (
                         <th className="px-3 py-2.5 w-8">
-                          <Checkbox checked={allOnPageSelected} onCheckedChange={togglePage} aria-label="Select page" />
+                          <Checkbox checked={allOnPageSelected} onCheckedChange={togglePage} aria-label={t("select_page")} />
                         </th>
                       )}
-                      <th className="text-start px-4 py-2.5">Code</th>
-                      <th className="text-start px-4 py-2.5">Name</th>
+                      <th className="text-start px-4 py-2.5">{t("code")}</th>
+                      <th className="text-start px-4 py-2.5">{t("name")}</th>
                       <th className="text-start px-4 py-2.5">{t("department")}</th>
                       <th className="text-start px-4 py-2.5">{t("job_title")}</th>
                       <th className="text-start px-4 py-2.5">{t("grade")}</th>
                       <th className="text-end px-4 py-2.5">{t("base_salary")}</th>
-                      <th className="text-end px-4 py-2.5">Compa</th>
-                      <th className="text-end px-4 py-2.5">Target%</th>
+                      <th className="text-end px-4 py-2.5">{t("compa")}</th>
+                      <th className="text-end px-4 py-2.5">{t("target_pct_short")}</th>
                       <th className="px-4 py-2.5"></th>
                     </tr>
                   </thead>
@@ -343,7 +343,7 @@ function EmployeesPage() {
                         <tr key={e.id} className="border-t hover:bg-muted/20">
                           {perms.canDelete && (
                             <td className="px-3 py-2.5">
-                              <Checkbox checked={selected.has(e.id)} onCheckedChange={() => toggleOne(e.id)} aria-label="Select row" />
+                              <Checkbox checked={selected.has(e.id)} onCheckedChange={() => toggleOne(e.id)} aria-label={t("select_row")} />
                             </td>
                           )}
                           <td className="px-4 py-2.5 text-xs text-muted-foreground">{e.employee_code}</td>
@@ -372,14 +372,14 @@ function EmployeesPage() {
 
               <div className="flex items-center justify-between border-t px-4 py-2.5 text-xs text-muted-foreground">
                 <span>
-                  Showing {(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, filtered.length)} of {filtered.length}
+                  {t("showing_range", { from: (safePage - 1) * PAGE_SIZE + 1, to: Math.min(safePage * PAGE_SIZE, filtered.length), total: filtered.length })}
                 </span>
                 <div className="flex items-center gap-2">
-                  <Button size="icon" variant="ghost" disabled={safePage === 1} onClick={() => setPage(safePage - 1)} aria-label="Prev">
+                  <Button size="icon" variant="ghost" disabled={safePage === 1} onClick={() => setPage(safePage - 1)} aria-label={t("prev")}>
                     <ChevronLeft className="w-4 h-4" />
                   </Button>
                   <span className="tabular-nums">{safePage} / {totalPages}</span>
-                  <Button size="icon" variant="ghost" disabled={safePage === totalPages} onClick={() => setPage(safePage + 1)} aria-label="Next">
+                  <Button size="icon" variant="ghost" disabled={safePage === totalPages} onClick={() => setPage(safePage + 1)} aria-label={t("next")}>
                     <ChevronRight className="w-4 h-4" />
                   </Button>
                 </div>
