@@ -3,6 +3,7 @@ import appCss from "../styles.css?url";
 import { I18nProvider } from "@/lib/i18n";
 import { ThemeProvider } from "@/lib/theme";
 import { AuthProvider } from "@/lib/auth";
+import { QueryProvider } from "@/lib/query";
 import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
@@ -60,10 +61,12 @@ function RootComponent() {
   return (
     <ThemeProvider>
       <I18nProvider>
-        <AuthProvider>
-          <Outlet />
-          <Toaster />
-        </AuthProvider>
+        <QueryProvider>
+          <AuthProvider>
+            <Outlet />
+            <Toaster />
+          </AuthProvider>
+        </QueryProvider>
       </I18nProvider>
     </ThemeProvider>
   );
