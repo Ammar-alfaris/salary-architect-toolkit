@@ -31,26 +31,26 @@ function Landing() {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card/60 backdrop-blur sticky top-0 z-30">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-md bg-primary text-primary-foreground flex items-center justify-center">
+        <div className="container mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-8 h-8 rounded-md bg-primary text-primary-foreground flex items-center justify-center shrink-0">
               <Layers className="w-4 h-4" />
             </div>
-            <span className="font-semibold tracking-tight">{t("app_name")}</span>
+            <span className="font-semibold tracking-tight truncate text-sm sm:text-base">{t("app_name")}</span>
           </div>
           <nav className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
             <a href="#features" className="hover:text-foreground">{t("features")}</a>
             <a href="#modules" className="hover:text-foreground">{t("modules")}</a>
             <a href="#cta" className="hover:text-foreground">{t("pricing")}</a>
           </nav>
-          <div className="flex items-center gap-1">
-            <Button variant="ghost" size="sm" onClick={() => setLocale(locale === "en" ? "ar" : "en")}>
-              <Languages className="w-4 h-4 me-1" />{locale.toUpperCase()}
+          <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
+            <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setLocale(locale === "en" ? "ar" : "en")} aria-label="Language">
+              <Languages className="w-4 h-4" />
             </Button>
-            <Button variant="ghost" size="icon" onClick={toggle}>
+            <Button variant="ghost" size="icon" className="h-9 w-9" onClick={toggle} aria-label="Theme">
               {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </Button>
-            <Button variant="ghost" size="sm" asChild><Link to="/auth">{t("sign_in")}</Link></Button>
+            <Button variant="ghost" size="sm" className="hidden sm:inline-flex" asChild><Link to="/auth">{t("sign_in")}</Link></Button>
             <Button size="sm" asChild><Link to="/auth">{t("get_started")}</Link></Button>
           </div>
         </div>
@@ -59,15 +59,15 @@ function Landing() {
       {/* Hero */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 -z-10 opacity-50" style={{ background: "radial-gradient(ellipse at top, var(--primary-glow), transparent 60%)" }} />
-        <div className="container mx-auto px-4 py-20 md:py-28 max-w-5xl text-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border bg-card text-xs text-muted-foreground mb-6">
-            <span className="w-1.5 h-1.5 rounded-full bg-accent" />
-            For HR, Compensation & Total Rewards teams
+        <div className="container mx-auto px-4 py-14 sm:py-20 md:py-28 max-w-5xl text-center">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border bg-card text-xs text-muted-foreground mb-6 max-w-full">
+            <span className="w-1.5 h-1.5 rounded-full bg-accent shrink-0" />
+            <span className="truncate">For HR, Compensation & Total Rewards teams</span>
           </div>
-          <h1 className="text-4xl md:text-6xl font-semibold tracking-tight leading-[1.05]">
+          <h1 className="text-3xl sm:text-4xl md:text-6xl font-semibold tracking-tight leading-[1.1] break-words">
             {t("hero_headline")}
           </h1>
-          <p className="mt-5 text-lg text-muted-foreground max-w-2xl mx-auto">{t("hero_sub")}</p>
+          <p className="mt-5 text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">{t("hero_sub")}</p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Button size="lg" asChild><Link to="/auth">{t("start_free")} <ArrowRight className="w-4 h-4 ms-2" /></Link></Button>
             <Button size="lg" variant="outline" asChild><a href="#features">{t("view_demo")}</a></Button>
