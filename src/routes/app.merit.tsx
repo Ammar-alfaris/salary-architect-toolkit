@@ -51,40 +51,40 @@ function MeritPage() {
     <div>
       <PageHeader
         title={t("merit_increase")}
-        subtitle="Configure your merit matrix and project the budget impact"
+        subtitle={t("merit_subtitle")}
         actions={<Button variant="outline" size="sm" onClick={() => exportCSV("merit.csv", recommendations)}><Download className="w-4 h-4 me-1" />{t("export_csv")}</Button>}
       />
 
       <div className="p-4 md:p-6 space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
           <div className="border rounded-lg bg-card p-4">
-            <div className="text-xs text-muted-foreground">Target budget</div>
+            <div className="text-xs text-muted-foreground">{t("target_budget")}</div>
             <div className="flex items-end gap-2 mt-1">
               <Input type="number" step="0.1" value={budget} onChange={(e) => setBudget(+e.target.value || 0)} className="h-8" />
               <span className="text-sm">%</span>
             </div>
           </div>
           <div className="border rounded-lg bg-card p-4">
-            <div className="text-xs text-muted-foreground">Actual budget</div>
+            <div className="text-xs text-muted-foreground">{t("actual_budget")}</div>
             <div className={`text-2xl font-semibold num mt-1 ${actualBudgetPct > budget ? "text-destructive" : "text-success"}`}>{fmtPercent(actualBudgetPct, locale)}</div>
           </div>
           <div className="border rounded-lg bg-card p-4">
-            <div className="text-xs text-muted-foreground">Total increase</div>
+            <div className="text-xs text-muted-foreground">{t("total_increase")}</div>
             <div className="text-2xl font-semibold num mt-1">{fmtCurrency(totalIncrease, "USD", locale)}</div>
           </div>
           <div className="border rounded-lg bg-card p-4">
-            <div className="text-xs text-muted-foreground">Employees</div>
+            <div className="text-xs text-muted-foreground">{t("employees")}</div>
             <div className="text-2xl font-semibold num mt-1">{recommendations.length}</div>
           </div>
         </div>
 
         <div className="border rounded-lg bg-card p-4">
-          <h3 className="font-medium text-sm mb-3 flex items-center gap-2"><Calculator className="w-4 h-4" /> Merit guideline matrix</h3>
+          <h3 className="font-medium text-sm mb-3 flex items-center gap-2"><Calculator className="w-4 h-4" /> {t("merit_guideline_matrix")}</h3>
           <div className="overflow-x-auto">
             <table className="w-full text-sm min-w-[560px]">
               <thead className="bg-muted/40 text-xs uppercase text-muted-foreground">
                 <tr>
-                  <th className="text-start px-3 py-2">Performance \ Compa-Ratio</th>
+                  <th className="text-start px-3 py-2">{t("perf_compa_axis")}</th>
                   {COMPA_BANDS.map((b) => <th key={b} className="text-end px-3 py-2">{b}</th>)}
                 </tr>
               </thead>
@@ -112,19 +112,19 @@ function MeritPage() {
             <table className="w-full text-sm min-w-[820px]">
               <thead className="bg-muted/40 text-xs uppercase text-muted-foreground">
                 <tr>
-                  <th className="text-start px-4 py-2.5">Name</th>
-                  <th className="text-start px-4 py-2.5">Rating</th>
-                  <th className="text-end px-4 py-2.5">Compa</th>
-                  <th className="text-end px-4 py-2.5">Band</th>
-                  <th className="text-end px-4 py-2.5">Current</th>
-                  <th className="text-end px-4 py-2.5">Increase %</th>
-                  <th className="text-end px-4 py-2.5">Increase $</th>
-                  <th className="text-end px-4 py-2.5">New Salary</th>
+                  <th className="text-start px-4 py-2.5">{t("name")}</th>
+                  <th className="text-start px-4 py-2.5">{t("rating")}</th>
+                  <th className="text-end px-4 py-2.5">{t("compa")}</th>
+                  <th className="text-end px-4 py-2.5">{t("band")}</th>
+                  <th className="text-end px-4 py-2.5">{t("current")}</th>
+                  <th className="text-end px-4 py-2.5">{t("increase_pct")}</th>
+                  <th className="text-end px-4 py-2.5">{t("increase_amount")}</th>
+                  <th className="text-end px-4 py-2.5">{t("new_salary")}</th>
                 </tr>
               </thead>
               <tbody>
                 {recommendations.length === 0 ? (
-                  <tr><td colSpan={8} className="text-center text-sm text-muted-foreground py-10">No employees yet.</td></tr>
+                  <tr><td colSpan={8} className="text-center text-sm text-muted-foreground py-10">{t("no_employees_yet")}</td></tr>
                 ) : recommendations.map((r) => (
                   <tr key={r.id} className="border-t">
                     <td className="px-4 py-2.5 font-medium">{r.name}</td>
