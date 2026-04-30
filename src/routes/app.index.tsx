@@ -111,7 +111,7 @@ function Dashboard() {
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="font-medium text-sm">{t("headcount_by_grade")}</h3>
                 </div>
-                <div className="h-64">
+                <div className="h-64" dir="ltr">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={distData}>
                       <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -126,7 +126,7 @@ function Dashboard() {
 
               <div className="border rounded-lg bg-card p-4">
                 <h3 className="font-medium text-sm mb-3">{t("payroll_by_department")}</h3>
-                <div className="h-64">
+                <div className="h-64" dir="ltr">
                   {deptData.length ? (
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
