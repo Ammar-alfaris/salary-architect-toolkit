@@ -149,7 +149,7 @@ function EmployeesPage() {
             <Input placeholder="Search by name or code…" value={search} onChange={(e) => setSearch(e.target.value)} className="ps-9" />
           </div>
           <Select value={deptFilter} onValueChange={setDeptFilter}>
-            <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-full sm:w-48"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All departments</SelectItem>
               {departments.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
@@ -162,7 +162,7 @@ function EmployeesPage() {
             <div className="p-12 text-center text-sm text-muted-foreground">No employees match your filters.</div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full text-sm min-w-[860px]">
                 <thead className="bg-muted/40 text-xs uppercase text-muted-foreground">
                   <tr><th className="text-start px-4 py-2.5">Code</th><th className="text-start px-4 py-2.5">Name</th><th className="text-start px-4 py-2.5">{t("department")}</th><th className="text-start px-4 py-2.5">{t("job_title")}</th><th className="text-start px-4 py-2.5">{t("grade")}</th><th className="text-end px-4 py-2.5">{t("base_salary")}</th><th className="text-end px-4 py-2.5">Compa</th><th className="text-end px-4 py-2.5">Target%</th><th className="px-4 py-2.5"></th></tr>
                 </thead>
