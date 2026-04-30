@@ -69,7 +69,7 @@ function MeritPage() {
         <div className="border rounded-lg bg-card p-4">
           <h3 className="font-medium text-sm mb-3 flex items-center gap-2"><Calculator className="w-4 h-4" /> Merit guideline matrix</h3>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-sm min-w-[560px]">
               <thead className="bg-muted/40 text-xs uppercase text-muted-foreground">
                 <tr>
                   <th className="text-start px-3 py-2">Performance \ Compa-Ratio</th>
@@ -96,7 +96,8 @@ function MeritPage() {
         </div>
 
         <div className="border rounded-lg bg-card overflow-hidden">
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[820px]">
             <thead className="bg-muted/40 text-xs uppercase text-muted-foreground">
               <tr><th className="text-start px-4 py-2.5">Name</th><th className="text-start px-4 py-2.5">Rating</th><th className="text-end px-4 py-2.5">Compa</th><th className="text-end px-4 py-2.5">Band</th><th className="text-end px-4 py-2.5">Current</th><th className="text-end px-4 py-2.5">Increase %</th><th className="text-end px-4 py-2.5">Increase $</th><th className="text-end px-4 py-2.5">New Salary</th></tr>
             </thead>
