@@ -22,6 +22,7 @@ const nav = [
   { to: "/app/allowances", icon: Wallet, key: "allowances" },
   { to: "/app/employees", icon: Users, key: "employees" },
   { to: "/app/reports", icon: FileBarChart, key: "reports" },
+  { to: "/app/audit", icon: ShieldCheck, key: "audit_log" },
   { to: "/app/settings", icon: SettingsIcon, key: "settings" },
 ] as const;
 
