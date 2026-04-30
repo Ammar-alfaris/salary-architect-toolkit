@@ -10,14 +10,18 @@ import { useI18n } from "@/lib/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { generateGrades } from "@/lib/comp";
 import { fmtCurrency } from "@/lib/format";
+import { logAudit } from "@/lib/audit";
+import { usePermissions } from "@/lib/rbac";
+import { exportXLSX } from "@/lib/excel";
 import { toast } from "sonner";
-import { Plus, Layers, Trash2, Eye } from "lucide-react";
+import { Plus, Layers, Trash2, Eye, FileSpreadsheet } from "lucide-react";
 
 export const Route = createFileRoute("/app/structures")({ component: StructuresPage });
 
 function StructuresPage() {
   const { organizationId, user } = useAuth();
   const { t, locale } = useI18n();
+  const perms = usePermissions();
   const [structures, setStructures] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
@@ -45,6 +49,7 @@ function StructuresPage() {
 
   const handleGenerate = async () => {
     if (!organizationId || !user) return;
+    if (!perms.canEdit) return toast.error("Insufficient permissions");
     const { data: structure, error } = await supabase.from("salary_structures").insert({
       organization_id: organizationId,
       name, currency, country: country || null,
@@ -73,13 +78,45 @@ function StructuresPage() {
     const { error: gErr } = await supabase.from("salary_grades").insert(grades);
     if (gErr) return toast.error(gErr.message);
     toast.success(`Created "${name}" with ${grades.length} grades`);
+    await logAudit({
+      organizationId,
+      action: "create",
+      entityType: "salary_structure",
+      entityId: structure.id,
+      entityLabel: name,
+      after: { currency, gradeCount, startingMidpoint, progressionPercent, spreadPercent, rounding },
+    });
     setOpen(false);
     refresh();
   };
 
-  const handleArchive = async (id: string) => {
-    await supabase.from("salary_structures").update({ archived: true }).eq("id", id);
+  const handleArchive = async (s: any) => {
+    if (!perms.canDelete) return toast.error("Admin only");
+    await supabase.from("salary_structures").update({ archived: true }).eq("id", s.id);
+    if (organizationId) {
+      await logAudit({ organizationId, action: "archive", entityType: "salary_structure", entityId: s.id, entityLabel: s.name });
+    }
     refresh();
+  };
+
+  const handleExportAll = async () => {
+    if (!organizationId) return;
+    const { data: gs } = await supabase
+      .from("salary_grades")
+      .select("*, salary_structures!inner(name, organization_id, currency)")
+      .eq("salary_structures.organization_id", organizationId);
+    const rows = (gs ?? []).map((g: any) => ({
+      Structure: g.salary_structures?.name,
+      Currency: g.salary_structures?.currency,
+      Grade: g.grade_code,
+      Sequence: g.sequence,
+      Min: Number(g.minimum),
+      Mid: Number(g.midpoint),
+      Max: Number(g.maximum),
+      SpreadPct: Number(g.spread_percent),
+    }));
+    exportXLSX("salary-structures.xlsx", rows, "Grades");
+    await logAudit({ organizationId, action: "export", entityType: "salary_structure", entityLabel: `${rows.length} grades` });
   };
 
   return (
