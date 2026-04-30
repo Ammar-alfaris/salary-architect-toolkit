@@ -20,6 +20,7 @@ import { Route as AppMeritRouteImport } from './routes/app.merit'
 import { Route as AppMatrixRouteImport } from './routes/app.matrix'
 import { Route as AppEmployeesRouteImport } from './routes/app.employees'
 import { Route as AppBonusRouteImport } from './routes/app.bonus'
+import { Route as AppAuditRouteImport } from './routes/app.audit'
 import { Route as AppAllowancesRouteImport } from './routes/app.allowances'
 import { Route as AppEmployeesIdRouteImport } from './routes/app.employees.$id'
 
@@ -78,6 +79,11 @@ const AppBonusRoute = AppBonusRouteImport.update({
   path: '/bonus',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAuditRoute = AppAuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAllowancesRoute = AppAllowancesRouteImport.update({
   id: '/allowances',
   path: '/allowances',
@@ -94,6 +100,7 @@ export interface FileRoutesByFullPath {
   '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
   '/app/allowances': typeof AppAllowancesRoute
+  '/app/audit': typeof AppAuditRoute
   '/app/bonus': typeof AppBonusRoute
   '/app/employees': typeof AppEmployeesRouteWithChildren
   '/app/matrix': typeof AppMatrixRoute
@@ -108,6 +115,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/app/allowances': typeof AppAllowancesRoute
+  '/app/audit': typeof AppAuditRoute
   '/app/bonus': typeof AppBonusRoute
   '/app/employees': typeof AppEmployeesRouteWithChildren
   '/app/matrix': typeof AppMatrixRoute
@@ -124,6 +132,7 @@ export interface FileRoutesById {
   '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
   '/app/allowances': typeof AppAllowancesRoute
+  '/app/audit': typeof AppAuditRoute
   '/app/bonus': typeof AppBonusRoute
   '/app/employees': typeof AppEmployeesRouteWithChildren
   '/app/matrix': typeof AppMatrixRoute
@@ -141,6 +150,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/auth'
     | '/app/allowances'
+    | '/app/audit'
     | '/app/bonus'
     | '/app/employees'
     | '/app/matrix'
@@ -155,6 +165,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/app/allowances'
+    | '/app/audit'
     | '/app/bonus'
     | '/app/employees'
     | '/app/matrix'
@@ -170,6 +181,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/auth'
     | '/app/allowances'
+    | '/app/audit'
     | '/app/bonus'
     | '/app/employees'
     | '/app/matrix'
@@ -266,6 +278,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppBonusRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/audit': {
+      id: '/app/audit'
+      path: '/audit'
+      fullPath: '/app/audit'
+      preLoaderRoute: typeof AppAuditRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/allowances': {
       id: '/app/allowances'
       path: '/allowances'
@@ -297,6 +316,7 @@ const AppEmployeesRouteWithChildren = AppEmployeesRoute._addFileChildren(
 
 interface AppRouteChildren {
   AppAllowancesRoute: typeof AppAllowancesRoute
+  AppAuditRoute: typeof AppAuditRoute
   AppBonusRoute: typeof AppBonusRoute
   AppEmployeesRoute: typeof AppEmployeesRouteWithChildren
   AppMatrixRoute: typeof AppMatrixRoute
@@ -309,6 +329,7 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppAllowancesRoute: AppAllowancesRoute,
+  AppAuditRoute: AppAuditRoute,
   AppBonusRoute: AppBonusRoute,
   AppEmployeesRoute: AppEmployeesRouteWithChildren,
   AppMatrixRoute: AppMatrixRoute,
@@ -329,3 +350,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
