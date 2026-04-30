@@ -124,7 +124,18 @@ function StructuresPage() {
       <PageHeader
         title={t("salary_structures")}
         subtitle="Define grade-based salary ranges"
-        actions={<Button size="sm" onClick={() => setOpen(!open)}><Plus className="w-4 h-4 me-1" />{open ? t("cancel") : t("create_structure")}</Button>}
+        actions={
+          <>
+            <Button size="sm" variant="outline" onClick={handleExportAll} disabled={!structures.length}>
+              <FileSpreadsheet className="w-4 h-4 me-1" />Excel
+            </Button>
+            {perms.canEdit && (
+              <Button size="sm" onClick={() => setOpen(!open)}>
+                <Plus className="w-4 h-4 me-1" />{open ? t("cancel") : t("create_structure")}
+              </Button>
+            )}
+          </>
+        }
       />
 
       <div className="p-4 md:p-6 space-y-4">
@@ -222,7 +233,7 @@ function StructuresPage() {
                       <td className="px-4 py-2.5 text-end">
                         <div className="flex gap-1 justify-end">
                           <Button asChild size="icon" variant="ghost"><Link to="/app/matrix"><Eye className="w-4 h-4" /></Link></Button>
-                          {!s.archived && <Button size="icon" variant="ghost" onClick={() => handleArchive(s.id)}><Trash2 className="w-4 h-4" /></Button>}
+                          {!s.archived && perms.canDelete && <Button size="icon" variant="ghost" onClick={() => handleArchive(s)}><Trash2 className="w-4 h-4" /></Button>}
                         </div>
                       </td>
                     </tr>
