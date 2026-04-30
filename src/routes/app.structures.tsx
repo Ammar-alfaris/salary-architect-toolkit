@@ -168,29 +168,31 @@ function StructuresPage() {
               <Button size="sm" className="mt-3" onClick={() => setOpen(true)}><Plus className="w-4 h-4 me-1" />{t("create_structure")}</Button>
             </div>
           ) : (
-            <table className="w-full text-sm">
-              <thead className="bg-muted/40 text-xs uppercase text-muted-foreground">
-                <tr><th className="text-start px-4 py-2.5">Name</th><th className="text-start px-4 py-2.5">Currency</th><th className="text-end px-4 py-2.5">Grades</th><th className="text-end px-4 py-2.5">Start mid</th><th className="text-end px-4 py-2.5">Effective</th><th className="text-end px-4 py-2.5">{t("status")}</th><th className="px-4 py-2.5"></th></tr>
-              </thead>
-              <tbody>
-                {structures.map((s) => (
-                  <tr key={s.id} className="border-t hover:bg-muted/20">
-                    <td className="px-4 py-2.5 font-medium">{s.name}</td>
-                    <td className="px-4 py-2.5">{s.currency}</td>
-                    <td className="px-4 py-2.5 text-end num">{s.grade_count}</td>
-                    <td className="px-4 py-2.5 text-end num">{fmtCurrency(Number(s.starting_midpoint), s.currency, locale)}</td>
-                    <td className="px-4 py-2.5 text-end text-muted-foreground">{new Date(s.effective_date).toLocaleDateString()}</td>
-                    <td className="px-4 py-2.5 text-end"><span className={`text-xs px-2 py-0.5 rounded-full ${s.archived ? "bg-muted" : "bg-success/15 text-success"}`}>{s.archived ? "Archived" : "Active"}</span></td>
-                    <td className="px-4 py-2.5 text-end">
-                      <div className="flex gap-1 justify-end">
-                        <Button asChild size="icon" variant="ghost"><Link to="/app/matrix"><Eye className="w-4 h-4" /></Link></Button>
-                        {!s.archived && <Button size="icon" variant="ghost" onClick={() => handleArchive(s.id)}><Trash2 className="w-4 h-4" /></Button>}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm min-w-[640px]">
+                <thead className="bg-muted/40 text-xs uppercase text-muted-foreground">
+                  <tr><th className="text-start px-4 py-2.5">Name</th><th className="text-start px-4 py-2.5">Currency</th><th className="text-end px-4 py-2.5">Grades</th><th className="text-end px-4 py-2.5">Start mid</th><th className="text-end px-4 py-2.5">Effective</th><th className="text-end px-4 py-2.5">{t("status")}</th><th className="px-4 py-2.5"></th></tr>
+                </thead>
+                <tbody>
+                  {structures.map((s) => (
+                    <tr key={s.id} className="border-t hover:bg-muted/20">
+                      <td className="px-4 py-2.5 font-medium">{s.name}</td>
+                      <td className="px-4 py-2.5">{s.currency}</td>
+                      <td className="px-4 py-2.5 text-end num">{s.grade_count}</td>
+                      <td className="px-4 py-2.5 text-end num">{fmtCurrency(Number(s.starting_midpoint), s.currency, locale)}</td>
+                      <td className="px-4 py-2.5 text-end text-muted-foreground">{new Date(s.effective_date).toLocaleDateString()}</td>
+                      <td className="px-4 py-2.5 text-end"><span className={`text-xs px-2 py-0.5 rounded-full ${s.archived ? "bg-muted" : "bg-success/15 text-success"}`}>{s.archived ? "Archived" : "Active"}</span></td>
+                      <td className="px-4 py-2.5 text-end">
+                        <div className="flex gap-1 justify-end">
+                          <Button asChild size="icon" variant="ghost"><Link to="/app/matrix"><Eye className="w-4 h-4" /></Link></Button>
+                          {!s.archived && <Button size="icon" variant="ghost" onClick={() => handleArchive(s.id)}><Trash2 className="w-4 h-4" /></Button>}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       </div>

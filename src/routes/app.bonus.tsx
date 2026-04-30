@@ -113,14 +113,16 @@ function BonusPage() {
                   <div className="border rounded-lg bg-card p-4 flex items-end justify-end"><Button variant="outline" size="sm" onClick={() => exportCSV("bonus.csv", bulkResults)}><Download className="w-4 h-4 me-1" />{t("export_csv")}</Button></div>
                 </div>
                 <div className="border rounded-lg bg-card overflow-hidden">
-                  <table className="w-full text-sm">
-                    <thead className="bg-muted/40 text-xs uppercase text-muted-foreground"><tr><th className="text-start px-4 py-2.5">Name</th><th className="text-start px-4 py-2.5">Dept</th><th className="text-end px-4 py-2.5">Base</th><th className="text-end px-4 py-2.5">Target%</th><th className="text-end px-4 py-2.5">Bonus</th></tr></thead>
-                    <tbody>
-                      {bulkResults.map((r) => (
-                        <tr key={r.id} className="border-t"><td className="px-4 py-2.5">{r.name}</td><td className="px-4 py-2.5 text-muted-foreground">{r.dept}</td><td className="px-4 py-2.5 text-end num">{fmtCurrency(r.base, "USD", locale)}</td><td className="px-4 py-2.5 text-end num">{r.target}%</td><td className="px-4 py-2.5 text-end num font-medium">{fmtCurrency(r.bonus, "USD", locale)}</td></tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm min-w-[640px]">
+                      <thead className="bg-muted/40 text-xs uppercase text-muted-foreground"><tr><th className="text-start px-4 py-2.5">Name</th><th className="text-start px-4 py-2.5">Dept</th><th className="text-end px-4 py-2.5">Base</th><th className="text-end px-4 py-2.5">Target%</th><th className="text-end px-4 py-2.5">Bonus</th></tr></thead>
+                      <tbody>
+                        {bulkResults.map((r) => (
+                          <tr key={r.id} className="border-t"><td className="px-4 py-2.5">{r.name}</td><td className="px-4 py-2.5 text-muted-foreground">{r.dept}</td><td className="px-4 py-2.5 text-end num">{fmtCurrency(r.base, "USD", locale)}</td><td className="px-4 py-2.5 text-end num">{r.target}%</td><td className="px-4 py-2.5 text-end num font-medium">{fmtCurrency(r.bonus, "USD", locale)}</td></tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </>
             )}

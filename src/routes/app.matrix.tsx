@@ -55,7 +55,7 @@ function MatrixPage() {
         actions={
           <>
             <Select value={structureId} onValueChange={setStructureId}>
-              <SelectTrigger className="w-64"><SelectValue placeholder="Select structure" /></SelectTrigger>
+              <SelectTrigger className="w-full sm:w-64"><SelectValue placeholder="Select structure" /></SelectTrigger>
               <SelectContent>{structures.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
             </Select>
             <Button size="sm" variant="outline" onClick={handleExport} disabled={!grades.length}><Download className="w-4 h-4 me-1" />{t("export_csv")}</Button>
@@ -89,32 +89,34 @@ function MatrixPage() {
             </div>
 
             <div className="border rounded-lg bg-card overflow-hidden">
-              <table className="w-full text-sm">
-                <thead className="bg-muted/40 text-xs uppercase text-muted-foreground">
-                  <tr>
-                    <th className="text-start px-4 py-2.5">{t("grade")}</th>
-                    <th className="text-start px-4 py-2.5">Name</th>
-                    <th className="text-end px-4 py-2.5">{t("minimum")}</th>
-                    <th className="text-end px-4 py-2.5">{t("midpoint")}</th>
-                    <th className="text-end px-4 py-2.5">{t("maximum")}</th>
-                    <th className="text-end px-4 py-2.5">{t("spread")}</th>
-                    <th className="text-end px-4 py-2.5">{t("progression")}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {grades.map((g) => (
-                    <tr key={g.id} className="border-t">
-                      <td className="px-4 py-2.5 font-medium">{g.grade_code}</td>
-                      <td className="px-4 py-2.5 text-muted-foreground">{g.grade_name}</td>
-                      <td className="px-4 py-2.5 text-end num">{fmtCurrency(Number(g.minimum), structure?.currency ?? "USD", locale)}</td>
-                      <td className="px-4 py-2.5 text-end num font-medium">{fmtCurrency(Number(g.midpoint), structure?.currency ?? "USD", locale)}</td>
-                      <td className="px-4 py-2.5 text-end num">{fmtCurrency(Number(g.maximum), structure?.currency ?? "USD", locale)}</td>
-                      <td className="px-4 py-2.5 text-end num text-muted-foreground">{Number(g.spread_percent)}%</td>
-                      <td className="px-4 py-2.5 text-end num text-muted-foreground">{Number(g.progression_percent)}%</td>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm min-w-[680px]">
+                  <thead className="bg-muted/40 text-xs uppercase text-muted-foreground">
+                    <tr>
+                      <th className="text-start px-4 py-2.5">{t("grade")}</th>
+                      <th className="text-start px-4 py-2.5">Name</th>
+                      <th className="text-end px-4 py-2.5">{t("minimum")}</th>
+                      <th className="text-end px-4 py-2.5">{t("midpoint")}</th>
+                      <th className="text-end px-4 py-2.5">{t("maximum")}</th>
+                      <th className="text-end px-4 py-2.5">{t("spread")}</th>
+                      <th className="text-end px-4 py-2.5">{t("progression")}</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {grades.map((g) => (
+                      <tr key={g.id} className="border-t">
+                        <td className="px-4 py-2.5 font-medium">{g.grade_code}</td>
+                        <td className="px-4 py-2.5 text-muted-foreground">{g.grade_name}</td>
+                        <td className="px-4 py-2.5 text-end num">{fmtCurrency(Number(g.minimum), structure?.currency ?? "USD", locale)}</td>
+                        <td className="px-4 py-2.5 text-end num font-medium">{fmtCurrency(Number(g.midpoint), structure?.currency ?? "USD", locale)}</td>
+                        <td className="px-4 py-2.5 text-end num">{fmtCurrency(Number(g.maximum), structure?.currency ?? "USD", locale)}</td>
+                        <td className="px-4 py-2.5 text-end num text-muted-foreground">{Number(g.spread_percent)}%</td>
+                        <td className="px-4 py-2.5 text-end num text-muted-foreground">{Number(g.progression_percent)}%</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </>
         )}

@@ -54,7 +54,7 @@ function SettingsPage() {
               <div className="space-y-1.5">
                 <Label>Default currency</Label>
                 <Select value={currency} onValueChange={setCurrency}>
-                  <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="w-full sm:w-48"><SelectValue /></SelectTrigger>
                   <SelectContent>{["USD", "EUR", "GBP", "AED", "SAR", "EGP", "JOD", "KWD"].map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
