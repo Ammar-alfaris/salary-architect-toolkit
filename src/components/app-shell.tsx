@@ -1,6 +1,6 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
-  LayoutDashboard, Layers, Grid3x3, Gift, TrendingUp, Wallet, Users, FileBarChart, Settings as SettingsIcon, LogOut, Moon, Sun, Languages, Search, Bell,
+  LayoutDashboard, Layers, Grid3x3, Gift, TrendingUp, Wallet, Users, FileBarChart, Settings as SettingsIcon, LogOut, Moon, Sun, Languages, Search, Bell, Menu,
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { useTheme } from "@/lib/theme";
@@ -103,27 +103,30 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       )}
 
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-14 border-b bg-card flex items-center gap-2 px-3 md:px-5">
+        <header className="h-14 border-b bg-card flex items-center gap-1 px-2 md:px-5">
           <button
             className="md:hidden p-2 -ms-1"
             onClick={() => setMobileOpen(true)}
             aria-label="Open menu"
           >
-            <Layers className="w-5 h-5" />
+            <Menu className="w-5 h-5" />
           </button>
+          <div className="md:hidden flex items-center gap-1.5 font-semibold text-sm">
+            <Layers className="w-4 h-4 text-primary" />
+            <span className="truncate">{t("app_name")}</span>
+          </div>
           <div className="hidden sm:flex items-center gap-2 flex-1 max-w-md">
             <Search className="w-4 h-4 text-muted-foreground" />
             <Input placeholder="Search…" className="h-9 border-0 bg-muted/50 focus-visible:ring-1" />
           </div>
           <div className="flex-1 sm:hidden" />
-          <Button variant="ghost" size="icon" onClick={() => setLocale(locale === "en" ? "ar" : "en")} aria-label="Language">
+          <Button variant="ghost" size="icon" className="shrink-0" onClick={() => setLocale(locale === "en" ? "ar" : "en")} aria-label="Language">
             <Languages className="w-4 h-4" />
-            <span className="ms-1 text-xs font-medium">{locale.toUpperCase()}</span>
           </Button>
-          <Button variant="ghost" size="icon" onClick={toggle} aria-label="Theme">
+          <Button variant="ghost" size="icon" className="shrink-0" onClick={toggle} aria-label="Theme">
             {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </Button>
-          <Button variant="ghost" size="icon" aria-label="Notifications">
+          <Button variant="ghost" size="icon" className="hidden sm:inline-flex shrink-0" aria-label="Notifications">
             <Bell className="w-4 h-4" />
           </Button>
           <DropdownMenu>
@@ -151,12 +154,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
 export function PageHeader({ title, subtitle, actions }: { title: string; subtitle?: string; actions?: React.ReactNode }) {
   return (
-    <div className="flex flex-wrap items-end justify-between gap-3 px-4 md:px-6 py-4 border-b bg-card/40">
-      <div>
-        <h1 className="text-xl font-semibold tracking-tight">{title}</h1>
-        {subtitle && <p className="text-sm text-muted-foreground mt-0.5">{subtitle}</p>}
+    <div className="flex flex-col md:flex-row md:flex-wrap md:items-end md:justify-between gap-3 px-4 md:px-6 py-4 border-b bg-card/40">
+      <div className="min-w-0">
+        <h1 className="text-lg md:text-xl font-semibold tracking-tight truncate">{title}</h1>
+        {subtitle && <p className="text-sm text-muted-foreground mt-0.5 truncate">{subtitle}</p>}
       </div>
-      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+      {actions && <div className="flex flex-wrap items-center gap-2 [&>*]:flex-shrink-0">{actions}</div>}
     </div>
   );
 }
