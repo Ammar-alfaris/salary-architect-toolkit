@@ -19,13 +19,13 @@ function Landing() {
   const { theme, toggle } = useTheme();
 
   const features = [
-    { icon: Layers, title: "Salary Structure Builder", desc: "Configurable grade count, midpoint progression, and spread logic." },
-    { icon: Grid3x3, title: "Salary Range Matrix", desc: "Auto-generate min, midpoint and max with rounding rules and visual range bars." },
-    { icon: Gift, title: "Bonus Calculator", desc: "Target %, performance, business and individual modifiers with proration." },
-    { icon: TrendingUp, title: "Merit Increase Planner", desc: "Editable matrix by performance × compa-ratio with budget impact." },
-    { icon: Wallet, title: "Allowances Calculator", desc: "Housing, transport, mobile, education and custom allowance templates." },
-    { icon: Users, title: "Employee Registry", desc: "Compensation profiles with compa-ratio, range penetration and total rewards." },
-    { icon: FileBarChart, title: "Reports & Export", desc: "Export-ready CSVs for finance review and management reporting." },
+    { icon: Layers, title: t("feat_structure_title"), desc: t("feat_structure_desc") },
+    { icon: Grid3x3, title: t("feat_matrix_title"), desc: t("feat_matrix_desc") },
+    { icon: Gift, title: t("feat_bonus_title"), desc: t("feat_bonus_desc") },
+    { icon: TrendingUp, title: t("feat_merit_title"), desc: t("feat_merit_desc") },
+    { icon: Wallet, title: t("feat_allow_title"), desc: t("feat_allow_desc") },
+    { icon: Users, title: t("feat_emp_title"), desc: t("feat_emp_desc") },
+    { icon: FileBarChart, title: t("feat_reports_title"), desc: t("feat_reports_desc") },
   ];
 
   return (
@@ -44,10 +44,10 @@ function Landing() {
             <a href="#cta" className="hover:text-foreground">{t("pricing")}</a>
           </nav>
           <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
-            <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setLocale(locale === "en" ? "ar" : "en")} aria-label="Language">
+            <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setLocale(locale === "en" ? "ar" : "en")} aria-label={t("language")}>
               <Languages className="w-4 h-4" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-9 w-9" onClick={toggle} aria-label="Theme">
+            <Button variant="ghost" size="icon" className="h-9 w-9" onClick={toggle} aria-label={t("theme")}>
               {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </Button>
             <Button variant="ghost" size="sm" className="hidden sm:inline-flex" asChild><Link to="/auth">{t("sign_in")}</Link></Button>
@@ -62,7 +62,7 @@ function Landing() {
         <div className="container mx-auto px-4 py-14 sm:py-20 md:py-28 max-w-5xl text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border bg-card text-xs text-muted-foreground mb-6 max-w-full">
             <span className="w-1.5 h-1.5 rounded-full bg-accent shrink-0" />
-            <span className="truncate">For HR, Compensation & Total Rewards teams</span>
+            <span className="truncate">{t("for_total_rewards_teams")}</span>
           </div>
           <h1 className="text-3xl sm:text-4xl md:text-6xl font-semibold tracking-tight leading-[1.1] break-words">
             {t("hero_headline")}
@@ -80,9 +80,9 @@ function Landing() {
         <div className="rounded-xl border bg-card overflow-hidden shadow-[var(--shadow-elegant)]">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6 bg-muted/40 border-b">
             {[
-              { label: "Total Employees", value: "1,284" },
-              { label: "Active Structures", value: "6" },
-              { label: "Avg Compa-Ratio", value: "0.97" },
+              { label: t("total_employees"), value: "1,284" },
+              { label: t("active_structures"), value: "6" },
+              { label: t("avg_compa_ratio"), value: "0.97" },
             ].map((k) => (
               <div key={k.label} className="bg-card border rounded-lg p-4">
                 <div className="text-xs text-muted-foreground">{k.label}</div>
@@ -91,7 +91,7 @@ function Landing() {
             ))}
           </div>
           <div className="p-6">
-            <div className="text-sm font-medium mb-3">Salary Range Matrix</div>
+            <div className="text-sm font-medium mb-3">{t("salary_matrix")}</div>
             <div className="space-y-2">
               {[1, 2, 3, 4, 5, 6, 7].map((g, i) => {
                 const widthPct = 30 + i * 5;
@@ -113,8 +113,8 @@ function Landing() {
       {/* Features */}
       <section id="features" className="container mx-auto px-4 py-20">
         <div className="text-center max-w-2xl mx-auto mb-12">
-          <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">Everything Total Rewards needs</h2>
-          <p className="mt-3 text-muted-foreground">Replace fragmented spreadsheets with a structured, repeatable compensation workflow.</p>
+          <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">{t("everything_total_rewards_needs")}</h2>
+          <p className="mt-3 text-muted-foreground">{t("replace_spreadsheets")}</p>
         </div>
         <div id="modules" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {features.map((f) => {
@@ -135,15 +135,15 @@ function Landing() {
       {/* CTA */}
       <section id="cta" className="container mx-auto px-4 py-16">
         <div className="rounded-2xl p-10 md:p-14 text-center text-primary-foreground" style={{ background: "var(--gradient-hero)" }}>
-          <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">Build salary structures faster, more consistently.</h2>
-          <p className="mt-3 opacity-90 max-w-xl mx-auto">Start with a default structure, customize the formulas, and apply to your employees in minutes.</p>
+          <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">{t("cta_headline")}</h2>
+          <p className="mt-3 opacity-90 max-w-xl mx-auto">{t("cta_sub")}</p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
             <Button size="lg" variant="secondary" asChild><Link to="/auth">{t("start_free")}</Link></Button>
           </div>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs opacity-90">
-            <div className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5" /> No credit card</div>
-            <div className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5" /> EN / AR with RTL</div>
-            <div className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5" /> Export-ready reports</div>
+            <div className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5" /> {t("cta_no_cc")}</div>
+            <div className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5" /> {t("cta_bilingual")}</div>
+            <div className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5" /> {t("cta_export_ready")}</div>
           </div>
         </div>
       </section>
@@ -151,7 +151,7 @@ function Landing() {
       <footer className="border-t mt-12">
         <div className="container mx-auto px-4 py-8 flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
           <div>© {new Date().getFullYear()} {t("app_name")}</div>
-          <div className="flex gap-4"><a href="#" className="hover:text-foreground">Privacy</a><a href="#" className="hover:text-foreground">Terms</a><a href="#" className="hover:text-foreground">Contact</a></div>
+          <div className="flex gap-4"><a href="#" className="hover:text-foreground">{t("privacy")}</a><a href="#" className="hover:text-foreground">{t("terms")}</a><a href="#" className="hover:text-foreground">{t("contact")}</a></div>
         </div>
       </footer>
     </div>
