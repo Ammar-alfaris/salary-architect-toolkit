@@ -3,7 +3,6 @@ import { useEffect, useMemo, useState } from "react";
 import { PageHeader } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { supabase } from "@/integrations/supabase/client";
@@ -58,12 +57,25 @@ function MeritPage() {
 
       <div className="p-4 md:p-6 space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-          <div className="border rounded-lg bg-card p-4"><div className="text-xs text-muted-foreground">Target budget</div>
-            <div className="flex items-end gap-2 mt-1"><Input type="number" step="0.1" value={budget} onChange={(e) => setBudget(+e.target.value || 0)} className="h-8" /><span className="text-sm">%</span></div>
+          <div className="border rounded-lg bg-card p-4">
+            <div className="text-xs text-muted-foreground">Target budget</div>
+            <div className="flex items-end gap-2 mt-1">
+              <Input type="number" step="0.1" value={budget} onChange={(e) => setBudget(+e.target.value || 0)} className="h-8" />
+              <span className="text-sm">%</span>
+            </div>
           </div>
-          <div className="border rounded-lg bg-card p-4"><div className="text-xs text-muted-foreground">Actual budget</div><div className={`text-2xl font-semibold num mt-1 ${actualBudgetPct > budget ? "text-destructive" : "text-success"}`}>{fmtPercent(actualBudgetPct, locale)}</div></div>
-          <div className="border rounded-lg bg-card p-4"><div className="text-xs text-muted-foreground">Total increase</div><div className="text-2xl font-semibold num mt-1">{fmtCurrency(totalIncrease, "USD", locale)}</div></div>
-          <div className="border rounded-lg bg-card p-4"><div className="text-xs text-muted-foreground">Employees</div><div className="text-2xl font-semibold num mt-1">{recommendations.length}</div></div>
+          <div className="border rounded-lg bg-card p-4">
+            <div className="text-xs text-muted-foreground">Actual budget</div>
+            <div className={`text-2xl font-semibold num mt-1 ${actualBudgetPct > budget ? "text-destructive" : "text-success"}`}>{fmtPercent(actualBudgetPct, locale)}</div>
+          </div>
+          <div className="border rounded-lg bg-card p-4">
+            <div className="text-xs text-muted-foreground">Total increase</div>
+            <div className="text-2xl font-semibold num mt-1">{fmtCurrency(totalIncrease, "USD", locale)}</div>
+          </div>
+          <div className="border rounded-lg bg-card p-4">
+            <div className="text-xs text-muted-foreground">Employees</div>
+            <div className="text-2xl font-semibold num mt-1">{recommendations.length}</div>
+          </div>
         </div>
 
         <div className="border rounded-lg bg-card p-4">
@@ -97,27 +109,36 @@ function MeritPage() {
 
         <div className="border rounded-lg bg-card overflow-hidden">
           <div className="overflow-x-auto">
-          <table className="w-full text-sm min-w-[820px]">
-            <thead className="bg-muted/40 text-xs uppercase text-muted-foreground">
-              <tr><th className="text-start px-4 py-2.5">Name</th><th className="text-start px-4 py-2.5">Rating</th><th className="text-end px-4 py-2.5">Compa</th><th className="text-end px-4 py-2.5">Band</th><th className="text-end px-4 py-2.5">Current</th><th className="text-end px-4 py-2.5">Increase %</th><th className="text-end px-4 py-2.5">Increase $</th><th className="text-end px-4 py-2.5">New Salary</th></tr>
-            </thead>
-            <tbody>
-              {recommendations.length === 0 ? (
-                <tr><td colSpan={8} className="text-center text-sm text-muted-foreground py-10">No employees yet.</td></tr>
-              ) : recommendations.map((r) => (
-                <tr key={r.id} className="border-t">
-                  <td className="px-4 py-2.5 font-medium">{r.name}</td>
-                  <td className="px-4 py-2.5 text-muted-foreground">{r.rating}</td>
-                  <td className="px-4 py-2.5 text-end num">{r.compa.toFixed(2)}</td>
-                  <td className="px-4 py-2.5 text-end text-xs text-muted-foreground">{r.band}</td>
-                  <td className="px-4 py-2.5 text-end num">{fmtCurrency(r.base, "USD", locale)}</td>
-                  <td className="px-4 py-2.5 text-end num">{r.pct}%</td>
-                  <td className="px-4 py-2.5 text-end num text-success">{fmtCurrency(r.increase, "USD", locale)}</td>
-                  <td className="px-4 py-2.5 text-end num font-medium">{fmtCurrency(r.newSalary, "USD", locale)}</td>
+            <table className="w-full text-sm min-w-[820px]">
+              <thead className="bg-muted/40 text-xs uppercase text-muted-foreground">
+                <tr>
+                  <th className="text-start px-4 py-2.5">Name</th>
+                  <th className="text-start px-4 py-2.5">Rating</th>
+                  <th className="text-end px-4 py-2.5">Compa</th>
+                  <th className="text-end px-4 py-2.5">Band</th>
+                  <th className="text-end px-4 py-2.5">Current</th>
+                  <th className="text-end px-4 py-2.5">Increase %</th>
+                  <th className="text-end px-4 py-2.5">Increase $</th>
+                  <th className="text-end px-4 py-2.5">New Salary</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {recommendations.length === 0 ? (
+                  <tr><td colSpan={8} className="text-center text-sm text-muted-foreground py-10">No employees yet.</td></tr>
+                ) : recommendations.map((r) => (
+                  <tr key={r.id} className="border-t">
+                    <td className="px-4 py-2.5 font-medium">{r.name}</td>
+                    <td className="px-4 py-2.5 text-muted-foreground">{r.rating}</td>
+                    <td className="px-4 py-2.5 text-end num">{r.compa.toFixed(2)}</td>
+                    <td className="px-4 py-2.5 text-end text-xs text-muted-foreground">{r.band}</td>
+                    <td className="px-4 py-2.5 text-end num">{fmtCurrency(r.base, "USD", locale)}</td>
+                    <td className="px-4 py-2.5 text-end num">{r.pct}%</td>
+                    <td className="px-4 py-2.5 text-end num text-success">{fmtCurrency(r.increase, "USD", locale)}</td>
+                    <td className="px-4 py-2.5 text-end num font-medium">{fmtCurrency(r.newSalary, "USD", locale)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
