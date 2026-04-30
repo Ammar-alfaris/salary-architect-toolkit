@@ -108,7 +108,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <button
             className="md:hidden p-2 -ms-1"
             onClick={() => setMobileOpen(true)}
-            aria-label="Open menu"
+            aria-label={t("open_menu")}
           >
             <Menu className="w-5 h-5" />
           </button>
@@ -118,16 +118,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
           <div className="hidden sm:flex items-center gap-2 flex-1 max-w-md">
             <Search className="w-4 h-4 text-muted-foreground" />
-            <Input placeholder="Search…" className="h-9 border-0 bg-muted/50 focus-visible:ring-1" />
+            <Input placeholder={t("search_placeholder")} className="h-9 border-0 bg-muted/50 focus-visible:ring-1" />
           </div>
           <div className="flex-1 sm:hidden" />
-          <Button variant="ghost" size="icon" className="shrink-0" onClick={() => setLocale(locale === "en" ? "ar" : "en")} aria-label="Language">
+          <Button variant="ghost" size="icon" className="shrink-0" onClick={() => setLocale(locale === "en" ? "ar" : "en")} aria-label={t("language")}>
             <Languages className="w-4 h-4" />
           </Button>
-          <Button variant="ghost" size="icon" className="shrink-0" onClick={toggle} aria-label="Theme">
+          <Button variant="ghost" size="icon" className="shrink-0" onClick={toggle} aria-label={t("theme")}>
             {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </Button>
-          <Button variant="ghost" size="icon" className="hidden sm:inline-flex shrink-0" aria-label="Notifications">
+          <Button variant="ghost" size="icon" className="hidden sm:inline-flex shrink-0" aria-label={t("notifications")}>
             <Bell className="w-4 h-4" />
           </Button>
           <DropdownMenu>
