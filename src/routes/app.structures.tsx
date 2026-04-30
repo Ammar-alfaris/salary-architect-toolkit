@@ -27,7 +27,7 @@ function StructuresPage() {
   const [open, setOpen] = useState(false);
 
   // Builder form state
-  const [name, setName] = useState("Annual Pay Structure 2026");
+  const [name, setName] = useState(t("default_structure_name"));
   const [currency, setCurrency] = useState("USD");
   const [country, setCountry] = useState("");
   const [gradeCount, setGradeCount] = useState(10);
@@ -49,7 +49,7 @@ function StructuresPage() {
 
   const handleGenerate = async () => {
     if (!organizationId || !user) return;
-    if (!perms.canEdit) return toast.error("Insufficient permissions");
+    if (!perms.canEdit) return toast.error(t("insufficient_permissions"));
     const { data: structure, error } = await supabase.from("salary_structures").insert({
       organization_id: organizationId,
       name, currency, country: country || null,
@@ -77,7 +77,7 @@ function StructuresPage() {
     }));
     const { error: gErr } = await supabase.from("salary_grades").insert(grades);
     if (gErr) return toast.error(gErr.message);
-    toast.success(`Created "${name}" with ${grades.length} grades`);
+    toast.success(t("created_with_grades", { name, n: grades.length }));
     await logAudit({
       organizationId,
       action: "create",
@@ -91,7 +91,7 @@ function StructuresPage() {
   };
 
   const handleArchive = async (s: any) => {
-    if (!perms.canDelete) return toast.error("Admin only");
+    if (!perms.canDelete) return toast.error(t("admin_only"));
     await supabase.from("salary_structures").update({ archived: true }).eq("id", s.id);
     if (organizationId) {
       await logAudit({ organizationId, action: "archive", entityType: "salary_structure", entityId: s.id, entityLabel: s.name });
@@ -123,11 +123,11 @@ function StructuresPage() {
     <div>
       <PageHeader
         title={t("salary_structures")}
-        subtitle="Define grade-based salary ranges"
+        subtitle={t("structures_subtitle")}
         actions={
           <>
             <Button size="sm" variant="outline" onClick={handleExportAll} disabled={!structures.length}>
-              <FileSpreadsheet className="w-4 h-4 me-1" />Excel
+              <FileSpreadsheet className="w-4 h-4 me-1" />{t("excel")}
             </Button>
             {perms.canEdit && (
               <Button size="sm" onClick={() => setOpen(!open)}>
@@ -143,9 +143,9 @@ function StructuresPage() {
           <div className="border rounded-lg bg-card p-5 space-y-5">
             <h3 className="font-semibold text-sm">{t("structure_basics")}</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div className="space-y-1.5"><Label>Structure name</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
+              <div className="space-y-1.5"><Label>{t("structure_name_label")}</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
               <div className="space-y-1.5">
-                <Label>Currency</Label>
+                <Label>{t("currency")}</Label>
                 <Select value={currency} onValueChange={setCurrency}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -153,15 +153,15 @@ function StructuresPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-1.5"><Label>Country (optional)</Label><Input value={country} onChange={(e) => setCountry(e.target.value)} /></div>
+              <div className="space-y-1.5"><Label>{t("country_optional")}</Label><Input value={country} onChange={(e) => setCountry(e.target.value)} /></div>
             </div>
 
             <h3 className="font-semibold text-sm pt-2">{t("midpoint_logic")}</h3>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-              <div className="space-y-1.5"><Label>Number of grades</Label><Input type="number" min={2} max={30} value={gradeCount} onChange={(e) => setGradeCount(+e.target.value || 0)} /></div>
-              <div className="space-y-1.5"><Label>Starting midpoint</Label><Input type="number" value={startingMidpoint} onChange={(e) => setStartingMidpoint(+e.target.value || 0)} /></div>
-              <div className="space-y-1.5"><Label>Progression % per grade</Label><Input type="number" step="0.5" value={progressionPercent} onChange={(e) => setProgressionPercent(+e.target.value || 0)} /></div>
-              <div className="space-y-1.5"><Label>Spread % (min↔max)</Label><Input type="number" step="1" value={spreadPercent} onChange={(e) => setSpreadPercent(+e.target.value || 0)} /></div>
+              <div className="space-y-1.5"><Label>{t("number_of_grades")}</Label><Input type="number" min={2} max={30} value={gradeCount} onChange={(e) => setGradeCount(+e.target.value || 0)} /></div>
+              <div className="space-y-1.5"><Label>{t("starting_midpoint")}</Label><Input type="number" value={startingMidpoint} onChange={(e) => setStartingMidpoint(+e.target.value || 0)} /></div>
+              <div className="space-y-1.5"><Label>{t("progression_per_grade")}</Label><Input type="number" step="0.5" value={progressionPercent} onChange={(e) => setProgressionPercent(+e.target.value || 0)} /></div>
+              <div className="space-y-1.5"><Label>{t("spread_min_max")}</Label><Input type="number" step="1" value={spreadPercent} onChange={(e) => setSpreadPercent(+e.target.value || 0)} /></div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
@@ -176,8 +176,8 @@ function StructuresPage() {
 
             <div className="border-t pt-4">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold text-sm">Preview</h3>
-                <p className="text-xs text-muted-foreground">Formula: midpoint × (1 ± spread/2), rounded to nearest {rounding}</p>
+                <h3 className="font-semibold text-sm">{t("preview")}</h3>
+                <p className="text-xs text-muted-foreground">{t("formula_helper", { n: rounding })}</p>
               </div>
               <div className="overflow-x-auto rounded border">
                 <table className="w-full text-sm">
@@ -201,7 +201,7 @@ function StructuresPage() {
 
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="ghost" onClick={() => setOpen(false)}>{t("cancel")}</Button>
-              <Button onClick={handleGenerate}>{t("generate")} & {t("save")}</Button>
+              <Button onClick={handleGenerate}>{t("generate_and_save")}</Button>
             </div>
           </div>
         )}
@@ -212,14 +212,14 @@ function StructuresPage() {
           ) : structures.length === 0 ? (
             <div className="p-12 text-center">
               <Layers className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
-              <p className="text-sm text-muted-foreground">No salary structures yet.</p>
+              <p className="text-sm text-muted-foreground">{t("no_structures_msg")}</p>
               <Button size="sm" className="mt-3" onClick={() => setOpen(true)}><Plus className="w-4 h-4 me-1" />{t("create_structure")}</Button>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm min-w-[640px]">
                 <thead className="bg-muted/40 text-xs uppercase text-muted-foreground">
-                  <tr><th className="text-start px-4 py-2.5">Name</th><th className="text-start px-4 py-2.5">Currency</th><th className="text-end px-4 py-2.5">Grades</th><th className="text-end px-4 py-2.5">Start mid</th><th className="text-end px-4 py-2.5">Effective</th><th className="text-end px-4 py-2.5">{t("status")}</th><th className="px-4 py-2.5"></th></tr>
+                  <tr><th className="text-start px-4 py-2.5">{t("name")}</th><th className="text-start px-4 py-2.5">{t("currency")}</th><th className="text-end px-4 py-2.5">{t("grades")}</th><th className="text-end px-4 py-2.5">{t("start_mid")}</th><th className="text-end px-4 py-2.5">{t("effective")}</th><th className="text-end px-4 py-2.5">{t("status")}</th><th className="px-4 py-2.5"></th></tr>
                 </thead>
                 <tbody>
                   {structures.map((s) => (
@@ -228,8 +228,8 @@ function StructuresPage() {
                       <td className="px-4 py-2.5">{s.currency}</td>
                       <td className="px-4 py-2.5 text-end num">{s.grade_count}</td>
                       <td className="px-4 py-2.5 text-end num">{fmtCurrency(Number(s.starting_midpoint), s.currency, locale)}</td>
-                      <td className="px-4 py-2.5 text-end text-muted-foreground">{new Date(s.effective_date).toLocaleDateString()}</td>
-                      <td className="px-4 py-2.5 text-end"><span className={`text-xs px-2 py-0.5 rounded-full ${s.archived ? "bg-muted" : "bg-success/15 text-success"}`}>{s.archived ? "Archived" : "Active"}</span></td>
+                      <td className="px-4 py-2.5 text-end text-muted-foreground">{new Date(s.effective_date).toLocaleDateString(locale === "ar" ? "ar" : "en-US")}</td>
+                      <td className="px-4 py-2.5 text-end"><span className={`text-xs px-2 py-0.5 rounded-full ${s.archived ? "bg-muted" : "bg-success/15 text-success"}`}>{s.archived ? t("archived") : t("active")}</span></td>
                       <td className="px-4 py-2.5 text-end">
                         <div className="flex gap-1 justify-end">
                           <Button asChild size="icon" variant="ghost"><Link to="/app/matrix"><Eye className="w-4 h-4" /></Link></Button>
