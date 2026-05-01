@@ -192,7 +192,7 @@ function PenetrationAnalytics() {
                           <td key={b} className="py-1 text-end">
                             <span
                               className="inline-block px-1.5 py-0.5 rounded num"
-                              style={{ background: `hsl(var(--accent) / ${0.1 + intensity * 0.5})` }}
+                              style={{ background: `color-mix(in oklab, var(--accent) ${10 + intensity * 50}%, transparent)` }}
                             >{c}</span>
                           </td>
                         );
