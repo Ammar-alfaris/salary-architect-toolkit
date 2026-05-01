@@ -1,6 +1,6 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
-  LayoutDashboard, Layers, Grid3x3, Gift, TrendingUp, Wallet, Users, FileBarChart, Settings as SettingsIcon, ShieldCheck, LogOut, Moon, Sun, Languages, Search, Bell, Menu,
+  LayoutDashboard, Layers, Grid3x3, Gift, TrendingUp, Wallet, Users, FileBarChart, Settings as SettingsIcon, ShieldCheck, LogOut, Moon, Sun, Languages, Search, Bell, Menu, BarChart3, Activity,
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { useTheme } from "@/lib/theme";
@@ -21,6 +21,8 @@ const nav = [
   { to: "/app/merit", icon: TrendingUp, key: "merit_increase" },
   { to: "/app/allowances", icon: Wallet, key: "allowances" },
   { to: "/app/employees", icon: Users, key: "employees" },
+  { to: "/app/analytics/compa", icon: BarChart3, key: "compa_analytics" },
+  { to: "/app/analytics/penetration", icon: Activity, key: "penetration_analytics" },
   { to: "/app/reports", icon: FileBarChart, key: "reports" },
   { to: "/app/audit", icon: ShieldCheck, key: "audit_log" },
   { to: "/app/settings", icon: SettingsIcon, key: "settings" },
