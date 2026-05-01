@@ -11,6 +11,8 @@ import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { useTheme } from "@/lib/theme";
 import { supabase } from "@/integrations/supabase/client";
+import { DEFAULT_APPROVAL_SETTINGS, type ApprovalSettings } from "@/lib/governance";
+import { usePermissions } from "@/lib/rbac";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/settings")({ component: SettingsPage });
@@ -19,14 +21,22 @@ function SettingsPage() {
   const { organizationId } = useAuth();
   const { t, locale, setLocale } = useI18n();
   const { theme, toggle } = useTheme();
+  const perms = usePermissions();
   const [org, setOrg] = useState<any>(null);
   const [name, setName] = useState("");
   const [currency, setCurrency] = useState("USD");
+  const [approval, setApproval] = useState<ApprovalSettings>(DEFAULT_APPROVAL_SETTINGS);
 
   useEffect(() => {
     if (!organizationId) return;
     supabase.from("organizations").select("*").eq("id", organizationId).maybeSingle().then(({ data }) => {
-      if (data) { setOrg(data); setName(data.name); setCurrency(data.default_currency); }
+      if (data) {
+        setOrg(data);
+        setName(data.name);
+        setCurrency(data.default_currency);
+        const raw = (data as any).approval_settings;
+        if (raw) setApproval({ ...DEFAULT_APPROVAL_SETTINGS, ...raw });
+      }
     });
   }, [organizationId]);
 
@@ -37,6 +47,17 @@ function SettingsPage() {
     toast.success(t("settings_saved"));
   };
 
+  const saveApproval = async (next: ApprovalSettings) => {
+    setApproval(next);
+    if (!organizationId) return;
+    const { error } = await supabase
+      .from("organizations")
+      .update({ approval_settings: next as never })
+      .eq("id", organizationId);
+    if (error) toast.error(error.message);
+    else toast.success(t("settings_saved"));
+  };
+
   return (
     <div>
       <PageHeader title={t("settings")} subtitle={t("settings_subtitle")} />
@@ -45,6 +66,7 @@ function SettingsPage() {
           <TabsList>
             <TabsTrigger value="org">{t("organization")}</TabsTrigger>
             <TabsTrigger value="defaults">{t("defaults")}</TabsTrigger>
+            <TabsTrigger value="approvals">{t("approvals")}</TabsTrigger>
             <TabsTrigger value="locale">{t("localization")}</TabsTrigger>
           </TabsList>
 
@@ -73,6 +95,47 @@ function SettingsPage() {
                 <li>{t("def_housing")}</li>
               </ul>
               <p className="text-xs text-muted-foreground pt-2">{t("defaults_can_override")}</p>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="approvals" className="mt-4">
+            <div className="border rounded-lg bg-card p-5 space-y-5">
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <Label>{t("approval_lock_on_approval")}</Label>
+                  <p className="text-xs text-muted-foreground mt-0.5">{t("approval_lock_on_approval_help")}</p>
+                </div>
+                <Switch
+                  checked={approval.lock_on_approval}
+                  disabled={!perms.canAdmin}
+                  onCheckedChange={(v) => saveApproval({ ...approval, lock_on_approval: v })}
+                />
+              </div>
+              <div className="flex items-start justify-between gap-4 border-t pt-4">
+                <div className="min-w-0">
+                  <Label>{t("approval_allow_unlock")}</Label>
+                  <p className="text-xs text-muted-foreground mt-0.5">{t("approval_allow_unlock_help")}</p>
+                </div>
+                <Switch
+                  checked={approval.allow_admin_unlock}
+                  disabled={!perms.canAdmin}
+                  onCheckedChange={(v) => saveApproval({ ...approval, allow_admin_unlock: v })}
+                />
+              </div>
+              <div className="flex items-start justify-between gap-4 border-t pt-4">
+                <div className="min-w-0">
+                  <Label>{t("approval_two_step")}</Label>
+                  <p className="text-xs text-muted-foreground mt-0.5">{t("approval_two_step_help")}</p>
+                </div>
+                <Switch
+                  checked={approval.require_two_step}
+                  disabled={!perms.canAdmin}
+                  onCheckedChange={(v) => saveApproval({ ...approval, require_two_step: v })}
+                />
+              </div>
+              {!perms.canAdmin && (
+                <p className="text-xs text-muted-foreground pt-2">Admin role required to change these settings.</p>
+              )}
             </div>
           </TabsContent>
 

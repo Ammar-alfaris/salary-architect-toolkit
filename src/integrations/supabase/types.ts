@@ -67,6 +67,60 @@ export type Database = {
           },
         ]
       }
+      approval_requests: {
+        Row: {
+          created_at: string
+          decision_note: string | null
+          entity_id: string
+          entity_label: string | null
+          entity_type: string
+          id: string
+          organization_id: string
+          payload: Json
+          reason: string | null
+          requested_by: string
+          requested_by_email: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          reviewed_by_email: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          decision_note?: string | null
+          entity_id: string
+          entity_label?: string | null
+          entity_type: string
+          id?: string
+          organization_id: string
+          payload?: Json
+          reason?: string | null
+          requested_by: string
+          requested_by_email?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reviewed_by_email?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          decision_note?: string | null
+          entity_id?: string
+          entity_label?: string | null
+          entity_type?: string
+          id?: string
+          organization_id?: string
+          payload?: Json
+          reason?: string | null
+          requested_by?: string
+          requested_by_email?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reviewed_by_email?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       audit_logs: {
         Row: {
           action: string
@@ -331,6 +385,7 @@ export type Database = {
           grade_id: string | null
           hire_date: string | null
           id: string
+          job_family: string | null
           job_title: string | null
           last_name: string
           location: string | null
@@ -353,6 +408,7 @@ export type Database = {
           grade_id?: string | null
           hire_date?: string | null
           id?: string
+          job_family?: string | null
           job_title?: string | null
           last_name: string
           location?: string | null
@@ -375,6 +431,7 @@ export type Database = {
           grade_id?: string | null
           hire_date?: string | null
           id?: string
+          job_family?: string | null
           job_title?: string | null
           last_name?: string
           location?: string | null
@@ -407,6 +464,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      equity_review_flags: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          employee_id: string
+          flag_type: string
+          grade_id: string | null
+          id: string
+          job_family: string | null
+          notes: string | null
+          organization_id: string
+          peer_median: number | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+          variance_percent: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          employee_id: string
+          flag_type: string
+          grade_id?: string | null
+          id?: string
+          job_family?: string | null
+          notes?: string | null
+          organization_id: string
+          peer_median?: number | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          variance_percent?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          employee_id?: string
+          flag_type?: string
+          grade_id?: string | null
+          id?: string
+          job_family?: string | null
+          notes?: string | null
+          organization_id?: string
+          peer_median?: number | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          variance_percent?: number
+        }
+        Relationships: []
       }
       merit_cycles: {
         Row: {
@@ -531,6 +639,7 @@ export type Database = {
       }
       organizations: {
         Row: {
+          approval_settings: Json
           created_at: string
           created_by: string | null
           default_currency: string
@@ -540,6 +649,7 @@ export type Database = {
           name: string
         }
         Insert: {
+          approval_settings?: Json
           created_at?: string
           created_by?: string | null
           default_currency?: string
@@ -549,6 +659,7 @@ export type Database = {
           name: string
         }
         Update: {
+          approval_settings?: Json
           created_at?: string
           created_by?: string | null
           default_currency?: string
@@ -738,6 +849,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      version_history: {
+        Row: {
+          change_summary: string | null
+          created_at: string
+          created_by: string | null
+          created_by_email: string | null
+          entity_id: string
+          entity_type: string
+          id: string
+          label: string | null
+          organization_id: string
+          snapshot: Json
+          version_number: number
+        }
+        Insert: {
+          change_summary?: string | null
+          created_at?: string
+          created_by?: string | null
+          created_by_email?: string | null
+          entity_id: string
+          entity_type: string
+          id?: string
+          label?: string | null
+          organization_id: string
+          snapshot: Json
+          version_number?: number
+        }
+        Update: {
+          change_summary?: string | null
+          created_at?: string
+          created_by?: string | null
+          created_by_email?: string | null
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          label?: string | null
+          organization_id?: string
+          snapshot?: Json
+          version_number?: number
+        }
+        Relationships: []
       }
     }
     Views: {

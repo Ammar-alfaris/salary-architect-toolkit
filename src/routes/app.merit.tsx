@@ -10,7 +10,11 @@ import { COMPA_BANDS, PERFORMANCE_RATINGS, compaRatio, compaRatioBand, defaultMe
 import { fmtCurrency, fmtPercent } from "@/lib/format";
 import { meritBudgetInsights } from "@/lib/insights";
 import { InsightCard } from "@/components/insight-card";
-import { Calculator, Download } from "lucide-react";
+import { ApprovalBar } from "@/components/approval-bar";
+import { snapshotVersion } from "@/lib/governance";
+import { logAudit } from "@/lib/audit";
+import { toast } from "sonner";
+import { Calculator, Download, Save } from "lucide-react";
 
 export const Route = createFileRoute("/app/merit")({ component: MeritPage });
 
@@ -21,18 +25,30 @@ function MeritPage() {
   const [grades, setGrades] = useState<any[]>([]);
   const [budget, setBudget] = useState(4);
   const [matrix, setMatrix] = useState(defaultMeritMatrix());
+  const [cycleId, setCycleId] = useState<string | null>(null);
+  const [cycleLocked, setCycleLocked] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!organizationId) return;
     Promise.all([
       supabase.from("employees").select("*").eq("organization_id", organizationId).eq("archived", false),
       supabase.from("salary_grades").select("*"),
-    ]).then(([e, g]) => { setEmployees(e.data ?? []); setGrades(g.data ?? []); });
+      supabase.from("merit_cycles").select("*").eq("organization_id", organizationId).order("created_at", { ascending: false }).limit(1).maybeSingle(),
+    ]).then(([e, g, c]) => {
+      setEmployees(e.data ?? []);
+      setGrades(g.data ?? []);
+      if (c.data) {
+        setCycleId(c.data.id);
+        setBudget(Number(c.data.total_budget_percent));
+      }
+    });
   }, [organizationId]);
 
   const gradeMap = useMemo(() => new Map(grades.map((g) => [g.id, g])), [grades]);
 
   const setRule = (rating: string, band: string, val: number) => {
+    if (cycleLocked) return toast.error(t("approval_lock_blocked"));
     setMatrix((m) => m.map((r) => r.performance_rating === rating && r.compa_ratio_band === band ? { ...r, recommended_increase_percent: val } : r));
   };
 
@@ -49,20 +65,80 @@ function MeritPage() {
   const totalBase = recommendations.reduce((s, r) => s + r.base, 0);
   const actualBudgetPct = totalBase ? (totalIncrease / totalBase) * 100 : 0;
 
+  const saveCycle = async () => {
+    if (!organizationId) return;
+    setSaving(true);
+    try {
+      let id = cycleId;
+      if (!id) {
+        const { data, error } = await supabase.from("merit_cycles").insert({
+          organization_id: organizationId,
+          name: `Merit ${new Date().getFullYear()}`,
+          effective_date: new Date().toISOString().slice(0, 10),
+          total_budget_percent: budget,
+          status: "draft",
+        }).select().single();
+        if (error) throw error;
+        id = data.id;
+        setCycleId(id);
+      } else {
+        await supabase.from("merit_cycles").update({ total_budget_percent: budget }).eq("id", id);
+      }
+      // Snapshot version
+      await snapshotVersion({
+        orgId: organizationId,
+        entityType: "merit_cycle",
+        entityId: id!,
+        snapshot: { budget, matrix, recommendations },
+        changeSummary: `Budget ${budget}%, ${recommendations.length} employees`,
+      });
+      await logAudit({
+        organizationId,
+        action: "update",
+        entityType: "merit_cycle",
+        entityId: id!,
+        entityLabel: `Merit ${new Date().getFullYear()}`,
+        metadata: { budget, employees: recommendations.length },
+      });
+      toast.success(t("settings_saved"));
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div>
       <PageHeader
         title={t("merit_increase")}
         subtitle={t("merit_subtitle")}
-        actions={<Button variant="outline" size="sm" onClick={() => exportCSV("merit.csv", recommendations)}><Download className="w-4 h-4 me-1" />{t("export_csv")}</Button>}
+        actions={
+          <>
+            <Button variant="outline" size="sm" onClick={saveCycle} disabled={saving}>
+              <Save className="w-4 h-4 me-1" />{t("save")}
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => exportCSV("merit.csv", recommendations)}>
+              <Download className="w-4 h-4 me-1" />{t("export_csv")}
+            </Button>
+          </>
+        }
       />
 
       <div className="p-4 md:p-6 space-y-4">
+        {cycleId && (
+          <ApprovalBar
+            entityType="merit_cycle"
+            entityId={cycleId}
+            entityLabel={`Merit ${new Date().getFullYear()}`}
+            onLockChange={setCycleLocked}
+          />
+        )}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
           <div className="border rounded-lg bg-card p-4">
             <div className="text-xs text-muted-foreground">{t("target_budget")}</div>
             <div className="flex items-end gap-2 mt-1">
-              <Input type="number" step="0.1" value={budget} onChange={(e) => setBudget(+e.target.value || 0)} className="h-8" />
+              <Input type="number" step="0.1" value={budget} disabled={cycleLocked} onChange={(e) => setBudget(+e.target.value || 0)} className="h-8" />
               <span className="text-sm">%</span>
             </div>
           </div>
