@@ -8,6 +8,8 @@ import { useI18n } from "@/lib/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { COMPA_BANDS, PERFORMANCE_RATINGS, compaRatio, compaRatioBand, defaultMeritMatrix, exportCSV, lookupMerit } from "@/lib/comp";
 import { fmtCurrency, fmtPercent } from "@/lib/format";
+import { meritBudgetInsights } from "@/lib/insights";
+import { InsightCard } from "@/components/insight-card";
 import { Calculator, Download } from "lucide-react";
 
 export const Route = createFileRoute("/app/merit")({ component: MeritPage });

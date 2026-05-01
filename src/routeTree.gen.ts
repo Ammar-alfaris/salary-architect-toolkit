@@ -23,6 +23,8 @@ import { Route as AppBonusRouteImport } from './routes/app.bonus'
 import { Route as AppAuditRouteImport } from './routes/app.audit'
 import { Route as AppAllowancesRouteImport } from './routes/app.allowances'
 import { Route as AppEmployeesIdRouteImport } from './routes/app.employees.$id'
+import { Route as AppAnalyticsPenetrationRouteImport } from './routes/app.analytics.penetration'
+import { Route as AppAnalyticsCompaRouteImport } from './routes/app.analytics.compa'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -94,6 +96,16 @@ const AppEmployeesIdRoute = AppEmployeesIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AppEmployeesRoute,
 } as any)
+const AppAnalyticsPenetrationRoute = AppAnalyticsPenetrationRouteImport.update({
+  id: '/analytics/penetration',
+  path: '/analytics/penetration',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAnalyticsCompaRoute = AppAnalyticsCompaRouteImport.update({
+  id: '/analytics/compa',
+  path: '/analytics/compa',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -109,6 +121,8 @@ export interface FileRoutesByFullPath {
   '/app/settings': typeof AppSettingsRoute
   '/app/structures': typeof AppStructuresRoute
   '/app/': typeof AppIndexRoute
+  '/app/analytics/compa': typeof AppAnalyticsCompaRoute
+  '/app/analytics/penetration': typeof AppAnalyticsPenetrationRoute
   '/app/employees/$id': typeof AppEmployeesIdRoute
 }
 export interface FileRoutesByTo {
@@ -124,6 +138,8 @@ export interface FileRoutesByTo {
   '/app/settings': typeof AppSettingsRoute
   '/app/structures': typeof AppStructuresRoute
   '/app': typeof AppIndexRoute
+  '/app/analytics/compa': typeof AppAnalyticsCompaRoute
+  '/app/analytics/penetration': typeof AppAnalyticsPenetrationRoute
   '/app/employees/$id': typeof AppEmployeesIdRoute
 }
 export interface FileRoutesById {
@@ -141,6 +157,8 @@ export interface FileRoutesById {
   '/app/settings': typeof AppSettingsRoute
   '/app/structures': typeof AppStructuresRoute
   '/app/': typeof AppIndexRoute
+  '/app/analytics/compa': typeof AppAnalyticsCompaRoute
+  '/app/analytics/penetration': typeof AppAnalyticsPenetrationRoute
   '/app/employees/$id': typeof AppEmployeesIdRoute
 }
 export interface FileRouteTypes {
@@ -159,6 +177,8 @@ export interface FileRouteTypes {
     | '/app/settings'
     | '/app/structures'
     | '/app/'
+    | '/app/analytics/compa'
+    | '/app/analytics/penetration'
     | '/app/employees/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -174,6 +194,8 @@ export interface FileRouteTypes {
     | '/app/settings'
     | '/app/structures'
     | '/app'
+    | '/app/analytics/compa'
+    | '/app/analytics/penetration'
     | '/app/employees/$id'
   id:
     | '__root__'
@@ -190,6 +212,8 @@ export interface FileRouteTypes {
     | '/app/settings'
     | '/app/structures'
     | '/app/'
+    | '/app/analytics/compa'
+    | '/app/analytics/penetration'
     | '/app/employees/$id'
   fileRoutesById: FileRoutesById
 }
@@ -299,6 +323,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppEmployeesIdRouteImport
       parentRoute: typeof AppEmployeesRoute
     }
+    '/app/analytics/penetration': {
+      id: '/app/analytics/penetration'
+      path: '/analytics/penetration'
+      fullPath: '/app/analytics/penetration'
+      preLoaderRoute: typeof AppAnalyticsPenetrationRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/analytics/compa': {
+      id: '/app/analytics/compa'
+      path: '/analytics/compa'
+      fullPath: '/app/analytics/compa'
+      preLoaderRoute: typeof AppAnalyticsCompaRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
@@ -325,6 +363,8 @@ interface AppRouteChildren {
   AppSettingsRoute: typeof AppSettingsRoute
   AppStructuresRoute: typeof AppStructuresRoute
   AppIndexRoute: typeof AppIndexRoute
+  AppAnalyticsCompaRoute: typeof AppAnalyticsCompaRoute
+  AppAnalyticsPenetrationRoute: typeof AppAnalyticsPenetrationRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -338,6 +378,8 @@ const AppRouteChildren: AppRouteChildren = {
   AppSettingsRoute: AppSettingsRoute,
   AppStructuresRoute: AppStructuresRoute,
   AppIndexRoute: AppIndexRoute,
+  AppAnalyticsCompaRoute: AppAnalyticsCompaRoute,
+  AppAnalyticsPenetrationRoute: AppAnalyticsPenetrationRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
