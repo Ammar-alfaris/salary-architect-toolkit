@@ -21,9 +21,11 @@ import { Route as AppMatrixRouteImport } from './routes/app.matrix'
 import { Route as AppEmployeesRouteImport } from './routes/app.employees'
 import { Route as AppBonusRouteImport } from './routes/app.bonus'
 import { Route as AppAuditRouteImport } from './routes/app.audit'
+import { Route as AppApprovalsRouteImport } from './routes/app.approvals'
 import { Route as AppAllowancesRouteImport } from './routes/app.allowances'
 import { Route as AppEmployeesIdRouteImport } from './routes/app.employees.$id'
 import { Route as AppAnalyticsPenetrationRouteImport } from './routes/app.analytics.penetration'
+import { Route as AppAnalyticsEquityRouteImport } from './routes/app.analytics.equity'
 import { Route as AppAnalyticsCompaRouteImport } from './routes/app.analytics.compa'
 
 const AuthRoute = AuthRouteImport.update({
@@ -86,6 +88,11 @@ const AppAuditRoute = AppAuditRouteImport.update({
   path: '/audit',
   getParentRoute: () => AppRoute,
 } as any)
+const AppApprovalsRoute = AppApprovalsRouteImport.update({
+  id: '/approvals',
+  path: '/approvals',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAllowancesRoute = AppAllowancesRouteImport.update({
   id: '/allowances',
   path: '/allowances',
@@ -101,6 +108,11 @@ const AppAnalyticsPenetrationRoute = AppAnalyticsPenetrationRouteImport.update({
   path: '/analytics/penetration',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAnalyticsEquityRoute = AppAnalyticsEquityRouteImport.update({
+  id: '/analytics/equity',
+  path: '/analytics/equity',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAnalyticsCompaRoute = AppAnalyticsCompaRouteImport.update({
   id: '/analytics/compa',
   path: '/analytics/compa',
@@ -112,6 +124,7 @@ export interface FileRoutesByFullPath {
   '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
   '/app/allowances': typeof AppAllowancesRoute
+  '/app/approvals': typeof AppApprovalsRoute
   '/app/audit': typeof AppAuditRoute
   '/app/bonus': typeof AppBonusRoute
   '/app/employees': typeof AppEmployeesRouteWithChildren
@@ -122,6 +135,7 @@ export interface FileRoutesByFullPath {
   '/app/structures': typeof AppStructuresRoute
   '/app/': typeof AppIndexRoute
   '/app/analytics/compa': typeof AppAnalyticsCompaRoute
+  '/app/analytics/equity': typeof AppAnalyticsEquityRoute
   '/app/analytics/penetration': typeof AppAnalyticsPenetrationRoute
   '/app/employees/$id': typeof AppEmployeesIdRoute
 }
@@ -129,6 +143,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/app/allowances': typeof AppAllowancesRoute
+  '/app/approvals': typeof AppApprovalsRoute
   '/app/audit': typeof AppAuditRoute
   '/app/bonus': typeof AppBonusRoute
   '/app/employees': typeof AppEmployeesRouteWithChildren
@@ -139,6 +154,7 @@ export interface FileRoutesByTo {
   '/app/structures': typeof AppStructuresRoute
   '/app': typeof AppIndexRoute
   '/app/analytics/compa': typeof AppAnalyticsCompaRoute
+  '/app/analytics/equity': typeof AppAnalyticsEquityRoute
   '/app/analytics/penetration': typeof AppAnalyticsPenetrationRoute
   '/app/employees/$id': typeof AppEmployeesIdRoute
 }
@@ -148,6 +164,7 @@ export interface FileRoutesById {
   '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
   '/app/allowances': typeof AppAllowancesRoute
+  '/app/approvals': typeof AppApprovalsRoute
   '/app/audit': typeof AppAuditRoute
   '/app/bonus': typeof AppBonusRoute
   '/app/employees': typeof AppEmployeesRouteWithChildren
@@ -158,6 +175,7 @@ export interface FileRoutesById {
   '/app/structures': typeof AppStructuresRoute
   '/app/': typeof AppIndexRoute
   '/app/analytics/compa': typeof AppAnalyticsCompaRoute
+  '/app/analytics/equity': typeof AppAnalyticsEquityRoute
   '/app/analytics/penetration': typeof AppAnalyticsPenetrationRoute
   '/app/employees/$id': typeof AppEmployeesIdRoute
 }
@@ -168,6 +186,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/auth'
     | '/app/allowances'
+    | '/app/approvals'
     | '/app/audit'
     | '/app/bonus'
     | '/app/employees'
@@ -178,6 +197,7 @@ export interface FileRouteTypes {
     | '/app/structures'
     | '/app/'
     | '/app/analytics/compa'
+    | '/app/analytics/equity'
     | '/app/analytics/penetration'
     | '/app/employees/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -185,6 +205,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/app/allowances'
+    | '/app/approvals'
     | '/app/audit'
     | '/app/bonus'
     | '/app/employees'
@@ -195,6 +216,7 @@ export interface FileRouteTypes {
     | '/app/structures'
     | '/app'
     | '/app/analytics/compa'
+    | '/app/analytics/equity'
     | '/app/analytics/penetration'
     | '/app/employees/$id'
   id:
@@ -203,6 +225,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/auth'
     | '/app/allowances'
+    | '/app/approvals'
     | '/app/audit'
     | '/app/bonus'
     | '/app/employees'
@@ -213,6 +236,7 @@ export interface FileRouteTypes {
     | '/app/structures'
     | '/app/'
     | '/app/analytics/compa'
+    | '/app/analytics/equity'
     | '/app/analytics/penetration'
     | '/app/employees/$id'
   fileRoutesById: FileRoutesById
@@ -309,6 +333,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAuditRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/approvals': {
+      id: '/app/approvals'
+      path: '/approvals'
+      fullPath: '/app/approvals'
+      preLoaderRoute: typeof AppApprovalsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/allowances': {
       id: '/app/allowances'
       path: '/allowances'
@@ -328,6 +359,13 @@ declare module '@tanstack/react-router' {
       path: '/analytics/penetration'
       fullPath: '/app/analytics/penetration'
       preLoaderRoute: typeof AppAnalyticsPenetrationRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/analytics/equity': {
+      id: '/app/analytics/equity'
+      path: '/analytics/equity'
+      fullPath: '/app/analytics/equity'
+      preLoaderRoute: typeof AppAnalyticsEquityRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/analytics/compa': {
@@ -354,6 +392,7 @@ const AppEmployeesRouteWithChildren = AppEmployeesRoute._addFileChildren(
 
 interface AppRouteChildren {
   AppAllowancesRoute: typeof AppAllowancesRoute
+  AppApprovalsRoute: typeof AppApprovalsRoute
   AppAuditRoute: typeof AppAuditRoute
   AppBonusRoute: typeof AppBonusRoute
   AppEmployeesRoute: typeof AppEmployeesRouteWithChildren
@@ -364,11 +403,13 @@ interface AppRouteChildren {
   AppStructuresRoute: typeof AppStructuresRoute
   AppIndexRoute: typeof AppIndexRoute
   AppAnalyticsCompaRoute: typeof AppAnalyticsCompaRoute
+  AppAnalyticsEquityRoute: typeof AppAnalyticsEquityRoute
   AppAnalyticsPenetrationRoute: typeof AppAnalyticsPenetrationRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppAllowancesRoute: AppAllowancesRoute,
+  AppApprovalsRoute: AppApprovalsRoute,
   AppAuditRoute: AppAuditRoute,
   AppBonusRoute: AppBonusRoute,
   AppEmployeesRoute: AppEmployeesRouteWithChildren,
@@ -379,6 +420,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppStructuresRoute: AppStructuresRoute,
   AppIndexRoute: AppIndexRoute,
   AppAnalyticsCompaRoute: AppAnalyticsCompaRoute,
+  AppAnalyticsEquityRoute: AppAnalyticsEquityRoute,
   AppAnalyticsPenetrationRoute: AppAnalyticsPenetrationRoute,
 }
 
