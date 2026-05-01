@@ -8,6 +8,8 @@ import { useI18n } from "@/lib/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { COMPA_BANDS, PERFORMANCE_RATINGS, compaRatio, compaRatioBand, defaultMeritMatrix, exportCSV, lookupMerit } from "@/lib/comp";
 import { fmtCurrency, fmtPercent } from "@/lib/format";
+import { meritBudgetInsights } from "@/lib/insights";
+import { InsightCard } from "@/components/insight-card";
 import { Calculator, Download } from "lucide-react";
 
 export const Route = createFileRoute("/app/merit")({ component: MeritPage });
@@ -77,6 +79,8 @@ function MeritPage() {
             <div className="text-2xl font-semibold num mt-1">{recommendations.length}</div>
           </div>
         </div>
+
+        <InsightCard items={meritBudgetInsights({ targetPct: budget, actualPct: actualBudgetPct })} />
 
         <div className="border rounded-lg bg-card p-4">
           <h3 className="font-medium text-sm mb-3 flex items-center gap-2"><Calculator className="w-4 h-4" /> {t("merit_guideline_matrix")}</h3>

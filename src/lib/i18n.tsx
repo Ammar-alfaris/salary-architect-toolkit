@@ -368,6 +368,102 @@ const en: Dict = {
   view: "View",
   edit: "Edit",
   delete: "Delete",
+
+  // Analytics nav
+  analytics: "Analytics",
+  compa_analytics: "Compa-Ratio Analytics",
+  penetration_analytics: "Range Penetration",
+  compa_analytics_subtitle: "Distribution of pay positions across grades, departments and structures.",
+  penetration_analytics_subtitle: "Where employees sit within their assigned salary ranges.",
+
+  // Decision Support — generic
+  decision_support: "Decision support",
+  why_this_matters: "Why this matters",
+  badge_attention_needed: "Attention needed",
+  badge_within_policy: "Within policy",
+  badge_outside_guideline: "Outside guideline",
+  badge_budget_risk: "Budget risk",
+  badge_review_recommended: "Review recommended",
+
+  // Filters / grouping
+  group_by: "Group by",
+  structure: "Structure",
+  all: "All",
+  filter: "Filter",
+  count: "Count",
+  share: "Share",
+
+  // KPI labels
+  kpi_below_range: "% below range",
+  kpi_in_range: "% in range",
+  kpi_above_range: "% above range",
+  kpi_avg_compa: "Average compa-ratio",
+  kpi_employees_total: "Employees analyzed",
+  kpi_high_pen: "% high in range",
+  kpi_low_pen: "% low in range",
+  kpi_above_max: "% above maximum",
+
+  // Penetration bands
+  pen_band_early: "Early range",
+  pen_band_mid: "Mid range",
+  pen_band_high: "High in range",
+  pen_band_above: "Above maximum",
+  penetration_explainer: "Range penetration shows where an employee's salary sits between the minimum and maximum of their assigned range.",
+  compa_explainer: "Compa-ratio compares an employee's pay to the midpoint of the assigned grade. 1.00 means paid at midpoint.",
+
+  // Employee-level insight strings
+  ins_emp_above_max_title: "Salary above range maximum",
+  ins_emp_above_max_body: "Current pay exceeds the grade maximum by {pct}%. Further fixed increases may create range compression risk.",
+  ins_emp_below_min_title: "Salary below range minimum",
+  ins_emp_below_min_body: "Current pay is {pct}% below the grade minimum. Consider an alignment adjustment in the next cycle.",
+  ins_emp_high_in_range_title: "High in range",
+  ins_emp_high_in_range_body: "Salary is at the {pct}% penetration mark, leaving limited progression room within the current grade.",
+  ins_emp_low_in_range_title: "Early in range",
+  ins_emp_low_in_range_body: "Salary is at the {pct}% penetration mark, providing significant progression room as performance grows.",
+  ins_emp_in_range_title: "Positioned within policy",
+  ins_emp_in_range_body: "Compa-ratio is {compa}, consistent with policy guidance for the assigned grade.",
+  ins_emp_above_peer_title: "Above peer median",
+  ins_emp_above_peer_body: "Pay is {pct}% above the median for similar peers. Review supporting performance and tenure rationale.",
+  ins_emp_below_peer_title: "Below peer median",
+  ins_emp_below_peer_body: "Pay is {pct}% below the median for similar peers. Internal equity review recommended.",
+  ins_emp_allow_heavy_title: "Allowance-heavy mix",
+  ins_emp_allow_heavy_body: "Allowances form {pct}% of total cash compensation, reducing the share driven by base pay.",
+
+  // Distribution insights
+  ins_dist_many_below_title: "Concentration below range",
+  ins_dist_many_below_body: "{pct}% of employees are paid below the grade minimum. Possible structure misalignment or under-positioning.",
+  ins_dist_many_above_title: "Concentration above policy target",
+  ins_dist_many_above_body: "{pct}% of employees are above 110% compa-ratio, signalling potential range compression and budget pressure.",
+  ins_dist_low_avg_title: "Low average compa-ratio",
+  ins_dist_low_avg_body: "Group average compa-ratio is {compa}, suggesting under-positioning relative to midpoint.",
+  ins_dist_high_avg_title: "High average compa-ratio",
+  ins_dist_high_avg_body: "Group average compa-ratio is {compa}, indicating salaries are clustered above midpoint.",
+  ins_dist_balanced_title: "Distribution within policy",
+  ins_dist_balanced_body: "Average compa-ratio is {compa}, consistent with healthy positioning around midpoint.",
+
+  // Penetration insights
+  ins_pen_many_high_title: "Many employees high in range",
+  ins_pen_many_high_body: "{pct}% of employees sit above 85% penetration, leaving limited progression room within current grades.",
+  ins_pen_above_max_title: "Employees above range maximum",
+  ins_pen_above_max_body: "{pct}% of employees are paid above the grade maximum. Review structure design or pay placement.",
+  ins_pen_many_low_title: "Many employees early in range",
+  ins_pen_many_low_body: "{pct}% of employees are below 20% penetration, indicating recent hires or development room.",
+  ins_pen_healthy_title: "Healthy distribution within ranges",
+  ins_pen_healthy_body: "Range penetration is well distributed across employees. No structural concentration detected.",
+
+  // Merit insights
+  ins_merit_over_title: "Recommendations exceed budget",
+  ins_merit_over_body: "Computed budget {actual}% exceeds the target of {target}%. Tighten matrix rules or reduce high-end increases.",
+  ins_merit_under_title: "Recommendations below budget",
+  ins_merit_under_body: "Computed budget {actual}% is below the target of {target}%. Capacity remains for higher merit increases.",
+  ins_merit_on_title: "Recommendations on budget",
+  ins_merit_on_body: "Computed budget {actual}% is aligned with the target. Distribution can be reviewed by department.",
+
+  // Profile peer block
+  peer_positioning: "Peer positioning",
+  peer_median: "Peer median",
+  variance_from_peer: "Variance from peer median",
+  no_peers: "No peer group available for comparison.",
 };
 
 const ar: Dict = {
@@ -734,6 +830,102 @@ const ar: Dict = {
   view: "عرض",
   edit: "تعديل",
   delete: "حذف",
+
+  // Analytics nav
+  analytics: "التحليلات",
+  compa_analytics: "تحليلات COMPA-RATIO",
+  penetration_analytics: "نفاذ النطاق",
+  compa_analytics_subtitle: "توزيع المواقع داخل النطاقات حسب الدرجة والقسم والهيكل.",
+  penetration_analytics_subtitle: "موقع الموظفين داخل نطاقات الرواتب المخصصة لهم.",
+
+  // Decision Support
+  decision_support: "مساند القرار",
+  why_this_matters: "لماذا هذا مهم",
+  badge_attention_needed: "يستدعي الانتباه",
+  badge_within_policy: "ضمن السياسة",
+  badge_outside_guideline: "خارج التوجيه",
+  badge_budget_risk: "خطر على الميزانية",
+  badge_review_recommended: "يُوصى بالمراجعة",
+
+  // Filters / grouping
+  group_by: "تجميع حسب",
+  structure: "الهيكل",
+  all: "الكل",
+  filter: "تصفية",
+  count: "العدد",
+  share: "النسبة",
+
+  // KPI
+  kpi_below_range: "% أدنى من النطاق",
+  kpi_in_range: "% ضمن النطاق",
+  kpi_above_range: "% أعلى من النطاق",
+  kpi_avg_compa: "متوسط COMPA-RATIO",
+  kpi_employees_total: "عدد الموظفين في التحليل",
+  kpi_high_pen: "% عالٍ في النطاق",
+  kpi_low_pen: "% منخفض في النطاق",
+  kpi_above_max: "% فوق الحد الأقصى",
+
+  // Penetration bands
+  pen_band_early: "بداية النطاق",
+  pen_band_mid: "وسط النطاق",
+  pen_band_high: "أعلى النطاق",
+  pen_band_above: "فوق الحد الأقصى",
+  penetration_explainer: "نفاذ النطاق يوضح موقع راتب الموظف بين الحد الأدنى والأقصى للنطاق المخصّص له.",
+  compa_explainer: "COMPA-RATIO يقارن راتب الموظف بنقطة وسط الدرجة. القيمة 1.00 تعني الراتب مطابق لنقطة الوسط.",
+
+  // Employee insights
+  ins_emp_above_max_title: "الراتب أعلى من الحد الأقصى للنطاق",
+  ins_emp_above_max_body: "الراتب الحالي يتجاوز الحد الأقصى للدرجة بنسبة {pct}%. الزيادات الثابتة الإضافية قد تخلق ضغطًا على النطاق.",
+  ins_emp_below_min_title: "الراتب أدنى من الحد الأدنى للنطاق",
+  ins_emp_below_min_body: "الراتب الحالي أقل من الحد الأدنى للدرجة بنسبة {pct}%. يُنصح بتسوية في الدورة القادمة.",
+  ins_emp_high_in_range_title: "موقع عالٍ داخل النطاق",
+  ins_emp_high_in_range_body: "نسبة النفاذ {pct}%، مما يترك مساحة محدودة للتطور داخل الدرجة الحالية.",
+  ins_emp_low_in_range_title: "بداية النطاق",
+  ins_emp_low_in_range_body: "نسبة النفاذ {pct}%، مما يوفر مساحة جيدة للنمو مع تطور الأداء.",
+  ins_emp_in_range_title: "موقع ضمن السياسة",
+  ins_emp_in_range_body: "قيمة COMPA-RATIO هي {compa}، متوافقة مع توجيهات السياسة للدرجة المخصّصة.",
+  ins_emp_above_peer_title: "أعلى من وسيط الأقران",
+  ins_emp_above_peer_body: "الراتب أعلى بنسبة {pct}% من وسيط الأقران المماثلين. راجع مبررات الأداء والخبرة.",
+  ins_emp_below_peer_title: "أدنى من وسيط الأقران",
+  ins_emp_below_peer_body: "الراتب أقل بنسبة {pct}% من وسيط الأقران المماثلين. يُوصى بمراجعة العدالة الداخلية.",
+  ins_emp_allow_heavy_title: "البدلات تُشكّل نسبة مرتفعة",
+  ins_emp_allow_heavy_body: "البدلات تمثّل {pct}% من إجمالي التعويض النقدي، مما يقلل من حصة الراتب الأساسي.",
+
+  // Distribution
+  ins_dist_many_below_title: "تركّز أدنى من النطاق",
+  ins_dist_many_below_body: "{pct}% من الموظفين يتقاضون أقل من الحد الأدنى للدرجة. قد يشير إلى عدم اتساق الهيكل.",
+  ins_dist_many_above_title: "تركّز أعلى من المستهدف",
+  ins_dist_many_above_body: "{pct}% من الموظفين فوق 110% COMPA-RATIO، مما يشير إلى ضغط محتمل على النطاق والميزانية.",
+  ins_dist_low_avg_title: "متوسط COMPA-RATIO منخفض",
+  ins_dist_low_avg_body: "متوسط المجموعة {compa}، مما يشير إلى موقع منخفض نسبيًا من نقطة الوسط.",
+  ins_dist_high_avg_title: "متوسط COMPA-RATIO مرتفع",
+  ins_dist_high_avg_body: "متوسط المجموعة {compa}، مما يشير إلى تركّز الرواتب فوق نقطة الوسط.",
+  ins_dist_balanced_title: "توزيع ضمن السياسة",
+  ins_dist_balanced_body: "متوسط COMPA-RATIO هو {compa}، متوافق مع موقع صحي حول نقطة الوسط.",
+
+  // Penetration
+  ins_pen_many_high_title: "كثير من الموظفين في أعلى النطاق",
+  ins_pen_many_high_body: "{pct}% من الموظفين فوق نسبة نفاذ 85%، مما يحدّ من مساحة التطور داخل الدرجات الحالية.",
+  ins_pen_above_max_title: "موظفون فوق الحد الأقصى للنطاق",
+  ins_pen_above_max_body: "{pct}% من الموظفين يتقاضون أعلى من الحد الأقصى للدرجة. راجع تصميم الهيكل أو موضع الراتب.",
+  ins_pen_many_low_title: "كثير من الموظفين في بداية النطاق",
+  ins_pen_many_low_body: "{pct}% من الموظفين تحت نسبة نفاذ 20%، مما يشير إلى تعيينات حديثة أو مساحة تطور.",
+  ins_pen_healthy_title: "توزيع صحي داخل النطاقات",
+  ins_pen_healthy_body: "نفاذ النطاق موزّع بشكل جيد بين الموظفين، دون تركّز هيكلي ملحوظ.",
+
+  // Merit
+  ins_merit_over_title: "التوصيات تتجاوز الميزانية",
+  ins_merit_over_body: "الميزانية المحسوبة {actual}% تتجاوز المستهدف {target}%. يُنصح بتقليل الزيادات في الفئات العليا.",
+  ins_merit_under_title: "التوصيات أقل من الميزانية",
+  ins_merit_under_body: "الميزانية المحسوبة {actual}% أقل من المستهدف {target}%. توجد مساحة لزيادات إضافية.",
+  ins_merit_on_title: "التوصيات ضمن الميزانية",
+  ins_merit_on_body: "الميزانية المحسوبة {actual}% متوافقة مع المستهدف. يمكن مراجعة التوزيع حسب القسم.",
+
+  // Profile peer
+  peer_positioning: "موقع الأقران",
+  peer_median: "وسيط الأقران",
+  variance_from_peer: "الفرق عن وسيط الأقران",
+  no_peers: "لا توجد مجموعة أقران للمقارنة.",
 };
 
 const dictionaries: Record<Locale, Dict> = { en, ar };

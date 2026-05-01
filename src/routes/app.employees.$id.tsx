@@ -6,6 +6,8 @@ import { useI18n } from "@/lib/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { calculateBonus, compaRatio, rangePenetration, rangePosition, calculateAllowances } from "@/lib/comp";
 import { fmtCurrency, fmtPercent } from "@/lib/format";
+import { employeeInsights } from "@/lib/insights";
+import { InsightCard } from "@/components/insight-card";
 import { ArrowLeft } from "lucide-react";
 
 export const Route = createFileRoute("/app/employees/$id")({ component: EmployeeProfile });
@@ -15,6 +17,7 @@ function EmployeeProfile() {
   const { t, locale } = useI18n();
   const [emp, setEmp] = useState<any>(null);
   const [grade, setGrade] = useState<any>(null);
+  const [peers, setPeers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -24,6 +27,14 @@ function EmployeeProfile() {
       if (e?.grade_id) {
         const { data: g } = await supabase.from("salary_grades").select("*").eq("id", e.grade_id).maybeSingle();
         setGrade(g);
+        const { data: p } = await supabase
+          .from("employees")
+          .select("id, base_salary")
+          .eq("organization_id", e.organization_id)
+          .eq("grade_id", e.grade_id)
+          .eq("archived", false)
+          .neq("id", e.id);
+        setPeers(p ?? []);
       }
       setLoading(false);
     })();
@@ -39,6 +50,25 @@ function EmployeeProfile() {
   const allowances = calculateAllowances({ baseSalary: Number(emp.base_salary), housingPercent: 25, transportPercent: 10, mobileAmount: 50 * 12, educationAmount: 0, shiftPercent: 0, hardshipPercent: 0, customAmount: 0 });
   const tcc = Number(emp.base_salary) + bonus + allowances.total;
   const posLabel = pos === "in" ? t("pos_in") : pos === "below" ? t("pos_below") : t("pos_above");
+
+  // Peer median (within same grade)
+  const peerSalaries = peers.map((p) => Number(p.base_salary)).filter((n) => !isNaN(n) && n > 0).sort((a, b) => a - b);
+  const peerMedian = peerSalaries.length
+    ? peerSalaries.length % 2 === 0
+      ? (peerSalaries[peerSalaries.length / 2 - 1] + peerSalaries[peerSalaries.length / 2]) / 2
+      : peerSalaries[Math.floor(peerSalaries.length / 2)]
+    : undefined;
+  const peerVariance = peerMedian ? ((Number(emp.base_salary) - peerMedian) / peerMedian) * 100 : null;
+
+  const insights = employeeInsights({
+    base: Number(emp.base_salary),
+    midpoint: grade ? Number(grade.midpoint) : undefined,
+    min: grade ? Number(grade.minimum) : undefined,
+    max: grade ? Number(grade.maximum) : undefined,
+    peerMedian,
+    allowanceTotal: allowances.total,
+    bonus,
+  });
 
   return (
     <div>
@@ -90,6 +120,31 @@ function EmployeeProfile() {
             <Button asChild size="sm" variant="outline"><Link to="/app/bonus">{t("calc_bonus")}</Link></Button>
             <Button asChild size="sm" variant="outline"><Link to="/app/allowances">{t("go_allowances")}</Link></Button>
           </div>
+        </div>
+      </div>
+
+      <div className="px-4 md:px-6 pb-6 grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="border rounded-lg bg-card p-5">
+          <h3 className="font-semibold text-sm mb-3">{t("peer_positioning")}</h3>
+          {peerMedian ? (
+            <dl className="text-sm space-y-2">
+              <Row label={t("peer_median")} value={fmtCurrency(peerMedian, "USD", locale)} />
+              <Row label={t("kpi_employees_total")} value={peers.length} />
+              <Row
+                label={t("variance_from_peer")}
+                value={
+                  <span className={`num ${peerVariance != null && Math.abs(peerVariance) >= 15 ? "text-warning-foreground font-medium" : ""}`}>
+                    {peerVariance != null ? `${peerVariance >= 0 ? "+" : ""}${peerVariance.toFixed(1)}%` : "—"}
+                  </span>
+                }
+              />
+            </dl>
+          ) : (
+            <p className="text-sm text-muted-foreground">{t("no_peers")}</p>
+          )}
+        </div>
+        <div className="lg:col-span-2">
+          <InsightCard items={insights} />
         </div>
       </div>
     </div>
