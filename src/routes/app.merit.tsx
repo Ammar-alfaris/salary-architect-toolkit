@@ -126,11 +126,19 @@ function MeritPage() {
       />
 
       <div className="p-4 md:p-6 space-y-4">
+        {cycleId && (
+          <ApprovalBar
+            entityType="merit_cycle"
+            entityId={cycleId}
+            entityLabel={`Merit ${new Date().getFullYear()}`}
+            onLockChange={setCycleLocked}
+          />
+        )}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
           <div className="border rounded-lg bg-card p-4">
             <div className="text-xs text-muted-foreground">{t("target_budget")}</div>
             <div className="flex items-end gap-2 mt-1">
-              <Input type="number" step="0.1" value={budget} onChange={(e) => setBudget(+e.target.value || 0)} className="h-8" />
+              <Input type="number" step="0.1" value={budget} disabled={cycleLocked} onChange={(e) => setBudget(+e.target.value || 0)} className="h-8" />
               <span className="text-sm">%</span>
             </div>
           </div>
