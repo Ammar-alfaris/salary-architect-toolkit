@@ -958,7 +958,6 @@ const ar: Dict = {
   flag_compression: "ضغط بين الدرجات",
   flag_inversion: "انعكاس بين الدرجات",
   flag_small_cohort: "مجموعة صغيرة",
-  base_salary: "الراتب الأساسي",
 
   // Approvals (AR)
   approvals: "الموافقات",
@@ -977,7 +976,6 @@ const ar: Dict = {
   decision_note: "ملاحظة القرار (اختيارية)",
   decision_note_placeholder: "اكتب سبب أو شرح القرار…",
   confirm: "تأكيد",
-  cancel: "إلغاء",
   requested_by: "مقدّم الطلب",
   reviewed_by: "المراجِع",
   entity_merit_cycle: "دورة Merit",
