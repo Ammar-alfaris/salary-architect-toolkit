@@ -6,6 +6,8 @@ import { useI18n } from "@/lib/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { calculateBonus, compaRatio, rangePenetration, rangePosition, calculateAllowances } from "@/lib/comp";
 import { fmtCurrency, fmtPercent } from "@/lib/format";
+import { employeeInsights } from "@/lib/insights";
+import { InsightCard } from "@/components/insight-card";
 import { ArrowLeft } from "lucide-react";
 
 export const Route = createFileRoute("/app/employees/$id")({ component: EmployeeProfile });
