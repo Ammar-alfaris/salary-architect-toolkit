@@ -17,6 +17,7 @@ function EmployeeProfile() {
   const { t, locale } = useI18n();
   const [emp, setEmp] = useState<any>(null);
   const [grade, setGrade] = useState<any>(null);
+  const [peers, setPeers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -26,6 +27,14 @@ function EmployeeProfile() {
       if (e?.grade_id) {
         const { data: g } = await supabase.from("salary_grades").select("*").eq("id", e.grade_id).maybeSingle();
         setGrade(g);
+        const { data: p } = await supabase
+          .from("employees")
+          .select("id, base_salary")
+          .eq("organization_id", e.organization_id)
+          .eq("grade_id", e.grade_id)
+          .eq("archived", false)
+          .neq("id", e.id);
+        setPeers(p ?? []);
       }
       setLoading(false);
     })();
