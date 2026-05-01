@@ -47,7 +47,7 @@ function EmployeesPage() {
   const [page, setPage] = useState(1);
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [form, setForm] = useState({ employee_code: "", first_name: "", last_name: "", department: "", job_title: "", location: "", base_salary: 0, target_bonus_percent: 10, grade_id: "", performance_rating: "Meets" });
+  const [form, setForm] = useState({ employee_code: "", first_name: "", last_name: "", department: "", job_title: "", job_family: "", location: "", base_salary: 0, target_bonus_percent: 10, grade_id: "", performance_rating: "Meets" });
 
   const { data: employees = [], isLoading } = useQuery({
     queryKey: ["employees", organizationId],
@@ -119,6 +119,7 @@ function EmployeesPage() {
         last_name: form.last_name,
         department: form.department || null,
         job_title: form.job_title || null,
+        job_family: form.job_family || null,
         location: form.location || null,
         base_salary: form.base_salary,
         target_bonus_percent: form.target_bonus_percent,
@@ -138,7 +139,7 @@ function EmployeesPage() {
       after: { base_salary: form.base_salary, target_bonus_percent: form.target_bonus_percent, grade_id: form.grade_id || null },
     });
     setOpen(false);
-    setForm({ employee_code: "", first_name: "", last_name: "", department: "", job_title: "", location: "", base_salary: 0, target_bonus_percent: 10, grade_id: "", performance_rating: "Meets" });
+    setForm({ employee_code: "", first_name: "", last_name: "", department: "", job_title: "", job_family: "", location: "", base_salary: 0, target_bonus_percent: 10, grade_id: "", performance_rating: "Meets" });
     refresh();
   };
 
@@ -235,6 +236,7 @@ function EmployeesPage() {
                     <div className="space-y-1.5"><Label>{t("department")}</Label><Input value={form.department} onChange={(e) => setForm({ ...form, department: e.target.value })} /></div>
                     <div className="space-y-1.5"><Label>{t("job_title")}</Label><Input value={form.job_title} onChange={(e) => setForm({ ...form, job_title: e.target.value })} /></div>
                     <div className="space-y-1.5"><Label>{t("location")}</Label><Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} /></div>
+                    <div className="space-y-1.5"><Label>{t("job_family")}</Label><Input placeholder={t("job_family_helper")} value={form.job_family} onChange={(e) => setForm({ ...form, job_family: e.target.value })} /></div>
                     <div className="space-y-1.5"><Label>{t("base_salary")}</Label><Input type="number" value={form.base_salary} onChange={(e) => setForm({ ...form, base_salary: +e.target.value || 0 })} /></div>
                     <div className="space-y-1.5"><Label>{t("target_bonus_pct")}</Label><Input type="number" step="0.5" value={form.target_bonus_percent} onChange={(e) => setForm({ ...form, target_bonus_percent: +e.target.value || 0 })} /></div>
                     <div className="space-y-1.5">
