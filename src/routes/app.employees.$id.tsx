@@ -51,6 +51,25 @@ function EmployeeProfile() {
   const tcc = Number(emp.base_salary) + bonus + allowances.total;
   const posLabel = pos === "in" ? t("pos_in") : pos === "below" ? t("pos_below") : t("pos_above");
 
+  // Peer median (within same grade)
+  const peerSalaries = peers.map((p) => Number(p.base_salary)).filter((n) => !isNaN(n) && n > 0).sort((a, b) => a - b);
+  const peerMedian = peerSalaries.length
+    ? peerSalaries.length % 2 === 0
+      ? (peerSalaries[peerSalaries.length / 2 - 1] + peerSalaries[peerSalaries.length / 2]) / 2
+      : peerSalaries[Math.floor(peerSalaries.length / 2)]
+    : undefined;
+  const peerVariance = peerMedian ? ((Number(emp.base_salary) - peerMedian) / peerMedian) * 100 : null;
+
+  const insights = employeeInsights({
+    base: Number(emp.base_salary),
+    midpoint: grade ? Number(grade.midpoint) : undefined,
+    min: grade ? Number(grade.minimum) : undefined,
+    max: grade ? Number(grade.maximum) : undefined,
+    peerMedian,
+    allowanceTotal: allowances.total,
+    bonus,
+  });
+
   return (
     <div>
       <PageHeader
@@ -101,6 +120,31 @@ function EmployeeProfile() {
             <Button asChild size="sm" variant="outline"><Link to="/app/bonus">{t("calc_bonus")}</Link></Button>
             <Button asChild size="sm" variant="outline"><Link to="/app/allowances">{t("go_allowances")}</Link></Button>
           </div>
+        </div>
+      </div>
+
+      <div className="px-4 md:px-6 pb-6 grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="border rounded-lg bg-card p-5">
+          <h3 className="font-semibold text-sm mb-3">{t("peer_positioning")}</h3>
+          {peerMedian ? (
+            <dl className="text-sm space-y-2">
+              <Row label={t("peer_median")} value={fmtCurrency(peerMedian, "USD", locale)} />
+              <Row label={t("kpi_employees_total")} value={peers.length} />
+              <Row
+                label={t("variance_from_peer")}
+                value={
+                  <span className={`num ${peerVariance != null && Math.abs(peerVariance) >= 15 ? "text-warning-foreground font-medium" : ""}`}>
+                    {peerVariance != null ? `${peerVariance >= 0 ? "+" : ""}${peerVariance.toFixed(1)}%` : "—"}
+                  </span>
+                }
+              />
+            </dl>
+          ) : (
+            <p className="text-sm text-muted-foreground">{t("no_peers")}</p>
+          )}
+        </div>
+        <div className="lg:col-span-2">
+          <InsightCard items={insights} />
         </div>
       </div>
     </div>
