@@ -387,13 +387,11 @@ const en: Dict = {
 
   // Filters / grouping
   group_by: "Group by",
-  grade: "Grade",
   structure: "Structure",
   all: "All",
   filter: "Filter",
   count: "Count",
   share: "Share",
-  band: "Band",
 
   // KPI labels
   kpi_below_range: "% below range",
