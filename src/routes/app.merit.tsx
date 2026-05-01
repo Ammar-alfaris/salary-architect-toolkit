@@ -80,6 +80,8 @@ function MeritPage() {
           </div>
         </div>
 
+        <InsightCard items={meritBudgetInsights({ targetPct: budget, actualPct: actualBudgetPct })} />
+
         <div className="border rounded-lg bg-card p-4">
           <h3 className="font-medium text-sm mb-3 flex items-center gap-2"><Calculator className="w-4 h-4" /> {t("merit_guideline_matrix")}</h3>
           <div className="overflow-x-auto">
