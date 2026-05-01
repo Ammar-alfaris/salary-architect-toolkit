@@ -86,7 +86,7 @@ function CompaAnalytics() {
     share: total ? ((bandCounts[b] ?? 0) / total) * 100 : 0,
   }));
 
-  const colors = ["hsl(var(--destructive))", "hsl(var(--warning))", "hsl(var(--success))", "hsl(var(--success))", "hsl(var(--destructive))"];
+  const colors = ["var(--destructive)", "var(--warning)", "var(--success)", "var(--success)", "var(--destructive)"];
 
   const insights = distributionInsights({ totalEmployees: total, bandCounts, avgCompa });
 
@@ -145,7 +145,7 @@ function CompaAnalytics() {
                   <XAxis dataKey="band" tick={{ fontSize: 12 }} />
                   <YAxis tick={{ fontSize: 12 }} />
                   <Tooltip
-                    contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
+                    contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }}
                     formatter={(v: any, _n: any, p: any) => [`${v} (${(p.payload.share).toFixed(1)}%)`, t("count")]}
                   />
                   <Bar dataKey="count" radius={[6, 6, 0, 0]}>
