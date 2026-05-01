@@ -10,7 +10,11 @@ import { COMPA_BANDS, PERFORMANCE_RATINGS, compaRatio, compaRatioBand, defaultMe
 import { fmtCurrency, fmtPercent } from "@/lib/format";
 import { meritBudgetInsights } from "@/lib/insights";
 import { InsightCard } from "@/components/insight-card";
-import { Calculator, Download } from "lucide-react";
+import { ApprovalBar } from "@/components/approval-bar";
+import { snapshotVersion } from "@/lib/governance";
+import { logAudit } from "@/lib/audit";
+import { toast } from "sonner";
+import { Calculator, Download, Save } from "lucide-react";
 
 export const Route = createFileRoute("/app/merit")({ component: MeritPage });
 
