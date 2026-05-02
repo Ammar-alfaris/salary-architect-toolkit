@@ -12,7 +12,7 @@ import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { compaRatio, exportCSV, PERFORMANCE_RATINGS } from "@/lib/comp";
-import { exportXLSX, parseXLSX, downloadEmployeeTemplate, EMPLOYEE_TEMPLATE_HEADERS } from "@/lib/excel";
+import { exportXLSX, parseXLSX, downloadEmployeeTemplate } from "@/lib/excel";
 import { fmtCurrency } from "@/lib/format";
 import { logAudit } from "@/lib/audit";
 import { usePermissions, maskSalary } from "@/lib/rbac";
