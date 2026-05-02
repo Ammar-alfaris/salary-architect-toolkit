@@ -246,7 +246,24 @@ function StructuresPage() {
                       <td className="px-4 py-2.5 text-end">
                         <div className="flex gap-1 justify-end">
                           <Button asChild size="icon" variant="ghost"><Link to="/app/matrix"><Eye className="w-4 h-4" /></Link></Button>
-                          {!s.archived && perms.canDelete && <Button size="icon" variant="ghost" onClick={() => handleArchive(s)}><Trash2 className="w-4 h-4" /></Button>}
+                          {!s.archived && perms.canDelete && <Button size="icon" variant="ghost" onClick={() => handleArchive(s)} title={t("archived")}><Trash2 className="w-4 h-4" /></Button>}
+                          {perms.canDelete && (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button size="icon" variant="ghost" className="text-destructive hover:text-destructive" title={t("delete_permanent")}><X className="w-4 h-4" /></Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>{t("delete_structure_confirm")}</AlertDialogTitle>
+                                  <AlertDialogDescription>{t("delete_structure_warn")}</AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleDelete(s)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">{t("delete_permanent")}</AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          )}
                         </div>
                       </td>
                     </tr>
