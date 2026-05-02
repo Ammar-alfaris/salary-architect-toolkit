@@ -14,7 +14,8 @@ import { logAudit } from "@/lib/audit";
 import { usePermissions } from "@/lib/rbac";
 import { exportXLSX } from "@/lib/excel";
 import { toast } from "sonner";
-import { Plus, Layers, Trash2, Eye, FileSpreadsheet } from "lucide-react";
+import { Plus, Layers, Trash2, Eye, FileSpreadsheet, X } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/app/structures")({ component: StructuresPage });
 
@@ -96,6 +97,18 @@ function StructuresPage() {
     if (organizationId) {
       await logAudit({ organizationId, action: "archive", entityType: "salary_structure", entityId: s.id, entityLabel: s.name });
     }
+    refresh();
+  };
+
+  const handleDelete = async (s: any) => {
+    if (!perms.canDelete) return toast.error(t("admin_only"));
+    await supabase.from("salary_grades").delete().eq("salary_structure_id", s.id);
+    const { error } = await supabase.from("salary_structures").delete().eq("id", s.id);
+    if (error) return toast.error(error.message);
+    if (organizationId) {
+      await logAudit({ organizationId, action: "delete", entityType: "salary_structure", entityId: s.id, entityLabel: s.name });
+    }
+    toast.success(t("settings_saved"));
     refresh();
   };
 
