@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
@@ -12,12 +12,13 @@ import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { compaRatio, exportCSV, PERFORMANCE_RATINGS } from "@/lib/comp";
-import { exportXLSX } from "@/lib/excel";
+import { exportXLSX, parseXLSX, downloadEmployeeTemplate } from "@/lib/excel";
 import { fmtCurrency } from "@/lib/format";
 import { logAudit } from "@/lib/audit";
 import { usePermissions, maskSalary } from "@/lib/rbac";
-import { Plus, Download, Search, Eye, Sparkles, FileSpreadsheet, Trash2, ChevronLeft, ChevronRight, ShieldAlert } from "lucide-react";
+import { Plus, Download, Search, Eye, Sparkles, FileSpreadsheet, Trash2, ChevronLeft, ChevronRight, ShieldAlert, Upload, FileDown, Pencil } from "lucide-react";
 import { toast } from "sonner";
+
 
 export const Route = createFileRoute("/app/employees")({ component: EmployeesPage });
 
@@ -48,6 +49,9 @@ function EmployeesPage() {
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [form, setForm] = useState({ employee_code: "", first_name: "", last_name: "", department: "", job_title: "", job_family: "", location: "", base_salary: 0, target_bonus_percent: 10, grade_id: "", performance_rating: "Meets" });
+  const [editTarget, setEditTarget] = useState<any | null>(null);
+  const [editForm, setEditForm] = useState<any>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const { data: employees = [], isLoading } = useQuery({
     queryKey: ["employees", organizationId],
@@ -196,6 +200,110 @@ function EmployeesPage() {
     refresh();
   };
 
+
+  const handleImportFile = async (file: File) => {
+    if (!organizationId || !perms.canEdit) return;
+    try {
+      const rows = await parseXLSX(file);
+      if (rows.length === 0) return toast.error(t("no_employees_match"));
+      // Build code → grade_id map for fast lookup
+      const codeToGrade = new Map<string, string>();
+      grades.forEach((g: any) => codeToGrade.set(String(g.grade_code).toLowerCase(), g.id));
+
+      // Skip duplicates (existing codes)
+      const existingCodes = new Set(employees.map((e: any) => String(e.employee_code).toLowerCase()));
+      let ok = 0;
+      let fail = 0;
+      const toInsert: any[] = [];
+      for (const r of rows) {
+        const code = String(r.employee_code ?? "").trim();
+        if (!code || existingCodes.has(code.toLowerCase())) { fail++; continue; }
+        const gradeCode = String(r.grade_code ?? "").trim().toLowerCase();
+        toInsert.push({
+          organization_id: organizationId,
+          employee_code: code,
+          first_name: String(r.first_name ?? "").trim() || "—",
+          last_name: String(r.last_name ?? "").trim() || "—",
+          email: String(r.email ?? "").trim() || null,
+          department: String(r.department ?? "").trim() || null,
+          job_title: String(r.job_title ?? "").trim() || null,
+          job_family: String(r.job_family ?? "").trim() || null,
+          location: String(r.location ?? "").trim() || null,
+          grade_id: gradeCode ? codeToGrade.get(gradeCode) ?? null : null,
+          base_salary: Number(r.base_salary) || 0,
+          target_bonus_percent: Number(r.target_bonus_percent) || 0,
+          performance_rating: String(r.performance_rating ?? "Meets").trim() || "Meets",
+          hire_date: r.hire_date ? String(r.hire_date) : null,
+          manager_name: String(r.manager_name ?? "").trim() || null,
+        });
+        ok++;
+      }
+      if (toInsert.length) {
+        const { error } = await supabase.from("employees").insert(toInsert);
+        if (error) { toast.error(error.message); return; }
+      }
+      toast.success(t("import_results", { ok, fail }));
+      await logAudit({ organizationId, action: "create", entityType: "employee", entityLabel: `Excel import (${ok} added, ${fail} skipped)`, metadata: { ok, fail } });
+      refresh();
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  };
+
+  const openEdit = (emp: any) => {
+    setEditTarget(emp);
+    setEditForm({
+      first_name: emp.first_name ?? "",
+      last_name: emp.last_name ?? "",
+      department: emp.department ?? "",
+      job_title: emp.job_title ?? "",
+      job_family: emp.job_family ?? "",
+      location: emp.location ?? "",
+      base_salary: Number(emp.base_salary) || 0,
+      target_bonus_percent: Number(emp.target_bonus_percent) || 0,
+      grade_id: emp.grade_id ?? "",
+      performance_rating: emp.performance_rating ?? "Meets",
+    });
+  };
+
+  const handleSaveEdit = async () => {
+    if (!organizationId || !editTarget || !editForm) return;
+    if (!perms.canEdit) return toast.error(t("insufficient_permissions"));
+    const before = {
+      base_salary: Number(editTarget.base_salary),
+      target_bonus_percent: Number(editTarget.target_bonus_percent),
+      grade_id: editTarget.grade_id,
+      job_title: editTarget.job_title,
+    };
+    const { error } = await supabase
+      .from("employees")
+      .update({
+        first_name: editForm.first_name,
+        last_name: editForm.last_name,
+        department: editForm.department || null,
+        job_title: editForm.job_title || null,
+        job_family: editForm.job_family || null,
+        location: editForm.location || null,
+        base_salary: editForm.base_salary,
+        target_bonus_percent: editForm.target_bonus_percent,
+        grade_id: editForm.grade_id || null,
+        performance_rating: editForm.performance_rating,
+      })
+      .eq("id", editTarget.id);
+    if (error) return toast.error(error.message);
+    toast.success(t("save_changes"));
+    await logAudit({
+      organizationId, action: "update", entityType: "employee", entityId: editTarget.id,
+      entityLabel: `${editForm.first_name} ${editForm.last_name}`,
+      before, after: { base_salary: editForm.base_salary, target_bonus_percent: editForm.target_bonus_percent, grade_id: editForm.grade_id || null, job_title: editForm.job_title },
+    });
+    setEditTarget(null);
+    setEditForm(null);
+    refresh();
+  };
+
   return (
     <div>
       <PageHeader
@@ -217,6 +325,25 @@ function EmployeesPage() {
               <FileSpreadsheet className="w-4 h-4 me-1" />
               {t("excel")}
             </Button>
+            {perms.canEdit && (
+              <>
+                <Button size="sm" variant="outline" onClick={() => downloadEmployeeTemplate()}>
+                  <FileDown className="w-4 h-4 me-1" />
+                  {t("download_template")}
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => fileRef.current?.click()}>
+                  <Upload className="w-4 h-4 me-1" />
+                  {t("import_excel")}
+                </Button>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept=".xlsx,.xls,.csv"
+                  className="hidden"
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImportFile(f); }}
+                />
+              </>
+            )}
             {perms.canEdit && (
               <Dialog open={open} onOpenChange={setOpen}>
                 <DialogTrigger asChild>
@@ -361,9 +488,16 @@ function EmployeesPage() {
                           <td className="px-4 py-2.5 text-end num">{perms.canViewSalary ? compa?.toFixed(2) ?? "—" : "—"}</td>
                           <td className="px-4 py-2.5 text-end num">{e.target_bonus_percent}%</td>
                           <td className="px-4 py-2.5 text-end">
-                            <Button asChild size="icon" variant="ghost">
-                              <Link to="/app/employees/$id" params={{ id: e.id }}><Eye className="w-4 h-4" /></Link>
-                            </Button>
+                            <div className="inline-flex gap-0.5">
+                              {perms.canEdit && (
+                                <Button size="icon" variant="ghost" onClick={() => openEdit(e)} aria-label={t("edit_employee")}>
+                                  <Pencil className="w-4 h-4" />
+                                </Button>
+                              )}
+                              <Button asChild size="icon" variant="ghost">
+                                <Link to="/app/employees/$id" params={{ id: e.id }}><Eye className="w-4 h-4" /></Link>
+                              </Button>
+                            </div>
                           </td>
                         </tr>
                       );
@@ -390,6 +524,51 @@ function EmployeesPage() {
           )}
         </div>
       </div>
+
+      {/* Edit dialog */}
+      <Dialog open={!!editTarget} onOpenChange={(o) => { if (!o) { setEditTarget(null); setEditForm(null); } }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{t("edit_employee")}{editTarget ? ` — ${editTarget.full_name ?? editTarget.employee_code}` : ""}</DialogTitle>
+          </DialogHeader>
+          {editForm && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="space-y-1.5"><Label>{t("first_name")}</Label><Input value={editForm.first_name} onChange={(ev) => setEditForm({ ...editForm, first_name: ev.target.value })} /></div>
+              <div className="space-y-1.5"><Label>{t("last_name")}</Label><Input value={editForm.last_name} onChange={(ev) => setEditForm({ ...editForm, last_name: ev.target.value })} /></div>
+              <div className="space-y-1.5"><Label>{t("department")}</Label><Input value={editForm.department} onChange={(ev) => setEditForm({ ...editForm, department: ev.target.value })} /></div>
+              <div className="space-y-1.5"><Label>{t("job_title")}</Label><Input value={editForm.job_title} onChange={(ev) => setEditForm({ ...editForm, job_title: ev.target.value })} /></div>
+              <div className="space-y-1.5"><Label>{t("location")}</Label><Input value={editForm.location} onChange={(ev) => setEditForm({ ...editForm, location: ev.target.value })} /></div>
+              <div className="space-y-1.5"><Label>{t("job_family")}</Label><Input value={editForm.job_family} onChange={(ev) => setEditForm({ ...editForm, job_family: ev.target.value })} /></div>
+              <div className="space-y-1.5"><Label>{t("base_salary")}</Label><Input type="number" value={editForm.base_salary} onChange={(ev) => setEditForm({ ...editForm, base_salary: +ev.target.value || 0 })} /></div>
+              <div className="space-y-1.5"><Label>{t("target_bonus_pct")}</Label><Input type="number" step="0.5" value={editForm.target_bonus_percent} onChange={(ev) => setEditForm({ ...editForm, target_bonus_percent: +ev.target.value || 0 })} /></div>
+              <div className="space-y-1.5">
+                <Label>{t("grade")}</Label>
+                <Select value={editForm.grade_id} onValueChange={(v) => setEditForm({ ...editForm, grade_id: v })}>
+                  <SelectTrigger><SelectValue placeholder={t("pick_grade")} /></SelectTrigger>
+                  <SelectContent>
+                    {grades.map((g: any) => (
+                      <SelectItem key={g.id} value={g.id}>
+                        {g.grade_code} — {t("midpoint")} {fmtCurrency(Number(g.midpoint), defaultCurrency, locale)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>{t("performance")}</Label>
+                <Select value={editForm.performance_rating} onValueChange={(v) => setEditForm({ ...editForm, performance_rating: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{PERFORMANCE_RATINGS.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => { setEditTarget(null); setEditForm(null); }}>{t("cancel")}</Button>
+            <Button onClick={handleSaveEdit}>{t("save_changes")}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

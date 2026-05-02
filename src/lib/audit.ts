@@ -17,7 +17,9 @@ export type AuditEntity =
   | "bonus_cycle"
   | "merit_cycle"
   | "allowance_policy"
-  | "organization";
+  | "organization"
+  | "user_role"
+  | "invitation";
 
 export interface AuditPayload {
   organizationId: string;

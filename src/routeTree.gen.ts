@@ -13,6 +13,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as AppTeamRouteImport } from './routes/app.team'
 import { Route as AppStructuresRouteImport } from './routes/app.structures'
 import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as AppReportsRouteImport } from './routes/app.reports'
@@ -46,6 +47,11 @@ const IndexRoute = IndexRouteImport.update({
 const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTeamRoute = AppTeamRouteImport.update({
+  id: '/team',
+  path: '/team',
   getParentRoute: () => AppRoute,
 } as any)
 const AppStructuresRoute = AppStructuresRouteImport.update({
@@ -133,6 +139,7 @@ export interface FileRoutesByFullPath {
   '/app/reports': typeof AppReportsRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/structures': typeof AppStructuresRoute
+  '/app/team': typeof AppTeamRoute
   '/app/': typeof AppIndexRoute
   '/app/analytics/compa': typeof AppAnalyticsCompaRoute
   '/app/analytics/equity': typeof AppAnalyticsEquityRoute
@@ -152,6 +159,7 @@ export interface FileRoutesByTo {
   '/app/reports': typeof AppReportsRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/structures': typeof AppStructuresRoute
+  '/app/team': typeof AppTeamRoute
   '/app': typeof AppIndexRoute
   '/app/analytics/compa': typeof AppAnalyticsCompaRoute
   '/app/analytics/equity': typeof AppAnalyticsEquityRoute
@@ -173,6 +181,7 @@ export interface FileRoutesById {
   '/app/reports': typeof AppReportsRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/structures': typeof AppStructuresRoute
+  '/app/team': typeof AppTeamRoute
   '/app/': typeof AppIndexRoute
   '/app/analytics/compa': typeof AppAnalyticsCompaRoute
   '/app/analytics/equity': typeof AppAnalyticsEquityRoute
@@ -195,6 +204,7 @@ export interface FileRouteTypes {
     | '/app/reports'
     | '/app/settings'
     | '/app/structures'
+    | '/app/team'
     | '/app/'
     | '/app/analytics/compa'
     | '/app/analytics/equity'
@@ -214,6 +224,7 @@ export interface FileRouteTypes {
     | '/app/reports'
     | '/app/settings'
     | '/app/structures'
+    | '/app/team'
     | '/app'
     | '/app/analytics/compa'
     | '/app/analytics/equity'
@@ -234,6 +245,7 @@ export interface FileRouteTypes {
     | '/app/reports'
     | '/app/settings'
     | '/app/structures'
+    | '/app/team'
     | '/app/'
     | '/app/analytics/compa'
     | '/app/analytics/equity'
@@ -275,6 +287,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/app/'
       preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/team': {
+      id: '/app/team'
+      path: '/team'
+      fullPath: '/app/team'
+      preLoaderRoute: typeof AppTeamRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/structures': {
@@ -401,6 +420,7 @@ interface AppRouteChildren {
   AppReportsRoute: typeof AppReportsRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppStructuresRoute: typeof AppStructuresRoute
+  AppTeamRoute: typeof AppTeamRoute
   AppIndexRoute: typeof AppIndexRoute
   AppAnalyticsCompaRoute: typeof AppAnalyticsCompaRoute
   AppAnalyticsEquityRoute: typeof AppAnalyticsEquityRoute
@@ -418,6 +438,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppReportsRoute: AppReportsRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppStructuresRoute: AppStructuresRoute,
+  AppTeamRoute: AppTeamRoute,
   AppIndexRoute: AppIndexRoute,
   AppAnalyticsCompaRoute: AppAnalyticsCompaRoute,
   AppAnalyticsEquityRoute: AppAnalyticsEquityRoute,
