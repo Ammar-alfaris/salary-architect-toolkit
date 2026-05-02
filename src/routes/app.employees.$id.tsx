@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
+import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { calculateBonus, compaRatio, rangePenetration, rangePosition, calculateAllowances } from "@/lib/comp";
 import { fmtCurrency, fmtPercent } from "@/lib/format";
@@ -15,6 +16,7 @@ export const Route = createFileRoute("/app/employees/$id")({ component: Employee
 function EmployeeProfile() {
   const { id } = Route.useParams();
   const { t, locale } = useI18n();
+  const { defaultCurrency } = useAuth();
   const [emp, setEmp] = useState<any>(null);
   const [grade, setGrade] = useState<any>(null);
   const [peers, setPeers] = useState<any[]>([]);
@@ -94,9 +96,9 @@ function EmployeeProfile() {
         <div className="border rounded-lg bg-card p-5">
           <h3 className="font-semibold text-sm mb-3">{t("salary_position")}</h3>
           <dl className="text-sm space-y-2">
-            <Row label={t("base_salary")} value={fmtCurrency(Number(emp.base_salary), "USD", locale)} />
+            <Row label={t("base_salary")} value={fmtCurrency(Number(emp.base_salary), defaultCurrency, locale)} />
             <Row label={t("grade")} value={grade?.grade_code ?? "—"} />
-            <Row label={t("range_label")} value={grade ? `${fmtCurrency(Number(grade.minimum), "USD", locale)} – ${fmtCurrency(Number(grade.maximum), "USD", locale)}` : "—"} />
+            <Row label={t("range_label")} value={grade ? `${fmtCurrency(Number(grade.minimum), defaultCurrency, locale)} – ${fmtCurrency(Number(grade.maximum), defaultCurrency, locale)}` : "—"} />
             <Row label={t("compa_ratio_label")} value={compa.toFixed(2)} />
             <Row label={t("range_penetration")} value={fmtPercent(penet * 100, locale)} />
             <Row label={t("position")} value={<span className={`text-xs px-2 py-0.5 rounded-full ${pos === "in" ? "bg-success/15 text-success" : pos === "below" ? "bg-warning/15 text-warning-foreground" : "bg-destructive/15 text-destructive"}`}>{posLabel}</span>} />
@@ -111,10 +113,10 @@ function EmployeeProfile() {
         <div className="border rounded-lg bg-card p-5">
           <h3 className="font-semibold text-sm mb-3">{t("total_rewards")}</h3>
           <dl className="text-sm space-y-2">
-            <Row label={t("base")} value={fmtCurrency(Number(emp.base_salary), "USD", locale)} />
-            <Row label={t("target_bonus_paren", { pct: emp.target_bonus_percent })} value={fmtCurrency(bonus, "USD", locale)} />
-            <Row label={t("estimated_allowances")} value={fmtCurrency(allowances.total, "USD", locale)} />
-            <div className="flex justify-between border-t pt-2 mt-2"><span className="font-medium">{t("total_cash_comp_short")}</span><span className="num font-semibold">{fmtCurrency(tcc, "USD", locale)}</span></div>
+            <Row label={t("base")} value={fmtCurrency(Number(emp.base_salary), defaultCurrency, locale)} />
+            <Row label={t("target_bonus_paren", { pct: emp.target_bonus_percent })} value={fmtCurrency(bonus, defaultCurrency, locale)} />
+            <Row label={t("estimated_allowances")} value={fmtCurrency(allowances.total, defaultCurrency, locale)} />
+            <div className="flex justify-between border-t pt-2 mt-2"><span className="font-medium">{t("total_cash_comp_short")}</span><span className="num font-semibold">{fmtCurrency(tcc, defaultCurrency, locale)}</span></div>
           </dl>
           <div className="mt-4 grid grid-cols-2 gap-2">
             <Button asChild size="sm" variant="outline"><Link to="/app/bonus">{t("calc_bonus")}</Link></Button>
@@ -128,7 +130,7 @@ function EmployeeProfile() {
           <h3 className="font-semibold text-sm mb-3">{t("peer_positioning")}</h3>
           {peerMedian ? (
             <dl className="text-sm space-y-2">
-              <Row label={t("peer_median")} value={fmtCurrency(peerMedian, "USD", locale)} />
+              <Row label={t("peer_median")} value={fmtCurrency(peerMedian, defaultCurrency, locale)} />
               <Row label={t("kpi_employees_total")} value={peers.length} />
               <Row
                 label={t("variance_from_peer")}

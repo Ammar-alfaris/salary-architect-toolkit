@@ -26,7 +26,7 @@ function Kpi({ label, value, icon: Icon, hint }: { label: string; value: string;
 }
 
 function Dashboard() {
-  const { organizationId } = useAuth();
+  const { organizationId, defaultCurrency } = useAuth();
   const { t, locale } = useI18n();
   const [employees, setEmployees] = useState<any[]>([]);
   const [grades, setGrades] = useState<any[]>([]);
@@ -100,10 +100,10 @@ function Dashboard() {
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
               <Kpi label={t("total_employees")} value={fmtNumber(employees.length, locale)} icon={Users} />
               <Kpi label={t("active_structures")} value={fmtNumber(structures.length, locale)} icon={Layers} />
-              <Kpi label={t("payroll_snapshot")} value={fmtCurrency(totalPayroll, "USD", locale)} icon={DollarSign} hint={t("annual_base")} />
+              <Kpi label={t("payroll_snapshot")} value={fmtCurrency(totalPayroll, defaultCurrency, locale)} icon={DollarSign} hint={t("annual_base")} />
               <Kpi label={t("avg_compa_ratio")} value={avgCompa ? avgCompa.toFixed(2) : "—"} icon={BarChart3} />
-              <Kpi label={t("bonus_budget")} value={fmtCurrency(bonusBudget, "USD", locale)} icon={Gift} />
-              <Kpi label={t("merit_budget")} value={fmtCurrency(meritBudget, "USD", locale)} icon={TrendingUp} hint={t("est_4_pct")} />
+              <Kpi label={t("bonus_budget")} value={fmtCurrency(bonusBudget, defaultCurrency, locale)} icon={Gift} />
+              <Kpi label={t("merit_budget")} value={fmtCurrency(meritBudget, defaultCurrency, locale)} icon={TrendingUp} hint={t("est_4_pct")} />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -177,7 +177,7 @@ function Dashboard() {
                         <div key={e.id} className="flex items-center justify-between py-2.5">
                           <div>
                             <div className="text-sm">{e.full_name}</div>
-                            <div className="text-xs text-muted-foreground">{g.grade_code} • {fmtCurrency(Number(e.base_salary), "USD", locale)}</div>
+                            <div className="text-xs text-muted-foreground">{g.grade_code} • {fmtCurrency(Number(e.base_salary), defaultCurrency, locale)}</div>
                           </div>
                           <span className={`text-xs px-2 py-0.5 rounded-full ${isBelow ? "bg-warning/15 text-warning-foreground" : "bg-destructive/15 text-destructive"}`}>{isBelow ? t("below") : t("above")}</span>
                         </div>

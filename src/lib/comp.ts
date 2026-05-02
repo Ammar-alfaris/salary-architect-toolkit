@@ -126,6 +126,23 @@ export function defaultMeritMatrix(): { performance_rating: string; compa_ratio_
   return rules;
 }
 
+/**
+ * Re-scale a merit matrix so its weighted average roughly matches a target budget %.
+ * Multiplies every cell by (targetPct / baselinePct), rounded to 0.5 step, clamped >= 0.
+ */
+export function scaleMatrixToBudget(
+  matrix: { performance_rating: string; compa_ratio_band: string; recommended_increase_percent: number }[],
+  targetPct: number,
+  baselinePct = 4,
+) {
+  if (!baselinePct || baselinePct <= 0) return matrix;
+  const factor = targetPct / baselinePct;
+  return matrix.map((r) => ({
+    ...r,
+    recommended_increase_percent: Math.max(0, Math.round(r.recommended_increase_percent * factor * 2) / 2),
+  }));
+}
+
 export interface AllowanceInput {
   baseSalary: number;
   housingPercent: number;

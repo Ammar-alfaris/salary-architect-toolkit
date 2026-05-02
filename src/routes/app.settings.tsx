@@ -18,7 +18,7 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/app/settings")({ component: SettingsPage });
 
 function SettingsPage() {
-  const { organizationId } = useAuth();
+  const { organizationId, refreshOrg } = useAuth();
   const { t, locale, setLocale } = useI18n();
   const { theme, toggle } = useTheme();
   const perms = usePermissions();
@@ -44,6 +44,7 @@ function SettingsPage() {
     if (!organizationId) return;
     const { error } = await supabase.from("organizations").update({ name, default_currency: currency }).eq("id", organizationId);
     if (error) return toast.error(error.message);
+    await refreshOrg();
     toast.success(t("settings_saved"));
   };
 
@@ -61,9 +62,9 @@ function SettingsPage() {
   return (
     <div>
       <PageHeader title={t("settings")} subtitle={t("settings_subtitle")} />
-      <div className="p-4 md:p-6">
+      <div className="p-4 md:p-6" dir={locale === "ar" ? "rtl" : "ltr"}>
         <Tabs defaultValue="org" className="max-w-3xl">
-          <TabsList>
+          <TabsList className="justify-start">
             <TabsTrigger value="org">{t("organization")}</TabsTrigger>
             <TabsTrigger value="defaults">{t("defaults")}</TabsTrigger>
             <TabsTrigger value="approvals">{t("approvals")}</TabsTrigger>

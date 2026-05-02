@@ -37,7 +37,7 @@ const SAMPLE = [
 const PAGE_SIZE = 25;
 
 function EmployeesPage() {
-  const { organizationId } = useAuth();
+  const { organizationId, defaultCurrency } = useAuth();
   const { t, locale } = useI18n();
   const perms = usePermissions();
   const qc = useQueryClient();
@@ -246,7 +246,7 @@ function EmployeesPage() {
                         <SelectContent>
                           {grades.map((g: any) => (
                             <SelectItem key={g.id} value={g.id}>
-                              {g.grade_code} — {t("midpoint")} {fmtCurrency(Number(g.midpoint), "USD", locale)}
+                              {g.grade_code} — {t("midpoint")} {fmtCurrency(Number(g.midpoint), defaultCurrency, locale)}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -355,7 +355,7 @@ function EmployeesPage() {
                           <td className="px-4 py-2.5">{g?.grade_code ?? "—"}</td>
                           <td className="px-4 py-2.5 text-end num">
                             {perms.canViewSalary
-                              ? fmtCurrency(Number(e.base_salary), "USD", locale)
+                              ? fmtCurrency(Number(e.base_salary), defaultCurrency, locale)
                               : maskSalary(Number(e.base_salary), false)}
                           </td>
                           <td className="px-4 py-2.5 text-end num">{perms.canViewSalary ? compa?.toFixed(2) ?? "—" : "—"}</td>

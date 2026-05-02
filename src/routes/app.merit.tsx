@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { supabase } from "@/integrations/supabase/client";
-import { COMPA_BANDS, PERFORMANCE_RATINGS, compaRatio, compaRatioBand, defaultMeritMatrix, exportCSV, lookupMerit } from "@/lib/comp";
+import { COMPA_BANDS, PERFORMANCE_RATINGS, compaRatio, compaRatioBand, defaultMeritMatrix, exportCSV, lookupMerit, scaleMatrixToBudget } from "@/lib/comp";
 import { fmtCurrency, fmtPercent } from "@/lib/format";
 import { meritBudgetInsights } from "@/lib/insights";
 import { InsightCard } from "@/components/insight-card";
@@ -14,12 +14,12 @@ import { ApprovalBar } from "@/components/approval-bar";
 import { snapshotVersion } from "@/lib/governance";
 import { logAudit } from "@/lib/audit";
 import { toast } from "sonner";
-import { Calculator, Download, Save } from "lucide-react";
+import { Calculator, Download, Save, RotateCcw } from "lucide-react";
 
 export const Route = createFileRoute("/app/merit")({ component: MeritPage });
 
 function MeritPage() {
-  const { organizationId } = useAuth();
+  const { organizationId, defaultCurrency } = useAuth();
   const { t, locale } = useI18n();
   const [employees, setEmployees] = useState<any[]>([]);
   const [grades, setGrades] = useState<any[]>([]);
@@ -28,6 +28,8 @@ function MeritPage() {
   const [cycleId, setCycleId] = useState<string | null>(null);
   const [cycleLocked, setCycleLocked] = useState(false);
   const [saving, setSaving] = useState(false);
+  // Track if user manually edited the matrix; if so, stop auto-scaling on budget change.
+  const [matrixDirty, setMatrixDirty] = useState(false);
 
   useEffect(() => {
     if (!organizationId) return;
@@ -45,11 +47,26 @@ function MeritPage() {
     });
   }, [organizationId]);
 
+  // Auto-scale the merit matrix to the new target budget when the budget changes
+  // (unless the user has manually customised the matrix).
+  useEffect(() => {
+    if (matrixDirty) return;
+    setMatrix(scaleMatrixToBudget(defaultMeritMatrix(), budget, 4));
+  }, [budget, matrixDirty]);
+
   const gradeMap = useMemo(() => new Map(grades.map((g) => [g.id, g])), [grades]);
 
   const setRule = (rating: string, band: string, val: number) => {
     if (cycleLocked) return toast.error(t("approval_lock_blocked"));
+    setMatrixDirty(true);
     setMatrix((m) => m.map((r) => r.performance_rating === rating && r.compa_ratio_band === band ? { ...r, recommended_increase_percent: val } : r));
+  };
+
+  const resetMatrix = () => {
+    if (cycleLocked) return;
+    setMatrixDirty(false);
+    setMatrix(scaleMatrixToBudget(defaultMeritMatrix(), budget, 4));
+    toast.success(t("matrix_scaled_to_budget", { pct: budget }));
   };
 
   const recommendations = useMemo(() => employees.map((e) => {
@@ -148,7 +165,7 @@ function MeritPage() {
           </div>
           <div className="border rounded-lg bg-card p-4">
             <div className="text-xs text-muted-foreground">{t("total_increase")}</div>
-            <div className="text-2xl font-semibold num mt-1">{fmtCurrency(totalIncrease, "USD", locale)}</div>
+            <div className="text-2xl font-semibold num mt-1">{fmtCurrency(totalIncrease, defaultCurrency, locale)}</div>
           </div>
           <div className="border rounded-lg bg-card p-4">
             <div className="text-xs text-muted-foreground">{t("employees")}</div>
@@ -159,7 +176,12 @@ function MeritPage() {
         <InsightCard items={meritBudgetInsights({ targetPct: budget, actualPct: actualBudgetPct })} />
 
         <div className="border rounded-lg bg-card p-4">
-          <h3 className="font-medium text-sm mb-3 flex items-center gap-2"><Calculator className="w-4 h-4" /> {t("merit_guideline_matrix")}</h3>
+          <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+            <h3 className="font-medium text-sm flex items-center gap-2"><Calculator className="w-4 h-4" /> {t("merit_guideline_matrix")}</h3>
+            <Button size="sm" variant="ghost" onClick={resetMatrix} disabled={cycleLocked}>
+              <RotateCcw className="w-3.5 h-3.5 me-1" /> {t("reset_to_default")}
+            </Button>
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm min-w-[560px]">
               <thead className="bg-muted/40 text-xs uppercase text-muted-foreground">
@@ -211,10 +233,10 @@ function MeritPage() {
                     <td className="px-4 py-2.5 text-muted-foreground">{r.rating}</td>
                     <td className="px-4 py-2.5 text-end num">{r.compa.toFixed(2)}</td>
                     <td className="px-4 py-2.5 text-end text-xs text-muted-foreground">{r.band}</td>
-                    <td className="px-4 py-2.5 text-end num">{fmtCurrency(r.base, "USD", locale)}</td>
+                    <td className="px-4 py-2.5 text-end num">{fmtCurrency(r.base, defaultCurrency, locale)}</td>
                     <td className="px-4 py-2.5 text-end num">{r.pct}%</td>
-                    <td className="px-4 py-2.5 text-end num text-success">{fmtCurrency(r.increase, "USD", locale)}</td>
-                    <td className="px-4 py-2.5 text-end num font-medium">{fmtCurrency(r.newSalary, "USD", locale)}</td>
+                    <td className="px-4 py-2.5 text-end num text-success">{fmtCurrency(r.increase, defaultCurrency, locale)}</td>
+                    <td className="px-4 py-2.5 text-end num font-medium">{fmtCurrency(r.newSalary, defaultCurrency, locale)}</td>
                   </tr>
                 ))}
               </tbody>

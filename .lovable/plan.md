@@ -1,104 +1,117 @@
-# Full Arabic Localization & RTL Audit — TotalReward.app
+# خطة الإصلاحات والتحسينات
 
-## Goal
-When the user switches to Arabic, the **entire** app must render in professional, consistent Arabic with full RTL behavior. No stray English (except protected technical terms). Apply the exact glossary you provided.
+سأنفّذ التعديلات بالترتيب الذي ذكرته، مقسّمة على 6 محاور:
 
-## Current state (verified)
-- `src/lib/i18n.tsx` covers ~80 keys — only sidebar labels and a few generic words.
-- Every route file contains **hardcoded English** strings: dialog titles, table headers, placeholders, toasts, tab labels, empty states, chart legends, button labels, KPI captions.
-- `app-shell.tsx` search input placeholder is hardcoded `"Search…"`; aria-labels are English.
-- `app.settings.tsx` still shows the literal phrase "English / العربية with RTL" you flagged.
-- `index.tsx` (landing) feature cards, KPIs, and footer links are hardcoded English.
-- RTL works at the `<html dir>` level, but several layouts use `ml-/mr-/left-/right-/text-left/text-right` instead of logical `ms-/me-/start/end` — these break visually in RTL.
-- Toasts (`toast.success("Welcome back")`, `"Settings saved"`, `"Insufficient permissions"`, `"Employee added"`) are hardcoded.
-- Recharts `Tooltip`/`Bar name="Range"`/`Line name="Midpoint"` labels are hardcoded.
+---
 
-## Protected terms (kept as-is, never translated)
-`TotalReward`, `RewardArchitect`, `COMPA-RATIO`, `Compa`, `CSV`, `Excel`, `PDF`, `USD/EUR/GBP/AED/SAR/EGP/JOD/KWD`, `KPI`, `RTL`, `HRIS`, `MFA`, `RBAC`, `SSO`, `API`, performance band labels when used as technical anchors in matrices (we expose Arabic equivalents you supplied: استثنائي / يفوق التوقعات / يحقق التوقعات / دون التوقعات).
+## 1) عملة المؤسسة موحّدة + عرض ر.س / SAR حسب اللغة
 
-## Approach
+**المشكلة:** كل الصفحات تمرّر `"USD"` ثابتة لـ `fmtCurrency`، فلا تتأثر بإعداد عملة المؤسسة.
 
-### 1. Expand the dictionary (`src/lib/i18n.tsx`)
-Add ~250 new keys covering every visible string from your glossary, grouped by domain:
-- Common: `search_placeholder`, `notifications`, `clear`, `select`, `prev`, `next`, `page_of`, `select_row`, `select_page`, `restricted`, `welcome_back`, `settings_saved`, `insufficient_permissions`, `employee_added`, `auto`, …
-- Dashboard: `comp_overview_subtitle`, `payroll_by_department`, `latest_structures`, `grades_count`, `out_of_range_n`, `above_range`, `below_range`, `active_employees`, …
-- Structures: `define_grade_ranges`, `range_bands_midpoint_trend`, `start_mid`, `effective`, `archived`, `grade_n`, `name`, `currency`, …
-- Employees: `add_employee_title`, `first_name`, `last_name`, `employee_code`, `pick_grade`, `all_departments`, `code`, `compa`, `target_pct`, dept names (engineering/product/hr/finance/marketing/operations/sales), perf ratings (outstanding/exceeds/meets/below), …
-- Allowances: full glossary section (housing %, transportation %, mobile fixed monthly, education annual, shift %, hardship %, custom annual, total cash compensation, monthly equivalent, …).
-- Bonus: individual / bulk tab, `pick_employee_or_manual`, `target_bonus_pct`, `performance_multiplier`, `business_multiplier`, `individual_modifier`, `proration_factor`, `annual_bonus_estimate`, `monthly_equivalent`, `pct_of_base`, …
-- Merit: `merit_subtitle`, `merit_guideline_matrix`, `target_budget`, `actual_budget`, `total_increase`, `new_salary`, `increase_amount`, `increase_pct`, `current`, `band`, …
-- Reports: card titles + subtitles per your list.
-- Audit: `recent_events_n`, `export_excel`, `audit_search_placeholder`, `all_entities`, `no_audit_events`, `audit_empty_hint`, …
-- Settings: `org_defaults_subtitle`, `company_name`, `default_currency`, `appearance`, `light_dark_mode`, `language_helper`, `defaults_helper`, all default bullet points, …
-- Auth + landing: hero, features (6 cards), KPIs, footer (privacy/terms/contact).
+**الحل:**
+- إضافة `defaultCurrency` إلى `AuthProvider` (يُحمّل مع `organizationId` من `organizations.default_currency`).
+- تحديث `fmtCurrency` ليعرض رمزًا محليًا للريال السعودي:
+  - `locale=ar` + `SAR` → "ر.س"
+  - `locale=en` + `SAR` → "SAR"
+  - باقي العملات: `Intl.NumberFormat` الافتراضي.
+- استبدال جميع `fmtCurrency(..., "USD", locale)` بـ `fmtCurrency(..., currency, locale)` حيث `currency = useAuth().defaultCurrency` في الصفحات: `app.index`, `app.merit`, `app.bonus`, `app.allowances`, `app.employees`, `app.employees.$id`, `app.reports`, `app.analytics.equity`.
+- تأكيد بقاء `app.matrix` يستخدم عملة الهيكلة نفسها (لا تتغيّر).
 
-A small helper `t(key, vars)` for interpolation (e.g. `out_of_range_n` → "خارج النطاق ({count})").
+## 2) RTL — تثبيت اتجاه الواجهة في الإعدادات وغيرها
 
-### 2. Replace every hardcoded English string
-Pages to edit (all confirmed to contain hardcoded EN):
-- `src/components/app-shell.tsx` — search placeholder, aria-labels.
-- `src/routes/index.tsx` — landing page (hero, features, KPIs, footer).
-- `src/routes/auth.tsx` — toasts + any remaining labels.
-- `src/routes/app.index.tsx` — dashboard KPIs, sections.
-- `src/routes/app.structures.tsx` — table headers, status badges, "Range bands & midpoint trend".
-- `src/routes/app.matrix.tsx` — chart `name="Range"/"Midpoint"`, "Select structure", table headers.
-- `src/routes/app.employees.tsx` — Add-employee dialog, all column headers, filters, "Clear", "Restricted", pagination labels, toasts.
-- `src/routes/app.employees.$id.tsx` — detail panels.
-- `src/routes/app.bonus.tsx` — tab labels, all form fields, result block.
-- `src/routes/app.merit.tsx` — matrix headers, Performance \ COMPA-RATIO axes, KPI strip.
-- `src/routes/app.allowances.tsx` — every component label per your glossary.
-- `src/routes/app.reports.tsx` — card titles, subtitles, captions.
-- `src/routes/app.audit.tsx` — header, search, filter, empty state.
-- `src/routes/app.settings.tsx` — tabs (Organization/Defaults/Localization), all defaults bullets, fix "English / العربية with RTL" → glossary text.
+**المشكلة:** `Tabs`/`Select`/بعض الجداول لا تأخذ الاتجاه الصحيح في وضع العربية (تظهر يسارًا).
 
-Seed/demo employee names (Sara Khan, Ahmed Hassan, …) stay as-is — these are personal names, not UI strings.
+**الحل:**
+- التأكد من أن `<html dir="rtl">` يُضبط في `__root.tsx` بناءً على `locale` (موجود لكن سنتحقّق).
+- داخل `app.settings.tsx` لفّ المحتوى بـ `dir={locale==="ar" ? "rtl" : "ltr"}` على حاوية `Tabs` لضمان أن أزرار التبويب وقوائم `Select` تمتد جهة اليمين.
+- مراجعة `TabsList` لإضافة `justify-start` بدل أي `justify-end` تلقائي عكسي.
+- إصلاح أي أيقونات لها `me-1`/`ms-1` ثابتة مكسورة في الصفحات المذكورة.
 
-### 3. RTL correctness pass
-- Replace remaining `ml-*/mr-*/left-*/right-*/text-left/text-right` with logical `ms-*/me-*/start-*/end-*/text-start/text-end` in all touched files.
-- Sidebar border, dropdown alignment, drawer slide direction: use `border-s/border-e` and `start/end` so mobile drawer slides from the correct side in AR.
-- Tables: numeric columns keep `text-end` (numbers stay LTR via `dir="ltr"` wrapper on the cell to avoid currency symbol flipping); text columns use `text-start`.
-- Recharts: wrap chart container in `dir="ltr"` (chart geometry must remain LTR; only translate the `name` props for legend/tooltip). This is the standard approach and avoids broken bars.
-- Search inputs: icon position swaps automatically with `ms-*` padding on input + `start-*` icon position.
-- Dialog/Sheet: shadcn already honors `dir`; verify close-button placement.
-- Status badges (`Active`, `Archived`, `above`, `below`): switch to translated strings; styling unchanged.
+## 3) هيكلة الرواتب — زر حذف نهائي + وسم "Pay Structure" بالعربية
 
-### 4. Locale-aware formatting
-- `fmtCurrency`/`fmtNumber` already accept locale — pass `locale` from `useI18n()` everywhere it's currently hardcoded as `"en"` or omitted.
-- Keep currency symbols (USD/SAR/…) as ISO codes — do not localize.
+**المطلوب:**
+- بجانب زر "أرشفة" نضيف زر **حذف نهائي** (Admin فقط) مع تأكيد عبر `AlertDialog` يحذف `salary_structures` + `salary_grades` المرتبطة (cascade يدوي عبر استعلامين متسلسلين).
+- ترجمة عنوان "Pay Structure" → "هيكل الرواتب" (تصحيح أي مفتاح ناقص).
+- تسجيل العملية في `audit_logs` بنوع `delete`.
 
-### 5. Toast & system messages
-Centralize via `t()`: welcome_back, settings_saved, employee_added, insufficient_permissions, export_done, generic error fallback.
+## 4) ربط ميزانية الزيادة السنوية ديناميكيًا
 
-### 6. Fallback rule
-`t(key)` already falls back to English if AR missing. Add a dev-only `console.warn` for missing AR keys so future regressions are visible.
+**المشكلة الحالية:** تغيير "الميزانية المستهدفة" لا يُعيد حساب توصيات المصفوفة، فيظل "الفعلي" و"الإجمالي" ثابتين، وقائمة الموظفين لا تتحدث.
 
-## Files to edit
-1. `src/lib/i18n.tsx` — major dictionary expansion + interpolation helper.
-2. `src/components/app-shell.tsx` — search placeholder, aria-labels, logical spacing.
-3. `src/routes/index.tsx`
-4. `src/routes/auth.tsx`
-5. `src/routes/app.index.tsx`
-6. `src/routes/app.structures.tsx`
-7. `src/routes/app.matrix.tsx`
-8. `src/routes/app.employees.tsx`
-9. `src/routes/app.employees.$id.tsx`
-10. `src/routes/app.bonus.tsx`
-11. `src/routes/app.merit.tsx`
-12. `src/routes/app.allowances.tsx`
-13. `src/routes/app.reports.tsx`
-14. `src/routes/app.audit.tsx`
-15. `src/routes/app.settings.tsx`
+**الحل في `app.merit.tsx`:**
+- إضافة `useEffect` يُعيد قياس مصفوفة `defaultMeritMatrix()` عند تغيّر `budget`:
+  - إذا كان `budget` يختلف عن مرجع 4% الافتراضي، نضرب كل خلية في معامل `budget/4` (مع تقريب لخطوة 0.5%).
+- بدلًا من ذلك (أنظف): دالة `scaleMatrixToBudget(matrix, targetPct, baselinePct)` في `lib/comp.ts`، تُستدعى عند تغيير `budget` فقط.
+- بما أن `recommendations` مُحسوبة عبر `useMemo` تعتمد على `matrix`، ستتحدث القائمة كاملة + KPIs تلقائيًا.
+- إضافة زر صغير "إعادة ضبط افتراضي" لاستعادة المصفوفة الأصلية.
 
-No DB or schema changes. No business-logic changes. No renaming of brand or technical identifiers.
+## 5) الموظفون — قالب Excel + استيراد جماعي + تعديل من الواجهة
 
-## Sample before/after (Arabic)
-- `"Compensation overview at a glance"` → `"نظرة عامة سريعة على التعويضات"`
-- `"English / العربية with RTL"` → `"الإنجليزية / العربية (من اليمين إلى اليسار)"`
-- `"Add employee"` (dialog title) → `"إضافة موظف"`
-- `"Search by name or code"` → `"ابحث بالاسم أو الرمز"`
-- `Bar name="Range"` → `name={t("range")}` → `"النطاق"`
-- `toast.success("Settings saved")` → `toast.success(t("settings_saved"))` → `"تم حفظ الإعدادات"`
-- `"Performance \ COMPA-RATIO"` → `"الأداء \\ COMPA-RATIO"` (COMPA-RATIO preserved)
+**ميزات جديدة في `app.employees.tsx`:**
 
-## Deliverable
-Approve this plan and I'll implement all 15 file edits in one pass, then provide a short changelog with the file list and key before/after samples.
+أ) **تنزيل قالب Excel فارغ**
+- زر "تنزيل القالب" (Admin/Analyst) ينشئ ملف `.xlsx` عبر `lib/excel.ts` بأعمدة:
+  `employee_code, first_name, last_name, email, department, job_title, job_family, location, hire_date, manager_name, grade_code, base_salary, target_bonus_percent, performance_rating`
+- صف توضيحي واحد كمثال + تعليق في رأس الملف.
+
+ب) **استيراد ملف موظفين**
+- زر "استيراد من Excel" يقرأ `.xlsx` بـ `XLSX.read`، يحوّله لصفوف.
+- تحقق Zod لكل صف (اسم، راتب رقم موجب…).
+- ربط `grade_code` → `grade_id` عبر استعلام `salary_grades`.
+- إدراج جماعي عبر `supabase.from("employees").insert(rows)`، مع تقرير "نجح N، فشل M" في حوار.
+- تسجيل audit.
+
+ج) **تعديل بيانات الموظف**
+- زر "تعديل" (قلم) في كل صف يفتح نفس `Dialog` المستخدم للإضافة لكن في وضع تعديل (`form` معبأ مسبقًا) ويستدعي `update` بدل `insert`.
+- يُحدّث `full_name` تلقائيًا، يسجّل audit مع `before/after`.
+
+د) في صفحة بروفايل الموظف `app.employees.$id.tsx`، نضيف زر "تعديل" يفتح نفس الحوار.
+
+## 6) صفحة الموافقات — توضيح الدور + صفحة تفويض الصلاحيات
+
+**أ) إيضاح صفحة الموافقات داخل التطبيق:**
+- إضافة بطاقة شرحية أعلى `app.approvals.tsx` (مكوّن `WhyThisMatters`) تشرح بالعربية:
+  > "الموافقات تُستخدم لاعتماد دورات الزيادة السنوية والمكافآت قبل التطبيق. عند الاعتماد، تُقفل الدورة من التعديل (حسب إعدادات المؤسسة) ويُحفظ snapshot للنسخة المعتمدة. يطلب الموافقة المحلل، ويعتمدها المدير أو Admin."
+- إضافة شارة "دورك الحالي: …" بناءً على `usePermissions().role`.
+
+**ب) صفحة جديدة لتفويض الصلاحيات `/app/team`:**
+- جدول لأعضاء المؤسسة (من `user_roles` join `profiles` على `user_id`).
+- لكل عضو: عرض دوره (admin/analyst/manager/viewer) مع قائمة منسدلة لتغيير الدور.
+- زر "دعوة عضو" (Admin فقط): إدخال email — يظهر الإيميل في قائمة "دعوات معلّقة" ويُحفظ في جدول جديد `pending_invitations` (سنُنشئه عبر migration). عند تسجيل المستخدم بنفس الإيميل، يربطه trigger `handle_new_user` بالمؤسسة بدور المدعو بدل إنشاء مؤسسة جديدة.
+- زر "إزالة" يحذف صف من `user_roles`.
+- جدول `role_permissions` توضيحي للقراءة فقط (مصفوفة: ماذا يستطيع كل دور؟).
+- إضافة الصفحة لقائمة التنقل بأيقونة `UserCog`.
+
+**migration مطلوبة:**
+- جدول `pending_invitations(organization_id, email, role, invited_by, created_at, accepted_at)` مع RLS:
+  - أعضاء المؤسسة يقرؤون.
+  - Admin فقط يُنشئ/يحذف.
+- تحديث `handle_new_user()` ليبحث في `pending_invitations` بالإيميل قبل إنشاء مؤسسة جديدة.
+
+---
+
+## ملخص الملفات المتأثرة
+
+```text
+src/lib/auth.tsx                    + defaultCurrency
+src/lib/format.ts                   تخصيص رمز SAR
+src/lib/comp.ts                     scaleMatrixToBudget
+src/lib/i18n.tsx                    مفاتيح جديدة (ar+en)
+src/components/app-shell.tsx        رابط /app/team
+src/routes/__root.tsx               تأكيد dir
+src/routes/app.index.tsx            عملة من useAuth
+src/routes/app.settings.tsx         RTL على Tabs
+src/routes/app.structures.tsx       زر حذف نهائي
+src/routes/app.merit.tsx            ربط الميزانية بالمصفوفة
+src/routes/app.bonus.tsx            عملة من useAuth
+src/routes/app.allowances.tsx       عملة من useAuth
+src/routes/app.employees.tsx        قالب + استيراد + تعديل
+src/routes/app.employees.$id.tsx    زر تعديل + عملة
+src/routes/app.reports.tsx          عملة من useAuth
+src/routes/app.analytics.equity.tsx عملة من useAuth
+src/routes/app.approvals.tsx        WhyThisMatters
+src/routes/app.team.tsx             جديد
+supabase migration                  pending_invitations + handle_new_user
+```
+
+هل أبدأ التنفيذ بهذا الترتيب؟

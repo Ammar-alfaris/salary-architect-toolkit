@@ -6,8 +6,10 @@ interface AuthCtx {
   user: User | null;
   session: Session | null;
   organizationId: string | null;
+  defaultCurrency: string;
   loading: boolean;
   signOut: () => Promise<void>;
+  refreshOrg: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthCtx | null>(null);
@@ -16,6 +18,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [organizationId, setOrganizationId] = useState<string | null>(null);
+  const [defaultCurrency, setDefaultCurrency] = useState<string>("USD");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -26,6 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setTimeout(() => loadOrg(sess.user!.id), 0);
       } else {
         setOrganizationId(null);
+        setDefaultCurrency("USD");
       }
     });
 
@@ -46,18 +50,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .eq("user_id", uid)
       .limit(1)
       .maybeSingle();
-    setOrganizationId(data?.organization_id ?? null);
+    const orgId = data?.organization_id ?? null;
+    setOrganizationId(orgId);
+    if (orgId) {
+      const { data: org } = await supabase
+        .from("organizations")
+        .select("default_currency")
+        .eq("id", orgId)
+        .maybeSingle();
+      setDefaultCurrency(org?.default_currency || "USD");
+    }
   }
+
+  const refreshOrg = async () => {
+    if (user) await loadOrg(user.id);
+  };
 
   const signOut = async () => {
     await supabase.auth.signOut();
     setUser(null);
     setSession(null);
     setOrganizationId(null);
+    setDefaultCurrency("USD");
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, organizationId, loading, signOut }}>
+    <AuthContext.Provider value={{ user, session, organizationId, defaultCurrency, loading, signOut, refreshOrg }}>
       {children}
     </AuthContext.Provider>
   );
