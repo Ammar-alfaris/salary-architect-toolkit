@@ -86,7 +86,21 @@ function ApprovalsPage() {
     <div>
       <PageHeader title={t("approvals")} subtitle={t("approvals_subtitle")} />
 
-      <div className="p-4 md:p-6">
+      <div className="p-4 md:p-6 space-y-4">
+        <div className="rounded-lg border bg-primary/5 ring-1 ring-primary/20 p-4 flex items-start gap-3">
+          <Info className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+          <div className="space-y-1 text-sm">
+            <h3 className="font-medium">{t("what_is_approvals")}</h3>
+            <p className="text-muted-foreground text-xs leading-relaxed">{t("what_is_approvals_body")}</p>
+            {perms.role && (
+              <div className="pt-1 inline-flex items-center gap-1.5 text-xs">
+                <ShieldCheck className="w-3.5 h-3.5 text-primary" />
+                <span className="text-foreground/80">{t("your_role_is", { role: t(`role_${perms.role}`) })}</span>
+              </div>
+            )}
+          </div>
+        </div>
+
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList>
             <TabsTrigger value="pending">{t("status_pending")} ({counts.pending})</TabsTrigger>
