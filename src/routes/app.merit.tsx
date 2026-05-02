@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { supabase } from "@/integrations/supabase/client";
-import { COMPA_BANDS, PERFORMANCE_RATINGS, compaRatio, compaRatioBand, defaultMeritMatrix, exportCSV, lookupMerit } from "@/lib/comp";
+import { COMPA_BANDS, PERFORMANCE_RATINGS, compaRatio, compaRatioBand, defaultMeritMatrix, exportCSV, lookupMerit, scaleMatrixToBudget } from "@/lib/comp";
 import { fmtCurrency, fmtPercent } from "@/lib/format";
 import { meritBudgetInsights } from "@/lib/insights";
 import { InsightCard } from "@/components/insight-card";
@@ -14,12 +14,12 @@ import { ApprovalBar } from "@/components/approval-bar";
 import { snapshotVersion } from "@/lib/governance";
 import { logAudit } from "@/lib/audit";
 import { toast } from "sonner";
-import { Calculator, Download, Save } from "lucide-react";
+import { Calculator, Download, Save, RotateCcw } from "lucide-react";
 
 export const Route = createFileRoute("/app/merit")({ component: MeritPage });
 
 function MeritPage() {
-  const { organizationId } = useAuth();
+  const { organizationId, defaultCurrency } = useAuth();
   const { t, locale } = useI18n();
   const [employees, setEmployees] = useState<any[]>([]);
   const [grades, setGrades] = useState<any[]>([]);
@@ -28,6 +28,8 @@ function MeritPage() {
   const [cycleId, setCycleId] = useState<string | null>(null);
   const [cycleLocked, setCycleLocked] = useState(false);
   const [saving, setSaving] = useState(false);
+  // Track if user manually edited the matrix; if so, stop auto-scaling on budget change.
+  const [matrixDirty, setMatrixDirty] = useState(false);
 
   useEffect(() => {
     if (!organizationId) return;
@@ -45,11 +47,26 @@ function MeritPage() {
     });
   }, [organizationId]);
 
+  // Auto-scale the merit matrix to the new target budget when the budget changes
+  // (unless the user has manually customised the matrix).
+  useEffect(() => {
+    if (matrixDirty) return;
+    setMatrix(scaleMatrixToBudget(defaultMeritMatrix(), budget, 4));
+  }, [budget, matrixDirty]);
+
   const gradeMap = useMemo(() => new Map(grades.map((g) => [g.id, g])), [grades]);
 
   const setRule = (rating: string, band: string, val: number) => {
     if (cycleLocked) return toast.error(t("approval_lock_blocked"));
+    setMatrixDirty(true);
     setMatrix((m) => m.map((r) => r.performance_rating === rating && r.compa_ratio_band === band ? { ...r, recommended_increase_percent: val } : r));
+  };
+
+  const resetMatrix = () => {
+    if (cycleLocked) return;
+    setMatrixDirty(false);
+    setMatrix(scaleMatrixToBudget(defaultMeritMatrix(), budget, 4));
+    toast.success(t("matrix_scaled_to_budget", { pct: budget }));
   };
 
   const recommendations = useMemo(() => employees.map((e) => {
