@@ -14,6 +14,74 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_settings: {
+        Row: {
+          admin_contact_email: string | null
+          blog_permalink_pattern: string
+          branding: Json
+          contact_form_routing: string | null
+          default_currency: string
+          default_locale: string
+          default_plan_id: string | null
+          default_sender_email: string | null
+          default_trial_days: number
+          id: string
+          maintenance_mode: boolean
+          notifications: Json
+          platform_name: string
+          security: Json
+          support_email: string | null
+          timezone: string
+          updated_at: string
+        }
+        Insert: {
+          admin_contact_email?: string | null
+          blog_permalink_pattern?: string
+          branding?: Json
+          contact_form_routing?: string | null
+          default_currency?: string
+          default_locale?: string
+          default_plan_id?: string | null
+          default_sender_email?: string | null
+          default_trial_days?: number
+          id?: string
+          maintenance_mode?: boolean
+          notifications?: Json
+          platform_name?: string
+          security?: Json
+          support_email?: string | null
+          timezone?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_contact_email?: string | null
+          blog_permalink_pattern?: string
+          branding?: Json
+          contact_form_routing?: string | null
+          default_currency?: string
+          default_locale?: string
+          default_plan_id?: string | null
+          default_sender_email?: string | null
+          default_trial_days?: number
+          id?: string
+          maintenance_mode?: boolean
+          notifications?: Json
+          platform_name?: string
+          security?: Json
+          support_email?: string | null
+          timezone?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_settings_default_plan_id_fkey"
+            columns: ["default_plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       allowance_policies: {
         Row: {
           country: string | null
@@ -66,6 +134,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      announcements: {
+        Row: {
+          audience: string
+          body: string
+          created_at: string
+          created_by: string | null
+          cta_label: string | null
+          cta_link: string | null
+          end_at: string | null
+          id: string
+          is_active: boolean
+          start_at: string | null
+          target_org_ids: string[]
+          title: string
+          type: string
+        }
+        Insert: {
+          audience?: string
+          body: string
+          created_at?: string
+          created_by?: string | null
+          cta_label?: string | null
+          cta_link?: string | null
+          end_at?: string | null
+          id?: string
+          is_active?: boolean
+          start_at?: string | null
+          target_org_ids?: string[]
+          title: string
+          type?: string
+        }
+        Update: {
+          audience?: string
+          body?: string
+          created_at?: string
+          created_by?: string | null
+          cta_label?: string | null
+          cta_link?: string | null
+          end_at?: string | null
+          id?: string
+          is_active?: boolean
+          start_at?: string | null
+          target_org_ids?: string[]
+          title?: string
+          type?: string
+        }
+        Relationships: []
       }
       approval_requests: {
         Row: {
@@ -165,6 +281,101 @@ export type Database = {
           organization_id?: string
         }
         Relationships: []
+      }
+      blog_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
+      blog_posts: {
+        Row: {
+          author_id: string | null
+          canonical_url: string | null
+          category_id: string | null
+          content: string | null
+          created_at: string
+          excerpt: string | null
+          featured_image_alt: string | null
+          featured_image_url: string | null
+          id: string
+          is_featured: boolean
+          publish_at: string | null
+          seo_description: string | null
+          seo_title: string | null
+          slug: string
+          status: string
+          tags: string[]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author_id?: string | null
+          canonical_url?: string | null
+          category_id?: string | null
+          content?: string | null
+          created_at?: string
+          excerpt?: string | null
+          featured_image_alt?: string | null
+          featured_image_url?: string | null
+          id?: string
+          is_featured?: boolean
+          publish_at?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
+          slug: string
+          status?: string
+          tags?: string[]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string | null
+          canonical_url?: string | null
+          category_id?: string | null
+          content?: string | null
+          created_at?: string
+          excerpt?: string | null
+          featured_image_alt?: string | null
+          featured_image_url?: string | null
+          id?: string
+          is_featured?: boolean
+          publish_at?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
+          slug?: string
+          status?: string
+          tags?: string[]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blog_posts_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "blog_categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       bonus_cycles: {
         Row: {
@@ -310,6 +521,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      contact_messages: {
+        Row: {
+          assigned_to: string | null
+          created_at: string
+          email: string
+          id: string
+          internal_notes: string | null
+          message: string
+          name: string
+          priority: string
+          source_form: string | null
+          status: string
+          subject: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          internal_notes?: string | null
+          message: string
+          name: string
+          priority?: string
+          source_form?: string | null
+          status?: string
+          subject?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          internal_notes?: string | null
+          message?: string
+          name?: string
+          priority?: string
+          source_form?: string | null
+          status?: string
+          subject?: string | null
+        }
+        Relationships: []
       }
       employee_allowances: {
         Row: {
@@ -703,6 +956,96 @@ export type Database = {
         }
         Relationships: []
       }
+      plans: {
+        Row: {
+          annual_price: number
+          created_at: string
+          cta_label: string | null
+          currency: string
+          description: string | null
+          features: Json
+          id: string
+          is_recommended: boolean
+          is_visible: boolean
+          max_employees: number
+          max_users: number
+          monthly_price: number
+          name: string
+          slug: string
+          sort_order: number
+          status: string
+          trial_days: number
+          updated_at: string
+        }
+        Insert: {
+          annual_price?: number
+          created_at?: string
+          cta_label?: string | null
+          currency?: string
+          description?: string | null
+          features?: Json
+          id?: string
+          is_recommended?: boolean
+          is_visible?: boolean
+          max_employees?: number
+          max_users?: number
+          monthly_price?: number
+          name: string
+          slug: string
+          sort_order?: number
+          status?: string
+          trial_days?: number
+          updated_at?: string
+        }
+        Update: {
+          annual_price?: number
+          created_at?: string
+          cta_label?: string | null
+          currency?: string
+          description?: string | null
+          features?: Json
+          id?: string
+          is_recommended?: boolean
+          is_visible?: boolean
+          max_employees?: number
+          max_users?: number
+          monthly_price?: number
+          name?: string
+          slug?: string
+          sort_order?: number
+          status?: string
+          trial_days?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      platform_admins: {
+        Row: {
+          created_at: string
+          id: string
+          last_login_at: string | null
+          role: Database["public"]["Enums"]["platform_role"]
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_login_at?: string | null
+          role?: Database["public"]["Enums"]["platform_role"]
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_login_at?: string | null
+          role?: Database["public"]["Enums"]["platform_role"]
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -851,6 +1194,160 @@ export type Database = {
           },
         ]
       }
+      subscriptions: {
+        Row: {
+          amount: number
+          auto_renew: boolean
+          billing_cycle: string
+          created_at: string
+          end_at: string | null
+          id: string
+          notes: string | null
+          organization_id: string
+          payment_status: string
+          plan_id: string | null
+          renewal_at: string | null
+          start_at: string | null
+          status: string
+          trial_end_at: string | null
+          trial_start_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          auto_renew?: boolean
+          billing_cycle?: string
+          created_at?: string
+          end_at?: string | null
+          id?: string
+          notes?: string | null
+          organization_id: string
+          payment_status?: string
+          plan_id?: string | null
+          renewal_at?: string | null
+          start_at?: string | null
+          status?: string
+          trial_end_at?: string | null
+          trial_start_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          auto_renew?: boolean
+          billing_cycle?: string
+          created_at?: string
+          end_at?: string | null
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          payment_status?: string
+          plan_id?: string | null
+          renewal_at?: string | null
+          start_at?: string | null
+          status?: string
+          trial_end_at?: string | null
+          trial_start_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_tickets: {
+        Row: {
+          assigned_to: string | null
+          category: string | null
+          created_at: string
+          description: string | null
+          id: string
+          organization_id: string | null
+          priority: string
+          requester_email: string
+          requester_name: string
+          status: string
+          subject: string
+          tags: string[]
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          organization_id?: string | null
+          priority?: string
+          requester_email: string
+          requester_name: string
+          status?: string
+          subject: string
+          tags?: string[]
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          organization_id?: string | null
+          priority?: string
+          requester_email?: string
+          requester_name?: string
+          status?: string
+          subject?: string
+          tags?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ticket_messages: {
+        Row: {
+          created_at: string
+          id: string
+          is_internal: boolean
+          message: string
+          sender_id: string | null
+          sender_name: string | null
+          sender_type: string
+          ticket_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_internal?: boolean
+          message: string
+          sender_id?: string | null
+          sender_name?: string | null
+          sender_type?: string
+          ticket_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_internal?: boolean
+          message?: string
+          sender_id?: string | null
+          sender_name?: string | null
+          sender_type?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -930,9 +1427,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_platform_role: {
+        Args: { _uid: string }
+        Returns: Database["public"]["Enums"]["platform_role"]
+      }
       get_user_role: {
         Args: { _org_id: string; _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
+      }
+      has_platform_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["platform_role"]
+          _uid: string
+        }
+        Returns: boolean
       }
       has_role: {
         Args: {
@@ -946,11 +1454,19 @@ export type Database = {
         Args: { _org_id: string; _user_id: string }
         Returns: boolean
       }
+      is_platform_admin: { Args: { _uid: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "analyst" | "viewer" | "manager"
       cycle_status: "draft" | "in_review" | "approved" | "closed"
       employment_status: "active" | "on_leave" | "terminated"
+      platform_role:
+        | "super_admin"
+        | "platform_admin"
+        | "content_manager"
+        | "support_manager"
+        | "billing_manager"
+        | "viewer"
       progression_type: "fixed" | "custom"
       spread_type: "fixed" | "variable"
     }
@@ -1083,6 +1599,14 @@ export const Constants = {
       app_role: ["admin", "analyst", "viewer", "manager"],
       cycle_status: ["draft", "in_review", "approved", "closed"],
       employment_status: ["active", "on_leave", "terminated"],
+      platform_role: [
+        "super_admin",
+        "platform_admin",
+        "content_manager",
+        "support_manager",
+        "billing_manager",
+        "viewer",
+      ],
       progression_type: ["fixed", "custom"],
       spread_type: ["fixed", "variable"],
     },
