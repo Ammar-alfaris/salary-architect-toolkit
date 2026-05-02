@@ -165,7 +165,7 @@ function MeritPage() {
           </div>
           <div className="border rounded-lg bg-card p-4">
             <div className="text-xs text-muted-foreground">{t("total_increase")}</div>
-            <div className="text-2xl font-semibold num mt-1">{fmtCurrency(totalIncrease, "USD", locale)}</div>
+            <div className="text-2xl font-semibold num mt-1">{fmtCurrency(totalIncrease, defaultCurrency, locale)}</div>
           </div>
           <div className="border rounded-lg bg-card p-4">
             <div className="text-xs text-muted-foreground">{t("employees")}</div>
@@ -228,10 +228,10 @@ function MeritPage() {
                     <td className="px-4 py-2.5 text-muted-foreground">{r.rating}</td>
                     <td className="px-4 py-2.5 text-end num">{r.compa.toFixed(2)}</td>
                     <td className="px-4 py-2.5 text-end text-xs text-muted-foreground">{r.band}</td>
-                    <td className="px-4 py-2.5 text-end num">{fmtCurrency(r.base, "USD", locale)}</td>
+                    <td className="px-4 py-2.5 text-end num">{fmtCurrency(r.base, defaultCurrency, locale)}</td>
                     <td className="px-4 py-2.5 text-end num">{r.pct}%</td>
-                    <td className="px-4 py-2.5 text-end num text-success">{fmtCurrency(r.increase, "USD", locale)}</td>
-                    <td className="px-4 py-2.5 text-end num font-medium">{fmtCurrency(r.newSalary, "USD", locale)}</td>
+                    <td className="px-4 py-2.5 text-end num text-success">{fmtCurrency(r.increase, defaultCurrency, locale)}</td>
+                    <td className="px-4 py-2.5 text-end num font-medium">{fmtCurrency(r.newSalary, defaultCurrency, locale)}</td>
                   </tr>
                 ))}
               </tbody>
