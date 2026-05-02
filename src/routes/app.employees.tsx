@@ -200,6 +200,110 @@ function EmployeesPage() {
     refresh();
   };
 
+
+  const handleImportFile = async (file: File) => {
+    if (!organizationId || !perms.canEdit) return;
+    try {
+      const rows = await parseXLSX(file);
+      if (rows.length === 0) return toast.error(t("no_employees_match"));
+      // Build code → grade_id map for fast lookup
+      const codeToGrade = new Map<string, string>();
+      grades.forEach((g: any) => codeToGrade.set(String(g.grade_code).toLowerCase(), g.id));
+
+      // Skip duplicates (existing codes)
+      const existingCodes = new Set(employees.map((e: any) => String(e.employee_code).toLowerCase()));
+      let ok = 0;
+      let fail = 0;
+      const toInsert: any[] = [];
+      for (const r of rows) {
+        const code = String(r.employee_code ?? "").trim();
+        if (!code || existingCodes.has(code.toLowerCase())) { fail++; continue; }
+        const gradeCode = String(r.grade_code ?? "").trim().toLowerCase();
+        toInsert.push({
+          organization_id: organizationId,
+          employee_code: code,
+          first_name: String(r.first_name ?? "").trim() || "—",
+          last_name: String(r.last_name ?? "").trim() || "—",
+          email: String(r.email ?? "").trim() || null,
+          department: String(r.department ?? "").trim() || null,
+          job_title: String(r.job_title ?? "").trim() || null,
+          job_family: String(r.job_family ?? "").trim() || null,
+          location: String(r.location ?? "").trim() || null,
+          grade_id: gradeCode ? codeToGrade.get(gradeCode) ?? null : null,
+          base_salary: Number(r.base_salary) || 0,
+          target_bonus_percent: Number(r.target_bonus_percent) || 0,
+          performance_rating: String(r.performance_rating ?? "Meets").trim() || "Meets",
+          hire_date: r.hire_date ? String(r.hire_date) : null,
+          manager_name: String(r.manager_name ?? "").trim() || null,
+        });
+        ok++;
+      }
+      if (toInsert.length) {
+        const { error } = await supabase.from("employees").insert(toInsert);
+        if (error) { toast.error(error.message); return; }
+      }
+      toast.success(t("import_results", { ok, fail }));
+      await logAudit({ organizationId, action: "create", entityType: "employee", entityLabel: `Excel import (${ok} added, ${fail} skipped)`, metadata: { ok, fail } });
+      refresh();
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  };
+
+  const openEdit = (emp: any) => {
+    setEditTarget(emp);
+    setEditForm({
+      first_name: emp.first_name ?? "",
+      last_name: emp.last_name ?? "",
+      department: emp.department ?? "",
+      job_title: emp.job_title ?? "",
+      job_family: emp.job_family ?? "",
+      location: emp.location ?? "",
+      base_salary: Number(emp.base_salary) || 0,
+      target_bonus_percent: Number(emp.target_bonus_percent) || 0,
+      grade_id: emp.grade_id ?? "",
+      performance_rating: emp.performance_rating ?? "Meets",
+    });
+  };
+
+  const handleSaveEdit = async () => {
+    if (!organizationId || !editTarget || !editForm) return;
+    if (!perms.canEdit) return toast.error(t("insufficient_permissions"));
+    const before = {
+      base_salary: Number(editTarget.base_salary),
+      target_bonus_percent: Number(editTarget.target_bonus_percent),
+      grade_id: editTarget.grade_id,
+      job_title: editTarget.job_title,
+    };
+    const { error } = await supabase
+      .from("employees")
+      .update({
+        first_name: editForm.first_name,
+        last_name: editForm.last_name,
+        department: editForm.department || null,
+        job_title: editForm.job_title || null,
+        job_family: editForm.job_family || null,
+        location: editForm.location || null,
+        base_salary: editForm.base_salary,
+        target_bonus_percent: editForm.target_bonus_percent,
+        grade_id: editForm.grade_id || null,
+        performance_rating: editForm.performance_rating,
+      })
+      .eq("id", editTarget.id);
+    if (error) return toast.error(error.message);
+    toast.success(t("save_changes"));
+    await logAudit({
+      organizationId, action: "update", entityType: "employee", entityId: editTarget.id,
+      entityLabel: `${editForm.first_name} ${editForm.last_name}`,
+      before, after: { base_salary: editForm.base_salary, target_bonus_percent: editForm.target_bonus_percent, grade_id: editForm.grade_id || null, job_title: editForm.job_title },
+    });
+    setEditTarget(null);
+    setEditForm(null);
+    refresh();
+  };
+
   return (
     <div>
       <PageHeader
