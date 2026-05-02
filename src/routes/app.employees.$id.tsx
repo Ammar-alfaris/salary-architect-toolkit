@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
+import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { calculateBonus, compaRatio, rangePenetration, rangePosition, calculateAllowances } from "@/lib/comp";
 import { fmtCurrency, fmtPercent } from "@/lib/format";
@@ -15,6 +16,7 @@ export const Route = createFileRoute("/app/employees/$id")({ component: Employee
 function EmployeeProfile() {
   const { id } = Route.useParams();
   const { t, locale } = useI18n();
+  const { defaultCurrency } = useAuth();
   const [emp, setEmp] = useState<any>(null);
   const [grade, setGrade] = useState<any>(null);
   const [peers, setPeers] = useState<any[]>([]);
