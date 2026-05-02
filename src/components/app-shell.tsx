@@ -27,6 +27,7 @@ const nav = [
   { to: "/app/approvals", icon: CheckSquare, key: "approvals" },
   { to: "/app/reports", icon: FileBarChart, key: "reports" },
   { to: "/app/audit", icon: ShieldCheck, key: "audit_log" },
+  { to: "/app/team", icon: UsersRound, key: "team" },
   { to: "/app/settings", icon: SettingsIcon, key: "settings" },
 ] as const;
 
