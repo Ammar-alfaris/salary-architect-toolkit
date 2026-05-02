@@ -49,14 +49,14 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex w-full bg-background">
       {/* Sidebar */}
-      <aside className="hidden md:flex w-60 shrink-0 flex-col bg-sidebar text-sidebar-foreground border-e border-sidebar-border">
-        <div className="h-14 flex items-center gap-2 px-4 border-b border-sidebar-border">
+      <aside className="hidden md:flex w-60 shrink-0 flex-col bg-slate-900 text-slate-100 border-e border-slate-800">
+        <div className="h-14 flex items-center gap-2 px-4 border-b border-slate-800">
           <div className="w-8 h-8 rounded bg-primary flex items-center justify-center">
             <ShieldCheck className="w-4 h-4 text-primary-foreground" />
           </div>
           <div className="min-w-0">
-            <div className="font-semibold text-sm tracking-tight">Super Admin</div>
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Console</div>
+            <div className="font-semibold text-sm tracking-tight text-white">Super Admin</div>
+            <div className="text-[10px] uppercase tracking-wider text-slate-400">Console</div>
           </div>
         </div>
         <nav className="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto">
@@ -66,7 +66,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             return (
               <Link key={it.to} to={it.to}
                 className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
-                  active ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" : "hover:bg-sidebar-accent/50"
+                  active ? "bg-slate-800 text-white font-medium" : "text-slate-300 hover:bg-slate-800 hover:text-white"
                 }`}>
                 <Icon className="w-4 h-4 shrink-0" />
                 <span>{it.label}</span>
@@ -74,8 +74,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             );
           })}
         </nav>
-        <div className="p-3 border-t border-sidebar-border">
-          <Link to="/app" className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground">
+        <div className="p-3 border-t border-slate-800">
+          <Link to="/app" className="flex items-center gap-2 text-xs text-slate-400 hover:text-white">
             <ArrowLeft className="w-3.5 h-3.5" /> Back to tenant app
           </Link>
         </div>
@@ -83,18 +83,18 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
       {mobileOpen && (
         <div className="md:hidden fixed inset-0 z-40 flex">
-          <div className="absolute inset-0 bg-foreground/40" onClick={() => setMobileOpen(false)} />
-          <aside className="relative w-60 bg-sidebar border-e border-sidebar-border">
-            <div className="h-14 flex items-center gap-2 px-4 border-b">
+          <div className="absolute inset-0 bg-black/60" onClick={() => setMobileOpen(false)} />
+          <aside className="relative w-60 bg-slate-900 text-slate-100 border-e border-slate-800">
+            <div className="h-14 flex items-center gap-2 px-4 border-b border-slate-800">
               <ShieldCheck className="w-5 h-5 text-primary" />
-              <span className="font-semibold text-sm">Super Admin</span>
+              <span className="font-semibold text-sm text-white">Super Admin</span>
             </div>
             <nav className="px-2 py-3 space-y-0.5">
               {items.map((it) => {
                 const Icon = it.icon;
                 return (
                   <Link key={it.to} to={it.to} onClick={() => setMobileOpen(false)}
-                    className="flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-sidebar-accent/50">
+                    className="flex items-center gap-3 px-3 py-2 rounded-md text-sm text-slate-300 hover:bg-slate-800 hover:text-white">
                     <Icon className="w-4 h-4" /><span>{it.label}</span>
                   </Link>
                 );

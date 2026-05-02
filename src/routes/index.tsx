@@ -42,6 +42,7 @@ function Landing() {
             <a href="#features" className="hover:text-foreground">{t("features")}</a>
             <a href="#modules" className="hover:text-foreground">{t("modules")}</a>
             <a href="#cta" className="hover:text-foreground">{t("pricing")}</a>
+            <Link to="/blog" className="hover:text-foreground">Blog</Link>
           </nav>
           <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
             <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setLocale(locale === "en" ? "ar" : "en")} aria-label={t("language")}>
