@@ -524,6 +524,51 @@ function EmployeesPage() {
           )}
         </div>
       </div>
+
+      {/* Edit dialog */}
+      <Dialog open={!!editTarget} onOpenChange={(o) => { if (!o) { setEditTarget(null); setEditForm(null); } }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{t("edit_employee")}{editTarget ? ` — ${editTarget.full_name ?? editTarget.employee_code}` : ""}</DialogTitle>
+          </DialogHeader>
+          {editForm && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="space-y-1.5"><Label>{t("first_name")}</Label><Input value={editForm.first_name} onChange={(ev) => setEditForm({ ...editForm, first_name: ev.target.value })} /></div>
+              <div className="space-y-1.5"><Label>{t("last_name")}</Label><Input value={editForm.last_name} onChange={(ev) => setEditForm({ ...editForm, last_name: ev.target.value })} /></div>
+              <div className="space-y-1.5"><Label>{t("department")}</Label><Input value={editForm.department} onChange={(ev) => setEditForm({ ...editForm, department: ev.target.value })} /></div>
+              <div className="space-y-1.5"><Label>{t("job_title")}</Label><Input value={editForm.job_title} onChange={(ev) => setEditForm({ ...editForm, job_title: ev.target.value })} /></div>
+              <div className="space-y-1.5"><Label>{t("location")}</Label><Input value={editForm.location} onChange={(ev) => setEditForm({ ...editForm, location: ev.target.value })} /></div>
+              <div className="space-y-1.5"><Label>{t("job_family")}</Label><Input value={editForm.job_family} onChange={(ev) => setEditForm({ ...editForm, job_family: ev.target.value })} /></div>
+              <div className="space-y-1.5"><Label>{t("base_salary")}</Label><Input type="number" value={editForm.base_salary} onChange={(ev) => setEditForm({ ...editForm, base_salary: +ev.target.value || 0 })} /></div>
+              <div className="space-y-1.5"><Label>{t("target_bonus_pct")}</Label><Input type="number" step="0.5" value={editForm.target_bonus_percent} onChange={(ev) => setEditForm({ ...editForm, target_bonus_percent: +ev.target.value || 0 })} /></div>
+              <div className="space-y-1.5">
+                <Label>{t("grade")}</Label>
+                <Select value={editForm.grade_id} onValueChange={(v) => setEditForm({ ...editForm, grade_id: v })}>
+                  <SelectTrigger><SelectValue placeholder={t("pick_grade")} /></SelectTrigger>
+                  <SelectContent>
+                    {grades.map((g: any) => (
+                      <SelectItem key={g.id} value={g.id}>
+                        {g.grade_code} — {t("midpoint")} {fmtCurrency(Number(g.midpoint), defaultCurrency, locale)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>{t("performance")}</Label>
+                <Select value={editForm.performance_rating} onValueChange={(v) => setEditForm({ ...editForm, performance_rating: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{PERFORMANCE_RATINGS.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => { setEditTarget(null); setEditForm(null); }}>{t("cancel")}</Button>
+            <Button onClick={handleSaveEdit}>{t("save_changes")}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
