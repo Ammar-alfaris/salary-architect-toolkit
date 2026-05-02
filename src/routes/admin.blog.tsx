@@ -104,9 +104,9 @@ function BlogList() {
             });
           }
           if (toInsert.length > 0) {
-            const { error, count } = await supabase.from("blog_posts").insert(toInsert).select("id", { count: "exact", head: true });
+            const { data: ins, error } = await supabase.from("blog_posts").insert(toInsert).select("id");
             if (error) throw error;
-            inserted = count ?? toInsert.length;
+            inserted = ins?.length ?? toInsert.length;
           }
           toast.success(`Imported ${inserted}. Skipped ${skipped} duplicate slug(s). ${invalid} invalid row(s).`);
           load();
