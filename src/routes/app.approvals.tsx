@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { decideApproval, type ApprovalEntity } from "@/lib/governance";
 import { usePermissions } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
-import { CheckCircle2, XCircle, Clock, FileBarChart, Layers, Gift, TrendingUp } from "lucide-react";
+import { CheckCircle2, XCircle, Clock, FileBarChart, Layers, Gift, TrendingUp, Info, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/approvals")({ component: ApprovalsPage });
