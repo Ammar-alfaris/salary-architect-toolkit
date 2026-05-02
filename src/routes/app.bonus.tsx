@@ -84,13 +84,13 @@ function BonusPage() {
 
               <div className="border rounded-lg bg-card p-5">
                 <h3 className="font-semibold text-sm mb-3 flex items-center gap-2"><Calculator className="w-4 h-4" /> {t("result")}</h3>
-                <div className="text-3xl font-semibold num">{fmtCurrency(bonus, "USD", locale)}</div>
+                <div className="text-3xl font-semibold num">{fmtCurrency(bonus, defaultCurrency, locale)}</div>
                 <p className="text-xs text-muted-foreground mt-1">{t("annual_bonus_estimate")}</p>
                 <div className="mt-4 text-xs text-muted-foreground space-y-1.5">
                   <div className="font-mono p-2.5 bg-muted/50 rounded text-foreground/80" dir="ltr">
                     base × target% × perf × biz × ind × proration
                   </div>
-                  <div>{t("monthly_equivalent")}: <span className="num text-foreground">{fmtCurrency(bonus / 12, "USD", locale)}</span></div>
+                  <div>{t("monthly_equivalent")}: <span className="num text-foreground">{fmtCurrency(bonus / 12, defaultCurrency, locale)}</span></div>
                   <div>{t("pct_of_base")}: <span className="num text-foreground">{base ? fmtPercent((bonus / base) * 100, locale) : "—"}</span></div>
                 </div>
               </div>
@@ -108,8 +108,8 @@ function BonusPage() {
             {bulkResults.length > 0 && (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <div className="border rounded-lg bg-card p-4"><div className="text-xs text-muted-foreground">{t("total_budget")}</div><div className="text-2xl font-semibold num mt-1">{fmtCurrency(totalBudget, "USD", locale)}</div></div>
-                  <div className="border rounded-lg bg-card p-4"><div className="text-xs text-muted-foreground">{t("avg_bonus")}</div><div className="text-2xl font-semibold num mt-1">{fmtCurrency(totalBudget / bulkResults.length, "USD", locale)}</div></div>
+                  <div className="border rounded-lg bg-card p-4"><div className="text-xs text-muted-foreground">{t("total_budget")}</div><div className="text-2xl font-semibold num mt-1">{fmtCurrency(totalBudget, defaultCurrency, locale)}</div></div>
+                  <div className="border rounded-lg bg-card p-4"><div className="text-xs text-muted-foreground">{t("avg_bonus")}</div><div className="text-2xl font-semibold num mt-1">{fmtCurrency(totalBudget / bulkResults.length, defaultCurrency, locale)}</div></div>
                   <div className="border rounded-lg bg-card p-4 flex items-end justify-end"><Button variant="outline" size="sm" onClick={() => exportCSV("bonus.csv", bulkResults)}><Download className="w-4 h-4 me-1" />{t("export_csv")}</Button></div>
                 </div>
                 <div className="border rounded-lg bg-card overflow-hidden">
@@ -118,7 +118,7 @@ function BonusPage() {
                       <thead className="bg-muted/40 text-xs uppercase text-muted-foreground"><tr><th className="text-start px-4 py-2.5">{t("name")}</th><th className="text-start px-4 py-2.5">{t("dept_short")}</th><th className="text-end px-4 py-2.5">{t("base")}</th><th className="text-end px-4 py-2.5">{t("target_pct_short")}</th><th className="text-end px-4 py-2.5">{t("bonus_label")}</th></tr></thead>
                       <tbody>
                         {bulkResults.map((r) => (
-                          <tr key={r.id} className="border-t"><td className="px-4 py-2.5">{r.name}</td><td className="px-4 py-2.5 text-muted-foreground">{r.dept}</td><td className="px-4 py-2.5 text-end num">{fmtCurrency(r.base, "USD", locale)}</td><td className="px-4 py-2.5 text-end num">{r.target}%</td><td className="px-4 py-2.5 text-end num font-medium">{fmtCurrency(r.bonus, "USD", locale)}</td></tr>
+                          <tr key={r.id} className="border-t"><td className="px-4 py-2.5">{r.name}</td><td className="px-4 py-2.5 text-muted-foreground">{r.dept}</td><td className="px-4 py-2.5 text-end num">{fmtCurrency(r.base, defaultCurrency, locale)}</td><td className="px-4 py-2.5 text-end num">{r.target}%</td><td className="px-4 py-2.5 text-end num font-medium">{fmtCurrency(r.bonus, defaultCurrency, locale)}</td></tr>
                         ))}
                       </tbody>
                     </table>

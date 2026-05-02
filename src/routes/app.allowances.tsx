@@ -89,20 +89,20 @@ function AllowancesPage() {
         <div className="space-y-4">
           <div className="border rounded-lg bg-card p-5">
             <div className="flex items-center gap-2 mb-2"><Wallet className="w-4 h-4 text-accent" /><h3 className="font-semibold text-sm">{t("total_allowances")}</h3></div>
-            <div className="text-3xl font-semibold num">{fmtCurrency(result.total, "USD", locale)}</div>
-            <p className="text-xs text-muted-foreground mt-1">{t("annual")} • {fmtCurrency(monthly, "USD", locale)}{t("monthly_equiv_short")}</p>
+            <div className="text-3xl font-semibold num">{fmtCurrency(result.total, defaultCurrency, locale)}</div>
+            <p className="text-xs text-muted-foreground mt-1">{t("annual")} • {fmtCurrency(monthly, defaultCurrency, locale)}{t("monthly_equiv_short")}</p>
             <div className="mt-4 pt-4 border-t space-y-1.5 text-sm">
               {breakdown.map((b) => (
-                <div key={b.label} className="flex justify-between"><span className="text-muted-foreground">{b.label}</span><span className="num font-medium">{fmtCurrency(b.value, "USD", locale)}</span></div>
+                <div key={b.label} className="flex justify-between"><span className="text-muted-foreground">{b.label}</span><span className="num font-medium">{fmtCurrency(b.value, defaultCurrency, locale)}</span></div>
               ))}
             </div>
           </div>
           <div className="border rounded-lg bg-card p-5">
             <h3 className="font-semibold text-sm">{t("total_cash_compensation")}</h3>
             <div className="mt-2 space-y-1 text-sm">
-              <div className="flex justify-between"><span className="text-muted-foreground">{t("base")}</span><span className="num">{fmtCurrency(base, "USD", locale)}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">{t("allowances")}</span><span className="num">{fmtCurrency(result.total, "USD", locale)}</span></div>
-              <div className="flex justify-between border-t pt-2 mt-2"><span className="font-medium">{t("total")}</span><span className="num font-semibold">{fmtCurrency(base + result.total, "USD", locale)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">{t("base")}</span><span className="num">{fmtCurrency(base, defaultCurrency, locale)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">{t("allowances")}</span><span className="num">{fmtCurrency(result.total, defaultCurrency, locale)}</span></div>
+              <div className="flex justify-between border-t pt-2 mt-2"><span className="font-medium">{t("total")}</span><span className="num font-semibold">{fmtCurrency(base + result.total, defaultCurrency, locale)}</span></div>
             </div>
           </div>
         </div>

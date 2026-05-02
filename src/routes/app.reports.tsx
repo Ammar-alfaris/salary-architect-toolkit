@@ -85,7 +85,7 @@ function ReportsPage() {
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                 <XAxis dataKey="dept" fontSize={11} stroke="var(--muted-foreground)" />
                 <YAxis fontSize={11} stroke="var(--muted-foreground)" tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
-                <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 6, fontSize: 12 }} formatter={(v: any) => fmtCurrency(Number(v), "USD", locale)} />
+                <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 6, fontSize: 12 }} formatter={(v: any) => fmtCurrency(Number(v), defaultCurrency, locale)} />
                 <Bar dataKey="value" fill="var(--chart-2)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>

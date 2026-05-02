@@ -224,7 +224,7 @@ function EquityAnalytics() {
                     <td className="px-4 py-2 font-medium">{c.jobFamily}</td>
                     <td className="px-4 py-2 text-muted-foreground">{c.gradeCode}</td>
                     <td className="px-4 py-2 text-end num">{c.size}</td>
-                    <td className="px-4 py-2 text-end num">{fmtCurrency(c.median, "USD", locale)}</td>
+                    <td className="px-4 py-2 text-end num">{fmtCurrency(c.median, defaultCurrency, locale)}</td>
                     <td className="px-4 py-2 text-end num">{fmtPercent(c.spreadPct, locale)}</td>
                     <td className="px-4 py-2 text-end num">
                       {c.outlierCount > 0
@@ -264,8 +264,8 @@ function EquityAnalytics() {
                     <td className="px-4 py-2 font-medium">{r.employee.full_name}</td>
                     <td className="px-4 py-2 text-muted-foreground">{r.employee.job_family ?? "—"}</td>
                     <td className="px-4 py-2 text-muted-foreground">{r.employee.department ?? "—"}</td>
-                    <td className="px-4 py-2 text-end num">{fmtCurrency(Number(r.employee.base_salary), "USD", locale)}</td>
-                    <td className="px-4 py-2 text-end num">{fmtCurrency(r.peerMedian, "USD", locale)}</td>
+                    <td className="px-4 py-2 text-end num">{fmtCurrency(Number(r.employee.base_salary), defaultCurrency, locale)}</td>
+                    <td className="px-4 py-2 text-end num">{fmtCurrency(r.peerMedian, defaultCurrency, locale)}</td>
                     <td className={`px-4 py-2 text-end num ${Math.abs(r.variancePct) >= threshold ? "text-warning-foreground font-medium" : ""}`}>
                       {r.variancePct >= 0 ? "+" : ""}{r.variancePct.toFixed(1)}%
                     </td>
