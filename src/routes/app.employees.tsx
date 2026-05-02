@@ -37,7 +37,7 @@ const SAMPLE = [
 const PAGE_SIZE = 25;
 
 function EmployeesPage() {
-  const { organizationId } = useAuth();
+  const { organizationId, defaultCurrency } = useAuth();
   const { t, locale } = useI18n();
   const perms = usePermissions();
   const qc = useQueryClient();

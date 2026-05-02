@@ -16,7 +16,7 @@ import { Download, Calculator } from "lucide-react";
 export const Route = createFileRoute("/app/bonus")({ component: BonusPage });
 
 function BonusPage() {
-  const { organizationId } = useAuth();
+  const { organizationId, defaultCurrency } = useAuth();
   const { t, locale } = useI18n();
   const [employees, setEmployees] = useState<any[]>([]);
   const [employeeId, setEmployeeId] = useState("");

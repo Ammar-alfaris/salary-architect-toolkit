@@ -15,7 +15,7 @@ import { Wallet, Download } from "lucide-react";
 export const Route = createFileRoute("/app/allowances")({ component: AllowancesPage });
 
 function AllowancesPage() {
-  const { organizationId } = useAuth();
+  const { organizationId, defaultCurrency } = useAuth();
   const { t, locale } = useI18n();
   const [employees, setEmployees] = useState<any[]>([]);
   const [employeeId, setEmployeeId] = useState("");

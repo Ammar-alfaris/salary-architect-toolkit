@@ -26,7 +26,7 @@ const FLAG_TONES: Record<EquityFlagType, string> = {
 };
 
 function EquityAnalytics() {
-  const { organizationId } = useAuth();
+  const { organizationId, defaultCurrency } = useAuth();
   const { t, locale } = useI18n();
   const [employees, setEmployees] = useState<any[]>([]);
   const [grades, setGrades] = useState<any[]>([]);
