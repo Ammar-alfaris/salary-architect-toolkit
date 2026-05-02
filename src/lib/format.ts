@@ -1,5 +1,17 @@
+// Currency symbol overrides per locale (cosmetic only — Intl handles the rest).
+const SYMBOL_OVERRIDES: Record<string, { ar?: string; en?: string }> = {
+  SAR: { ar: "ر.س", en: "SAR" },
+};
+
 export function fmtCurrency(value: number | null | undefined, currency = "USD", locale = "en") {
   if (value == null || isNaN(value)) return "—";
+  const override = SYMBOL_OVERRIDES[currency]?.[locale === "ar" ? "ar" : "en"];
+  if (override) {
+    const num = new Intl.NumberFormat(locale === "ar" ? "ar" : "en-US", {
+      maximumFractionDigits: 0,
+    }).format(value);
+    return locale === "ar" ? `${num} ${override}` : `${override} ${num}`;
+  }
   try {
     return new Intl.NumberFormat(locale === "ar" ? "ar" : "en-US", {
       style: "currency",
