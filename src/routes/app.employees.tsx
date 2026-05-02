@@ -18,7 +18,7 @@ import { logAudit } from "@/lib/audit";
 import { usePermissions, maskSalary } from "@/lib/rbac";
 import { Plus, Download, Search, Eye, Sparkles, FileSpreadsheet, Trash2, ChevronLeft, ChevronRight, ShieldAlert, Upload, FileDown, Pencil } from "lucide-react";
 import { toast } from "sonner";
-import { useRef } from "react";
+
 
 export const Route = createFileRoute("/app/employees")({ component: EmployeesPage });
 
