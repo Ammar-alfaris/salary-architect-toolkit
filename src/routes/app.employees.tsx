@@ -12,12 +12,13 @@ import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { compaRatio, exportCSV, PERFORMANCE_RATINGS } from "@/lib/comp";
-import { exportXLSX } from "@/lib/excel";
+import { exportXLSX, parseXLSX, downloadEmployeeTemplate, EMPLOYEE_TEMPLATE_HEADERS } from "@/lib/excel";
 import { fmtCurrency } from "@/lib/format";
 import { logAudit } from "@/lib/audit";
 import { usePermissions, maskSalary } from "@/lib/rbac";
-import { Plus, Download, Search, Eye, Sparkles, FileSpreadsheet, Trash2, ChevronLeft, ChevronRight, ShieldAlert } from "lucide-react";
+import { Plus, Download, Search, Eye, Sparkles, FileSpreadsheet, Trash2, ChevronLeft, ChevronRight, ShieldAlert, Upload, FileDown, Pencil } from "lucide-react";
 import { toast } from "sonner";
+import { useRef } from "react";
 
 export const Route = createFileRoute("/app/employees")({ component: EmployeesPage });
 
