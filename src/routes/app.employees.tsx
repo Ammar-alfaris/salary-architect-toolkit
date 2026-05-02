@@ -326,6 +326,25 @@ function EmployeesPage() {
               {t("excel")}
             </Button>
             {perms.canEdit && (
+              <>
+                <Button size="sm" variant="outline" onClick={() => downloadEmployeeTemplate()}>
+                  <FileDown className="w-4 h-4 me-1" />
+                  {t("download_template")}
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => fileRef.current?.click()}>
+                  <Upload className="w-4 h-4 me-1" />
+                  {t("import_excel")}
+                </Button>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept=".xlsx,.xls,.csv"
+                  className="hidden"
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImportFile(f); }}
+                />
+              </>
+            )}
+            {perms.canEdit && (
               <Dialog open={open} onOpenChange={setOpen}>
                 <DialogTrigger asChild>
                   <Button size="sm">
