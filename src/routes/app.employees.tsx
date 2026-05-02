@@ -49,6 +49,9 @@ function EmployeesPage() {
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [form, setForm] = useState({ employee_code: "", first_name: "", last_name: "", department: "", job_title: "", job_family: "", location: "", base_salary: 0, target_bonus_percent: 10, grade_id: "", performance_rating: "Meets" });
+  const [editTarget, setEditTarget] = useState<any | null>(null);
+  const [editForm, setEditForm] = useState<any>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const { data: employees = [], isLoading } = useQuery({
     queryKey: ["employees", organizationId],
