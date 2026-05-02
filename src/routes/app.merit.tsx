@@ -176,7 +176,12 @@ function MeritPage() {
         <InsightCard items={meritBudgetInsights({ targetPct: budget, actualPct: actualBudgetPct })} />
 
         <div className="border rounded-lg bg-card p-4">
-          <h3 className="font-medium text-sm mb-3 flex items-center gap-2"><Calculator className="w-4 h-4" /> {t("merit_guideline_matrix")}</h3>
+          <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+            <h3 className="font-medium text-sm flex items-center gap-2"><Calculator className="w-4 h-4" /> {t("merit_guideline_matrix")}</h3>
+            <Button size="sm" variant="ghost" onClick={resetMatrix} disabled={cycleLocked}>
+              <RotateCcw className="w-3.5 h-3.5 me-1" /> {t("reset_to_default")}
+            </Button>
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm min-w-[560px]">
               <thead className="bg-muted/40 text-xs uppercase text-muted-foreground">
