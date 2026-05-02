@@ -488,9 +488,16 @@ function EmployeesPage() {
                           <td className="px-4 py-2.5 text-end num">{perms.canViewSalary ? compa?.toFixed(2) ?? "—" : "—"}</td>
                           <td className="px-4 py-2.5 text-end num">{e.target_bonus_percent}%</td>
                           <td className="px-4 py-2.5 text-end">
-                            <Button asChild size="icon" variant="ghost">
-                              <Link to="/app/employees/$id" params={{ id: e.id }}><Eye className="w-4 h-4" /></Link>
-                            </Button>
+                            <div className="inline-flex gap-0.5">
+                              {perms.canEdit && (
+                                <Button size="icon" variant="ghost" onClick={() => openEdit(e)} aria-label={t("edit_employee")}>
+                                  <Pencil className="w-4 h-4" />
+                                </Button>
+                              )}
+                              <Button asChild size="icon" variant="ghost">
+                                <Link to="/app/employees/$id" params={{ id: e.id }}><Eye className="w-4 h-4" /></Link>
+                              </Button>
+                            </div>
                           </td>
                         </tr>
                       );
