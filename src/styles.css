@@ -178,4 +178,10 @@
   }
   .num { font-variant-numeric: tabular-nums; }
   [dir="rtl"] .flip-rtl { transform: scaleX(-1); }
+  [dir="rtl"], [dir="rtl"] body, [lang="ar"], [lang="ar"] body {
+    font-family: "Tajawal", ui-sans-serif, system-ui, sans-serif;
+  }
+  [dir="rtl"] .font-logo, [lang="ar"] .font-logo {
+    font-family: "Montserrat", ui-sans-serif, system-ui, sans-serif !important;
+  }
 }
