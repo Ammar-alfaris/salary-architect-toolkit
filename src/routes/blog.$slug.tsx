@@ -97,12 +97,7 @@ function BlogPost() {
 
       <header className="border-b bg-card/60 backdrop-blur sticky top-0 z-30">
         <div className="container mx-auto px-4 h-14 sm:h-16 flex items-center justify-between gap-2">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-md bg-primary text-primary-foreground flex items-center justify-center">
-              <Layers className="w-4 h-4" />
-            </div>
-            <span className="font-semibold tracking-tight">Total Reward</span>
-          </Link>
+          <Link to="/"><Logo size={32} /></Link>
           <div className="flex items-center gap-1">
             <Button variant="ghost" size="sm" asChild><Link to="/blog"><ArrowLeft className={`w-4 h-4 me-1 ${ar ? "rotate-180" : ""}`} />{ar ? "المدونة" : "Blog"}</Link></Button>
             <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setLocale(ar ? "en" : "ar")}><Languages className="w-4 h-4" /></Button>
