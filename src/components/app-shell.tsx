@@ -50,11 +50,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen flex w-full bg-background">
       {/* Sidebar — desktop */}
       <aside className="hidden md:flex w-60 shrink-0 flex-col bg-sidebar text-sidebar-foreground border-e border-sidebar-border">
-        <div className="h-14 flex items-center gap-2 px-4 border-b border-sidebar-border">
-          <div className="w-8 h-8 rounded bg-sidebar-primary flex items-center justify-center">
-            <Layers className="w-4 h-4 text-sidebar-primary-foreground" />
-          </div>
-          <span className="font-semibold text-sm tracking-tight">{t("app_name")}</span>
+        <div className="h-14 flex items-center px-4 border-b border-sidebar-border">
+          <Logo size={28} textClassName="text-sm" />
         </div>
         <nav className="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto">
           {nav.map((item) => {
