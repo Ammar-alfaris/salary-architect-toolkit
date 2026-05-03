@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { useI18n } from "@/lib/i18n";
 import { useTheme } from "@/lib/theme";
 import { ArrowRight, Clock, Search, Layers, Languages, Moon, Sun, Sparkles } from "lucide-react";
+import { Logo } from "@/components/logo";
 
 export const Route = createFileRoute("/blog")({
   component: BlogIndex,
@@ -70,12 +71,7 @@ function BlogIndex() {
     <div className="min-h-screen bg-background" dir={ar ? "rtl" : "ltr"}>
       <header className="border-b bg-card/60 backdrop-blur sticky top-0 z-30">
         <div className="container mx-auto px-4 h-14 sm:h-16 flex items-center justify-between gap-2">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-md bg-primary text-primary-foreground flex items-center justify-center">
-              <Layers className="w-4 h-4" />
-            </div>
-            <span className="font-semibold tracking-tight">Total Reward</span>
-          </Link>
+          <Link to="/"><Logo size={32} /></Link>
           <nav className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
             <Link to="/" className="hover:text-foreground">{ar ? "الرئيسية" : "Home"}</Link>
             <Link to="/blog" className="text-foreground font-medium">{ar ? "المدونة" : "Blog"}</Link>

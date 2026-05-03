@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useState } from "react";
+import { Logo } from "@/components/logo";
 
 const nav = [
   { to: "/app", icon: LayoutDashboard, key: "dashboard" },
@@ -50,11 +51,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen flex w-full bg-background">
       {/* Sidebar — desktop */}
       <aside className="hidden md:flex w-60 shrink-0 flex-col bg-sidebar text-sidebar-foreground border-e border-sidebar-border">
-        <div className="h-14 flex items-center gap-2 px-4 border-b border-sidebar-border">
-          <div className="w-8 h-8 rounded bg-sidebar-primary flex items-center justify-center">
-            <Layers className="w-4 h-4 text-sidebar-primary-foreground" />
-          </div>
-          <span className="font-semibold text-sm tracking-tight">{t("app_name")}</span>
+        <div className="h-14 flex items-center px-4 border-b border-sidebar-border">
+          <Logo size={28} textClassName="text-sm" />
         </div>
         <nav className="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto">
           {nav.map((item) => {
@@ -81,9 +79,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="md:hidden fixed inset-0 z-40 flex">
           <div className="absolute inset-0 bg-foreground/40" onClick={() => setMobileOpen(false)} />
           <aside className="relative w-60 bg-sidebar text-sidebar-foreground border-e border-sidebar-border">
-            <div className="h-14 flex items-center gap-2 px-4 border-b border-sidebar-border">
-              <Layers className="w-5 h-5 text-sidebar-primary" />
-              <span className="font-semibold text-sm">{t("app_name")}</span>
+            <div className="h-14 flex items-center px-4 border-b border-sidebar-border">
+              <Logo size={28} textClassName="text-sm" />
             </div>
             <nav className="px-2 py-3 space-y-0.5">
               {nav.map((item) => {
@@ -117,9 +114,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           >
             <Menu className="w-5 h-5" />
           </button>
-          <div className="md:hidden flex items-center gap-1.5 font-semibold text-sm">
-            <Layers className="w-4 h-4 text-primary" />
-            <span className="truncate">{t("app_name")}</span>
+          <div className="md:hidden flex items-center">
+            <Logo size={24} textClassName="text-sm truncate" />
           </div>
           <div className="hidden sm:flex items-center gap-2 flex-1 max-w-md">
             <Search className="w-4 h-4 text-muted-foreground" />

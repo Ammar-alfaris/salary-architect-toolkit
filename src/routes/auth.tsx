@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Layers, ArrowLeft } from "lucide-react";
+import { Logo } from "@/components/logo";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
@@ -74,10 +75,7 @@ function AuthPage() {
         <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="w-4 h-4" /> {t("back_home")}
         </Link>
-        <div className="ms-auto flex items-center gap-2">
-          <Layers className="w-4 h-4 text-primary" />
-          <span className="font-semibold text-sm">{t("app_name")}</span>
-        </div>
+        <div className="ms-auto"><Logo size={24} textClassName="text-sm" /></div>
       </header>
       <div className="flex-1 grid place-items-center px-4 py-10">
         <div className="w-full max-w-md">
