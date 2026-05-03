@@ -178,10 +178,16 @@
   }
   .num { font-variant-numeric: tabular-nums; }
   [dir="rtl"] .flip-rtl { transform: scaleX(-1); }
-  [dir="rtl"], [dir="rtl"] body, [lang="ar"], [lang="ar"] body {
+  [dir="rtl"], [lang="ar"] {
+    --font-sans: "Tajawal", ui-sans-serif, system-ui, sans-serif;
+    --font-display: "Tajawal", ui-sans-serif, system-ui, sans-serif;
     font-family: "Tajawal", ui-sans-serif, system-ui, sans-serif;
   }
-  [dir="rtl"] .font-logo, [lang="ar"] .font-logo {
+  [dir="rtl"] *, [lang="ar"] * {
+    font-family: inherit;
+  }
+  [dir="rtl"] .font-logo, [lang="ar"] .font-logo,
+  [dir="rtl"] .font-logo *, [lang="ar"] .font-logo * {
     font-family: "Montserrat", ui-sans-serif, system-ui, sans-serif !important;
   }
 }
