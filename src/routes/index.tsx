@@ -32,12 +32,8 @@ function Landing() {
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card/60 backdrop-blur sticky top-0 z-30">
         <div className="container mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="w-8 h-8 rounded-md bg-primary text-primary-foreground flex items-center justify-center shrink-0">
-              <Layers className="w-4 h-4" />
-            </div>
-            <span className="font-semibold tracking-tight truncate text-sm sm:text-base">{t("app_name")}</span>
-          </div>
+          <Logo size={32} textClassName="truncate text-sm sm:text-base" className="min-w-0" />
+
           <nav className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
             <a href="#features" className="hover:text-foreground">{t("features")}</a>
             <a href="#modules" className="hover:text-foreground">{t("modules")}</a>
