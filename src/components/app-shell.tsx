@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useState } from "react";
+import { Logo } from "@/components/logo";
 
 const nav = [
   { to: "/app", icon: LayoutDashboard, key: "dashboard" },
