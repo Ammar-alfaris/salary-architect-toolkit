@@ -114,9 +114,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           >
             <Menu className="w-5 h-5" />
           </button>
-          <div className="md:hidden flex items-center gap-1.5 font-semibold text-sm">
-            <Layers className="w-4 h-4 text-primary" />
-            <span className="truncate">{t("app_name")}</span>
+          <div className="md:hidden flex items-center">
+            <Logo size={24} textClassName="text-sm truncate" />
           </div>
           <div className="hidden sm:flex items-center gap-2 flex-1 max-w-md">
             <Search className="w-4 h-4 text-muted-foreground" />
