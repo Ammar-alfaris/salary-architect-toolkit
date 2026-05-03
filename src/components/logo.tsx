@@ -29,7 +29,7 @@ export function Logo({ size = 32, showText = true, className = "", textClassName
       />
       {showText && (
         <span
-          className={`font-logo font-extrabold tracking-tight text-foreground ${textClassName}`}
+          className={`font-logo font-extrabold tracking-tight ${textClassName}`}
           style={{ fontFamily: '"Montserrat", ui-sans-serif, system-ui, sans-serif', fontWeight: 800 }}
         >
           Total Reward
