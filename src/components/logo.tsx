@@ -11,25 +11,21 @@ type Props = {
 export function Logo({ size = 32, showText = true, className = "", textClassName = "" }: Props) {
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      <picture className="shrink-0 inline-flex" style={{ width: size, height: size }}>
-        <source srcSet={logoDark} media="(prefers-color-scheme: dark)" />
-        <img
-          src={logoLight}
-          alt="Total Reward"
-          width={size}
-          height={size}
-          className="block dark:hidden rounded-md"
-          style={{ width: size, height: size }}
-        />
-      </picture>
+      <img
+        src={logoLight}
+        alt="Total Reward"
+        width={size}
+        height={size}
+        className="block dark:hidden rounded-md shrink-0"
+        style={{ width: size, height: size }}
+      />
       <img
         src={logoDark}
-        alt=""
-        aria-hidden
+        alt="Total Reward"
         width={size}
         height={size}
         className="hidden dark:block rounded-md shrink-0"
-        style={{ width: size, height: size, marginInlineStart: -size - 8 }}
+        style={{ width: size, height: size }}
       />
       {showText && (
         <span
