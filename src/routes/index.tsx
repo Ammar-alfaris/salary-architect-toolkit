@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
 import { useTheme } from "@/lib/theme";
 import { Layers, Grid3x3, Gift, TrendingUp, Wallet, Users, FileBarChart, Moon, Sun, Languages, ArrowRight, Check } from "lucide-react";
+import { Logo } from "@/components/logo";
 
 export const Route = createFileRoute("/")({
   component: Landing,
