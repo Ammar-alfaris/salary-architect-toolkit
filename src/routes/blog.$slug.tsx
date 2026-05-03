@@ -9,6 +9,7 @@ import { ReadingProgress } from "@/components/blog/reading-progress";
 import { useI18n } from "@/lib/i18n";
 import { useTheme } from "@/lib/theme";
 import { ArrowLeft, ArrowRight, Clock, Layers, Languages, Moon, Sun, Share2, Twitter, Linkedin, Link as LinkIcon } from "lucide-react";
+import { Logo } from "@/components/logo";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/blog/$slug")({
