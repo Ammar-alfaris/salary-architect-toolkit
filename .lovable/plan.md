@@ -1,109 +1,103 @@
+## Goal
 
-# خطة: تجربة موجَّهة بالهدف + ربط الموظفين بسلم الرواتب تلقائياً
-
-## المشكلة الحالية
-- بعد رفع 100 موظف عبر القالب، ينشئ المستخدم سلم رواتب جديداً لكن **لا يوجد ربط** بين الموظفين والسلم: حقل `employees.grade_id` يبقى فارغاً، فلا تظهر نتائج Compa-Ratio ولا Range Penetration ولا Out-of-range.
-- السبب التقني: الاستيراد يتطلب أن يحتوي ملف Excel على عمود `grade_code` يطابق درجة موجودة مسبقاً، وعند إنشاء السلم لاحقاً لا يتم إعادة ربط الموظفين الموجودين.
-- لا يوجد أي توجيه للمستخدم الجديد: يدخل لوحة التحكم مباشرة دون معرفة من أين يبدأ ولا ما الهدف من كل شاشة.
-
-## الهدف
-1. سؤال المستخدم عن هدفه فور أول دخول، وتوجيهه للمسار المناسب.
-2. دليل تفاعلي خطوة بخطوة (Tour) يضيء الأزرار ويشرح كيفية الاستخدام.
-3. ربط تلقائي بين الموظفين وسلم الرواتب حتى لو لم يكن الترتيب مثالياً.
+Solve cross-company data variance during employee import (different grade codes like S1/L2/Band-3, different performance labels like "Outstanding"/"5"/"ممتاز") by enriching the downloadable template with **mapping sheets and instructions** in both Arabic and English, and add a dedicated bilingual **Help & Support** page that walks users through the import process.
 
 ---
 
-## 1) معالج البداية حسب الهدف (Onboarding Wizard)
+## Part 1 — Enhanced Employee Template (`src/lib/excel.ts`)
 
-ملف جديد: `src/routes/app.onboarding.tsx` (يفتح تلقائياً عند أول دخول إذا لم يُكمل).
+Rewrite `downloadEmployeeTemplate()` so the workbook contains **6 sheets** instead of 1:
 
-السؤال الأول: **"ما الذي تريد تحقيقه؟"** مع 4 خيارات:
+1. **Employees / الموظفون** — main data sheet (current columns) with two extra columns:
+   - `company_grade` (free text — the company's own code, e.g. `S1`, `Band-3`, `L2`)
+   - `mapped_grade` (the normalized code the app uses, e.g. `G01`…`G15`)
+   - `company_rating` (free text — company's own label)
+   - `mapped_rating` (one of: Outstanding, Exceeds, Meets, Below, Unsatisfactory)
 
-| الهدف | المسار الموصى به |
-|---|---|
-| أ) شركة جديدة — أبني هيكل رواتب من الصفر | إنشاء سلم → إضافة موظفين → ربط → تحليلات |
-| ب) لدي موظفون وسلم حالي — أريد مراجعة/ترقية | استيراد موظفين → استيراد/إنشاء سلم → ربط تلقائي → تقارير الفجوات |
-| ج) لدي موظفون فقط — أحتاج بناء سلم يناسبهم | استيراد موظفين → اقتراح سلم تلقائي مبني على بياناتهم → مراجعة → ربط |
-| د) أريد فقط تشغيل دورة Merit/Bonus | الذهاب مباشرة إلى Merit Matrix أو Bonus |
+2. **Grade Mapping / مطابقة الدرجات** — two-column table:
+   ```
+   company_grade | app_grade
+   S1            | G01
+   S2            | G02
+   Band-A        | G03
+   ...
+   ```
+   The user fills the left side with their internal codes; the right side uses our standard `G01…G15`. Import will use this table to translate `company_grade` → `mapped_grade` automatically when `mapped_grade` is blank.
 
-أسئلة إضافية مختصرة (3 كحد أقصى): العملة الافتراضية، عدد الموظفين التقريبي، الدولة.
+3. **Performance Mapping / مطابقة التقييم** — two-column table with pre-filled common variants:
+   ```
+   company_rating       | app_rating
+   5 / Outstanding / ممتاز  | Outstanding
+   4 / Exceeds / يفوق       | Exceeds
+   3 / Meets / يحقق         | Meets
+   2 / Below / دون          | Below
+   1 / Unsatisfactory       | Unsatisfactory
+   ```
 
-يُحفظ الاختيار في عمود جديد `organizations.onboarding` (jsonb): `{ goal, completed_steps[], dismissed_at }`.
+4. **Instructions (EN)** — step-by-step English guide: required vs optional columns, allowed values, date format (`YYYY-MM-DD`), currency rules, how the two mapping sheets work, common errors.
 
----
+5. **التعليمات (AR)** — same guide in Arabic with RTL-friendly layout.
 
-## 2) ربط الموظفين بسلم الرواتب (الإصلاح الجوهري)
+6. **Reference Values / القيم المرجعية** — list of valid `app_grade` values (G01–G15), valid `app_rating` values, supported currencies, expected department/location format.
 
-### أ) ربط تلقائي عند إنشاء السلم
-في `app.structures.tsx` بعد `handleGenerate`، اسأل المستخدم في حوار:
-> "تم إنشاء السلم. هل تريد ربط الموظفين الحاليين تلقائياً بدرجاتهم بناءً على راتبهم؟"
+### Import logic update (`src/routes/app.employees.tsx` → `handleImportFile`)
 
-عند الموافقة، شغّل دالة `autoAssignGrades(orgId, structureId)`:
-- لكل موظف بدون `grade_id`: ابحث عن الدرجة التي يقع راتبه ضمن `[minimum, maximum]`؛ إن لم تطابق، اختر الأقرب إلى `midpoint`.
-- حدّث `grade_id` و `salary_structure_id`.
-- أظهر ملخص: "تم ربط X موظف، Y خارج النطاق".
-
-### ب) ربط تلقائي عند استيراد الموظفين
-في `handleImportFile` بـ `app.employees.tsx`: إذا كان `grade_code` فارغاً ووُجد سلم نشط، طبّق نفس منطق `autoAssignGrades` على الصفوف المستوردة قبل الإدراج.
-
-### ج) أداة ربط يدوي/جماعي
-زر "Re-assign grades" أعلى صفحة الموظفين يفتح حوار يسمح بـ:
-- اختيار سلم مرجعي.
-- اختيار طريقة الربط: حسب النطاق / حسب المسمى الوظيفي / يدوي.
-- معاينة قبل التطبيق.
-
-### د) اقتراح سلم من بيانات الموظفين (للهدف ج)
-دالة جديدة في `src/lib/comp.ts`: `suggestStructureFromEmployees(employees)`:
-- استخرج min/max للرواتب.
-- اقترح `gradeCount` (10 افتراضياً) و `startingMidpoint` و `progressionPercent` بحيث تغطي كل الرواتب.
-- افتح صفحة Structures مع الحقول معبأة مسبقاً.
-
----
-
-## 3) دليل تفاعلي خطوة بخطوة (Guided Tour)
-
-مكوّن جديد `src/components/guided-tour.tsx`:
-- يعرض tooltip فوق العنصر المستهدف (يستخدم `data-tour="step-id"` على الأزرار).
-- أزرار: السابق / التالي / تخطّي.
-- يحفظ التقدّم في `organizations.onboarding.completed_steps`.
-
-تعريف الجولات في `src/lib/tours.ts` — جولة لكل هدف. مثال للهدف (أ):
-
-```
-1. لوحة التحكم → "ابدأ بإنشاء سلم الرواتب" يضيء زر Create Salary Structure
-2. صفحة Structures → اشرح حقول: عدد الدرجات، نقطة البداية، التدرّج، الانتشار + معاينة
-3. بعد الحفظ → "أضف الموظفين الآن" يفتح صفحة Employees
-4. Employees → زر "تحميل قالب Excel" ثم "استيراد"
-5. بعد الاستيراد → "اربط الموظفين بالسلم" (auto-assign)
-6. التحليلات → اشرح Compa-Ratio و Range Penetration
-7. Merit / Bonus → كيف تشغّل الدورة
-```
-
-عناصر مساعدة:
-- شريط تقدّم ثابت أعلى التطبيق: "الخطوة 3 من 7" مع زر "متابعة الجولة".
-- زر مساعدة عائم (؟) في كل صفحة يعيد فتح الجولة الخاصة بها.
+- Read all sheets via `XLSX.read` (extend `parseXLSX` to return `{ employees, gradeMap, ratingMap }`).
+- Build two lookup maps from the mapping sheets.
+- For each employee row:
+  - If `mapped_grade` empty but `company_grade` present → look up in grade map.
+  - If `mapped_rating` empty but `company_rating` present → look up in rating map.
+  - Fall back to existing behaviour (`grade_code`, `performance_rating` columns) for backward compatibility.
+- After insert, call existing `autoAssignGrades()` to link employees to the active salary structure.
+- Toast a summary: `X imported, Y unmapped grades, Z unmapped ratings` and list the unmapped values so the user can fix the mapping sheet and re-upload.
 
 ---
 
-## 4) قاعدة البيانات (Migration)
+## Part 2 — Help & Support Page
 
-```sql
-ALTER TABLE organizations
-  ADD COLUMN onboarding jsonb NOT NULL DEFAULT '{}'::jsonb;
-```
+New route `src/routes/app.help.tsx` (path `/app/help`) — bilingual, follows existing app shell.
 
-(لا حاجة لجدول جديد؛ كل شيء داخل `onboarding` jsonb.)
+### Sections
+
+1. **Hero**: "Help & Support / الدعم والمساندة" with quick search box (filters guides client-side).
+2. **Quick start cards** (4): Upload employees · Build salary structure · Run merit cycle · Run bonus cycle. Each card opens an accordion with step-by-step instructions and a "Start tour" button that triggers the existing `GuidedTour` for that goal.
+3. **Detailed guide: "How to import your employee file"** — the priority guide for this release:
+   - Download the template (button → `downloadEmployeeTemplate()`)
+   - Fill the Employees sheet
+   - Open the **Grade Mapping** sheet and translate your internal codes to G01–G15
+   - Open the **Performance Mapping** sheet and translate your rating labels
+   - Upload the file on the Employees page
+   - Review the import summary and fix any unmapped rows
+   - Each step has a screenshot placeholder slot and an inline tip box.
+4. **FAQ accordion** — 6–8 entries (grade count limits, what if our scale has 20 grades, can we re-import, what happens to existing employees, etc.).
+5. **Contact box** — link to existing `contact_messages` form / email link, plus link to start the onboarding wizard again (`/app/onboarding`).
+
+### Wiring
+
+- Add nav entry "Help & Support / الدعم والمساندة" in `src/components/app-shell.tsx` sidebar (with `HelpCircle` icon).
+- Add all new strings to `src/lib/i18n.tsx` (EN + AR keys: `help_title`, `help_quick_start`, `help_import_guide_*`, `help_faq_*`, `help_contact`, plus mapping-sheet column names and instruction copy).
+- Page respects `dir="rtl"` and current theme; uses existing `Card`, `Accordion`, `Button` components.
 
 ---
 
-## 5) الترجمة
-إضافة كل مفاتيح النصوص الجديدة إلى `src/lib/i18n.tsx` بالعربية والإنجليزية (أهداف، أزرار الجولة، الرسائل، حوار الربط التلقائي).
+## Part 3 — Files Touched
+
+**New**
+- `src/routes/app.help.tsx`
+
+**Modified**
+- `src/lib/excel.ts` — rewrite `downloadEmployeeTemplate()`, extend `parseXLSX()` to return mapping sheets
+- `src/routes/app.employees.tsx` — use new mapping logic in `handleImportFile`, surface unmapped-rows summary
+- `src/components/app-shell.tsx` — add Help nav item
+- `src/lib/i18n.tsx` — add EN + AR translations for template instructions and the help page
+- `src/routeTree.gen.ts` — auto-regenerated
+
+No DB migration required.
 
 ---
 
-## الملفات المتأثرة
-- جديد: `src/routes/app.onboarding.tsx`، `src/components/guided-tour.tsx`، `src/lib/tours.ts`، `src/lib/auto-assign.ts`، migration SQL.
-- تعديل: `src/routes/app.tsx` (تحقق من حالة onboarding وتوجيه)، `src/routes/app.index.tsx` (شريط التقدم + data-tour)، `src/routes/app.structures.tsx` (حوار الربط بعد الإنشاء + إعداد مسبق من اقتراح السلم + data-tour)، `src/routes/app.employees.tsx` (ربط تلقائي عند الاستيراد + زر Re-assign + data-tour)، `src/lib/auth.tsx` (تحميل onboarding)، `src/lib/comp.ts` (suggestStructureFromEmployees)، `src/lib/i18n.tsx`.
+## Part 4 — Out of scope (for later)
 
-## ملاحظة على الحساب التجريبي
-حساب `hr.alfares@gmail.com` لديه 100 موظف بدون `grade_id` وسلم منشأ غير مربوط — بعد تطبيق هذه الخطة سيظهر له زر "اربط الموظفين الآن" وسيتم تعبئة كل الـ KPIs والتحليلات تلقائياً.
+- Video tutorials (placeholder slots only)
+- Per-organization custom mapping persisted in DB (current cycle uses per-file mapping sheet)
+- Auto-detection of grade count from the user's mapping sheet to suggest a structure size
