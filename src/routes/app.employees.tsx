@@ -12,7 +12,7 @@ import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { compaRatio, exportCSV, PERFORMANCE_RATINGS } from "@/lib/comp";
-import { exportXLSX, parseXLSX, downloadEmployeeTemplate } from "@/lib/excel";
+import { exportXLSX, parseEmployeeTemplate, downloadEmployeeTemplate } from "@/lib/excel";
 import { fmtCurrency } from "@/lib/format";
 import { logAudit } from "@/lib/audit";
 import { usePermissions, maskSalary } from "@/lib/rbac";
@@ -206,21 +206,36 @@ function EmployeesPage() {
   const handleImportFile = async (file: File) => {
     if (!organizationId || !perms.canEdit) return;
     try {
-      const rows = await parseXLSX(file);
+      const { employees: rows, gradeMap, ratingMap } = await parseEmployeeTemplate(file);
       if (rows.length === 0) return toast.error(t("no_employees_match"));
-      // Build code → grade_id map for fast lookup
+      // Build code → grade_id map (app grade codes G01..G15)
       const codeToGrade = new Map<string, string>();
       grades.forEach((g: any) => codeToGrade.set(String(g.grade_code).toLowerCase(), g.id));
 
-      // Skip duplicates (existing codes)
       const existingCodes = new Set(employees.map((e: any) => String(e.employee_code).toLowerCase()));
+      const unmappedGrades = new Set<string>();
+      const unmappedRatings = new Set<string>();
       let ok = 0;
       let fail = 0;
       const toInsert: any[] = [];
       for (const r of rows) {
         const code = String(r.employee_code ?? "").trim();
         if (!code || existingCodes.has(code.toLowerCase())) { fail++; continue; }
-        const gradeCode = String(r.grade_code ?? "").trim().toLowerCase();
+        // Resolve grade: mapped_grade > grade_code > company_grade via gradeMap
+        let appGrade = String(r.mapped_grade ?? r.grade_code ?? "").trim();
+        const companyGrade = String(r.company_grade ?? "").trim();
+        if (!appGrade && companyGrade) {
+          appGrade = gradeMap.get(companyGrade.toLowerCase()) ?? "";
+          if (!appGrade) unmappedGrades.add(companyGrade);
+        }
+        const gradeId = appGrade ? codeToGrade.get(appGrade.toLowerCase()) ?? null : null;
+        // Resolve rating
+        let rating = String(r.mapped_rating ?? r.performance_rating ?? "").trim();
+        const companyRating = String(r.company_rating ?? "").trim();
+        if (!rating && companyRating) {
+          rating = ratingMap.get(companyRating.toLowerCase()) ?? "";
+          if (!rating) unmappedRatings.add(companyRating);
+        }
         toInsert.push({
           organization_id: organizationId,
           employee_code: code,
@@ -231,10 +246,10 @@ function EmployeesPage() {
           job_title: String(r.job_title ?? "").trim() || null,
           job_family: String(r.job_family ?? "").trim() || null,
           location: String(r.location ?? "").trim() || null,
-          grade_id: gradeCode ? codeToGrade.get(gradeCode) ?? null : null,
+          grade_id: gradeId,
           base_salary: Number(r.base_salary) || 0,
           target_bonus_percent: Number(r.target_bonus_percent) || 0,
-          performance_rating: String(r.performance_rating ?? "Meets").trim() || "Meets",
+          performance_rating: rating || "Meets",
           hire_date: r.hire_date ? String(r.hire_date) : null,
           manager_name: String(r.manager_name ?? "").trim() || null,
         });
@@ -245,7 +260,9 @@ function EmployeesPage() {
         if (error) { toast.error(error.message); return; }
       }
       toast.success(t("import_results", { ok, fail }));
-      await logAudit({ organizationId, action: "create", entityType: "employee", entityLabel: `Excel import (${ok} added, ${fail} skipped)`, metadata: { ok, fail } });
+      if (unmappedGrades.size) toast.warning(t("unmapped_grades_warn", { list: Array.from(unmappedGrades).slice(0, 8).join(", ") }));
+      if (unmappedRatings.size) toast.warning(t("unmapped_ratings_warn", { list: Array.from(unmappedRatings).slice(0, 8).join(", ") }));
+      await logAudit({ organizationId, action: "create", entityType: "employee", entityLabel: `Excel import (${ok} added, ${fail} skipped)`, metadata: { ok, fail, unmappedGrades: Array.from(unmappedGrades), unmappedRatings: Array.from(unmappedRatings) } });
       refresh();
     } catch (e: any) {
       toast.error(e.message);
