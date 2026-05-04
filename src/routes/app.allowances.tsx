@@ -129,6 +129,16 @@ function AllowancesPage() {
               <div className="flex justify-between border-t pt-2 mt-2"><span className="font-medium">{t("total")}</span><span className="num font-semibold">{fmtCurrency(base + result.total, defaultCurrency, locale)}</span></div>
             </div>
           </div>
+          <ApplyOrApprove
+            entityType="salary_structure"
+            entityKey="allowance_change"
+            entityId={employeeId || null}
+            entityLabel={t("allowances")}
+            proposedPayload={{ employeeId, base, ...result }}
+            onApply={applyAllowance}
+            applyLabel={t("apply_now")}
+          />
+
         </div>
       </div>
     </div>
