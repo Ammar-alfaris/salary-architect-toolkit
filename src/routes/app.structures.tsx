@@ -299,6 +299,19 @@ function StructuresPage() {
           )}
         </div>
       </div>
+
+      <AlertDialog open={!!linkPrompt} onOpenChange={(o) => { if (!o) setLinkPrompt(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("autolink_prompt_title")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("autolink_prompt_body")}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("not_now")}</AlertDialogCancel>
+            <AlertDialogAction onClick={runAutoLink}>{t("link_now")}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
