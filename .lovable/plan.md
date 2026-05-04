@@ -1,103 +1,87 @@
-## Goal
+## Problem
 
-Solve cross-company data variance during employee import (different grade codes like S1/L2/Band-3, different performance labels like "Outstanding"/"5"/"ممتاز") by enriching the downloadable template with **mapping sheets and instructions** in both Arabic and English, and add a dedicated bilingual **Help & Support** page that walks users through the import process.
+Two issues with the guided tour on `/app/...` for new accounts (e.g., `Top.organizers@gmail.com`, goal = "new company"):
 
----
+1. **The tooltip card flickers / shakes**: `guided-tour.tsx` re-runs `update()` on a `requestAnimationFrame` loop *and* a 500ms `setInterval`, recalculating `rect` and re-scrolling into view every frame. The tooltip and highlight visibly jitter. Most users will dismiss it immediately.
+2. **Tour is "Next-driven", not "action-driven"**: today the user clicks **Next** to advance, even if they haven't performed the action. We want: show step → user performs the real action (clicks the highlighted button, completes the form) → tour auto-advances to the next step.
 
-## Part 1 — Enhanced Employee Template (`src/lib/excel.ts`)
+## Plan
 
-Rewrite `downloadEmployeeTemplate()` so the workbook contains **6 sheets** instead of 1:
+### 1. Stop the flicker (`src/components/guided-tour.tsx`)
 
-1. **Employees / الموظفون** — main data sheet (current columns) with two extra columns:
-   - `company_grade` (free text — the company's own code, e.g. `S1`, `Band-3`, `L2`)
-   - `mapped_grade` (the normalized code the app uses, e.g. `G01`…`G15`)
-   - `company_rating` (free text — company's own label)
-   - `mapped_rating` (one of: Outstanding, Exceeds, Meets, Below, Unsatisfactory)
+- Remove the `requestAnimationFrame` recursion and `setInterval(update, 500)`.
+- Replace with: one initial measurement + a `ResizeObserver` on the target element + a `MutationObserver` on `document.body` (subtree, throttled with `requestAnimationFrame`) + listeners for `resize` and `scroll`.
+- Only call `scrollIntoView` **once** when the step first mounts (track via `useRef(step.id)`), not on every measurement — this is the main cause of the shake.
+- Only call `setRect` when the new rect actually differs from the previous one (shallow compare) to avoid re-renders.
+- If the target element is not yet in the DOM, retry with a single `MutationObserver` instead of a rAF loop; clean up once found.
 
-2. **Grade Mapping / مطابقة الدرجات** — two-column table:
-   ```
-   company_grade | app_grade
-   S1            | G01
-   S2            | G02
-   Band-A        | G03
-   ...
-   ```
-   The user fills the left side with their internal codes; the right side uses our standard `G01…G15`. Import will use this table to translate `company_grade` → `mapped_grade` automatically when `mapped_grade` is blank.
+### 2. Make the tour action-driven (`src/lib/tours.ts` + `guided-tour.tsx` + the target pages)
 
-3. **Performance Mapping / مطابقة التقييم** — two-column table with pre-filled common variants:
-   ```
-   company_rating       | app_rating
-   5 / Outstanding / ممتاز  | Outstanding
-   4 / Exceeds / يفوق       | Exceeds
-   3 / Meets / يحقق         | Meets
-   2 / Below / دون          | Below
-   1 / Unsatisfactory       | Unsatisfactory
-   ```
+Extend the `TourStep` type with an optional **completion trigger**:
 
-4. **Instructions (EN)** — step-by-step English guide: required vs optional columns, allowed values, date format (`YYYY-MM-DD`), currency rules, how the two mapping sheets work, common errors.
+```ts
+export interface TourStep {
+  id: string;
+  route: string;
+  selector: string;
+  titleKey: string;
+  bodyKey: string;
+  // NEW — how this step is completed:
+  advanceOn?:
+    | { type: "click" }                       // user clicks the highlighted element
+    | { type: "event"; name: string }         // app dispatches window event, e.g. "tour:structure-created"
+    | { type: "route"; pathname: string };    // user navigates to a given route
+}
+```
 
-5. **التعليمات (AR)** — same guide in Arabic with RTL-friendly layout.
+Behaviour in `GuidedTour`:
+- **`click`** (default for most steps): attach a one-shot `click` listener to the highlighted element; on click, call `completeStep` + `setStepIndex(idx+1)`. The tooltip's **Next** button is hidden for these steps and replaced by a hint label like *"Click the highlighted button to continue"* (`tour_hint_click_target`).
+- **`event`**: subscribe to `window.addEventListener(name, …)`. Pages dispatch `window.dispatchEvent(new CustomEvent("tour:xxx"))` after the real action succeeds (structure created, employees imported, etc.).
+- **`route`**: listen to `location.pathname` changes and advance when matched.
+- Manual **Next** is kept only as a fallback for purely informational steps (no `advanceOn`), and **Back** + **Skip tour** stay available everywhere.
 
-6. **Reference Values / القيم المرجعية** — list of valid `app_grade` values (G01–G15), valid `app_rating` values, supported currencies, expected department/location format.
+### 3. Wire real action events from the relevant pages
 
-### Import logic update (`src/routes/app.employees.tsx` → `handleImportFile`)
+Dispatch `CustomEvent` after each meaningful action (small additions, no behaviour change otherwise):
 
-- Read all sheets via `XLSX.read` (extend `parseXLSX` to return `{ employees, gradeMap, ratingMap }`).
-- Build two lookup maps from the mapping sheets.
-- For each employee row:
-  - If `mapped_grade` empty but `company_grade` present → look up in grade map.
-  - If `mapped_rating` empty but `company_rating` present → look up in rating map.
-  - Fall back to existing behaviour (`grade_code`, `performance_rating` columns) for backward compatibility.
-- After insert, call existing `autoAssignGrades()` to link employees to the active salary structure.
-- Toast a summary: `X imported, Y unmapped grades, Z unmapped ratings` and list the unmapped values so the user can fix the mapping sheet and re-upload.
+- `src/routes/app.structures.tsx` — after a structure is successfully created → `window.dispatchEvent(new CustomEvent("tour:structure-created"))`.
+- `src/routes/app.employees.tsx` —
+  - after the **Add employee** dialog saves → `tour:employee-added`,
+  - after **Import from Excel** completes → `tour:employees-imported`,
+  - after **Auto-link grades** finishes → `tour:grades-linked`.
+- `src/routes/app.merit.tsx` and `src/routes/app.bonus.tsx` — after a cycle is created → `tour:merit-created` / `tour:bonus-created`.
 
----
+### 4. Update tour definitions (`src/lib/tours.ts`)
 
-## Part 2 — Help & Support Page
+Add `advanceOn` to each step. Example for `new_company`:
 
-New route `src/routes/app.help.tsx` (path `/app/help`) — bilingual, follows existing app shell.
+```text
+1. create-structure   → advanceOn: { type: "click" }                 (highlight the Create button)
+2. structure-fields   → advanceOn: { type: "event", name: "tour:structure-created" }
+3. add-employees      → advanceOn: { type: "event", name: "tour:employee-added" }
+4. import-template    → advanceOn: { type: "event", name: "tour:employees-imported" }
+5. auto-link          → advanceOn: { type: "event", name: "tour:grades-linked" }
+6. analytics          → informational, manual Next/Finish
+```
 
-### Sections
+Same approach for `existing_structure`, `employees_only`, `cycles_only`.
 
-1. **Hero**: "Help & Support / الدعم والمساندة" with quick search box (filters guides client-side).
-2. **Quick start cards** (4): Upload employees · Build salary structure · Run merit cycle · Run bonus cycle. Each card opens an accordion with step-by-step instructions and a "Start tour" button that triggers the existing `GuidedTour` for that goal.
-3. **Detailed guide: "How to import your employee file"** — the priority guide for this release:
-   - Download the template (button → `downloadEmployeeTemplate()`)
-   - Fill the Employees sheet
-   - Open the **Grade Mapping** sheet and translate your internal codes to G01–G15
-   - Open the **Performance Mapping** sheet and translate your rating labels
-   - Upload the file on the Employees page
-   - Review the import summary and fix any unmapped rows
-   - Each step has a screenshot placeholder slot and an inline tip box.
-4. **FAQ accordion** — 6–8 entries (grade count limits, what if our scale has 20 grades, can we re-import, what happens to existing employees, etc.).
-5. **Contact box** — link to existing `contact_messages` form / email link, plus link to start the onboarding wizard again (`/app/onboarding`).
+### 5. i18n (`src/lib/i18n.tsx`)
 
-### Wiring
+Add bilingual keys:
+- `tour_hint_click_target` — EN: "Click the highlighted button to continue." / AR: "اضغط الزر المُحدَّد للمتابعة."
+- `tour_hint_do_action` — EN: "Complete this action and we'll move to the next step." / AR: "أكمل هذه الخطوة وسننتقل تلقائياً إلى التالية."
+- `tour_waiting` — EN: "Waiting for you…" / AR: "بانتظار إكمال الخطوة…"
 
-- Add nav entry "Help & Support / الدعم والمساندة" in `src/components/app-shell.tsx` sidebar (with `HelpCircle` icon).
-- Add all new strings to `src/lib/i18n.tsx` (EN + AR keys: `help_title`, `help_quick_start`, `help_import_guide_*`, `help_faq_*`, `help_contact`, plus mapping-sheet column names and instruction copy).
-- Page respects `dir="rtl"` and current theme; uses existing `Card`, `Accordion`, `Button` components.
+### 6. Out of scope
 
----
+- No DB migration. Onboarding state shape in `organizations.onboarding` already supports `current_step_index` / `completed_steps`.
+- No redesign of the tooltip card visuals (only stability + button logic changes).
+- Tour analytics / step completion telemetry beyond what already persists.
 
-## Part 3 — Files Touched
+## Files touched
 
-**New**
-- `src/routes/app.help.tsx`
-
-**Modified**
-- `src/lib/excel.ts` — rewrite `downloadEmployeeTemplate()`, extend `parseXLSX()` to return mapping sheets
-- `src/routes/app.employees.tsx` — use new mapping logic in `handleImportFile`, surface unmapped-rows summary
-- `src/components/app-shell.tsx` — add Help nav item
-- `src/lib/i18n.tsx` — add EN + AR translations for template instructions and the help page
-- `src/routeTree.gen.ts` — auto-regenerated
-
-No DB migration required.
-
----
-
-## Part 4 — Out of scope (for later)
-
-- Video tutorials (placeholder slots only)
-- Per-organization custom mapping persisted in DB (current cycle uses per-file mapping sheet)
-- Auto-detection of grade count from the user's mapping sheet to suggest a structure size
+- edit `src/components/guided-tour.tsx` (stability + action-advance)
+- edit `src/lib/tours.ts` (add `advanceOn` per step)
+- edit `src/lib/i18n.tsx` (3 new keys × AR/EN)
+- edit `src/routes/app.structures.tsx`, `src/routes/app.employees.tsx`, `src/routes/app.merit.tsx`, `src/routes/app.bonus.tsx` (dispatch `CustomEvent` after real actions)
