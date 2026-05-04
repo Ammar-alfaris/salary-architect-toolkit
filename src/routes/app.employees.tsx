@@ -333,7 +333,7 @@ function EmployeesPage() {
                   <FileDown className="w-4 h-4 me-1" />
                   {t("download_template")}
                 </Button>
-                <Button size="sm" variant="outline" onClick={() => fileRef.current?.click()}>
+                <Button data-tour="import-employees" size="sm" variant="outline" onClick={() => fileRef.current?.click()}>
                   <Upload className="w-4 h-4 me-1" />
                   {t("import_excel")}
                 </Button>
@@ -344,12 +344,14 @@ function EmployeesPage() {
                   className="hidden"
                   onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImportFile(f); }}
                 />
+                <ReassignGradesButton organizationId={organizationId} onDone={refresh} />
+                <SuggestStructureButton employees={employees} />
               </>
             )}
             {perms.canEdit && (
               <Dialog open={open} onOpenChange={setOpen}>
                 <DialogTrigger asChild>
-                  <Button size="sm">
+                  <Button data-tour="add-employee" size="sm">
                     <Plus className="w-4 h-4 me-1" />
                     {t("add_employee")}
                   </Button>
