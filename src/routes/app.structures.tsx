@@ -168,7 +168,7 @@ function StructuresPage() {
               <FileSpreadsheet className="w-4 h-4 me-1" />{t("excel")}
             </Button>
             {perms.canEdit && (
-              <Button size="sm" onClick={() => setOpen(!open)}>
+              <Button data-tour="create-structure" size="sm" onClick={() => setOpen(!open)}>
                 <Plus className="w-4 h-4 me-1" />{open ? t("cancel") : t("create_structure")}
               </Button>
             )}
@@ -178,7 +178,7 @@ function StructuresPage() {
 
       <div className="p-4 md:p-6 space-y-4">
         {open && (
-          <div className="border rounded-lg bg-card p-5 space-y-5">
+          <div data-tour="structure-fields" className="border rounded-lg bg-card p-5 space-y-5">
             <h3 className="font-semibold text-sm">{t("structure_basics")}</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div className="space-y-1.5"><Label>{t("structure_name_label")}</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
