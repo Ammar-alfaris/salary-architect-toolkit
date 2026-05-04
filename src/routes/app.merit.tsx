@@ -10,11 +10,11 @@ import { COMPA_BANDS, PERFORMANCE_RATINGS, compaRatio, compaRatioBand, defaultMe
 import { fmtCurrency, fmtPercent } from "@/lib/format";
 import { meritBudgetInsights } from "@/lib/insights";
 import { InsightCard } from "@/components/insight-card";
-import { ApprovalBar } from "@/components/approval-bar";
+import { ApplyOrApprove } from "@/components/apply-or-approve";
 import { snapshotVersion } from "@/lib/governance";
 import { logAudit } from "@/lib/audit";
 import { toast } from "sonner";
-import { Calculator, Download, Save, RotateCcw } from "lucide-react";
+import { Calculator, Download, Save, RotateCcw, CheckCircle2 } from "lucide-react";
 
 export const Route = createFileRoute("/app/merit")({ component: MeritPage });
 
@@ -126,6 +126,35 @@ function MeritPage() {
     }
   };
 
+  const applyMerit = async () => {
+    if (!recommendations.length) return toast.error(t("no_employees_yet"));
+    if (!confirm(t("apply_merit_confirm"))) return;
+    await saveCycle();
+    try {
+      // write merit_results + update employee base salaries
+      if (cycleId) {
+        await supabase.from("merit_results").insert(
+          recommendations.map((r) => ({
+            merit_cycle_id: cycleId,
+            employee_id: r.id,
+            current_salary: r.base,
+            recommended_increase_percent: r.pct,
+            increase_amount: r.increase,
+            new_salary: r.newSalary,
+          })) as never,
+        );
+      }
+      await Promise.all(
+        recommendations.map((r) =>
+          supabase.from("employees").update({ base_salary: r.newSalary }).eq("id", r.id),
+        ),
+      );
+      toast.success(t("apply_merit_done"));
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+  };
+
   return (
     <div>
       <PageHeader
@@ -145,11 +174,13 @@ function MeritPage() {
 
       <div className="p-4 md:p-6 space-y-4">
         {cycleId && (
-          <ApprovalBar
+          <ApplyOrApprove
             entityType="merit_cycle"
+            entityKey="merit_cycle"
             entityId={cycleId}
             entityLabel={`Merit ${new Date().getFullYear()}`}
-            onLockChange={setCycleLocked}
+            proposedPayload={{ budget, matrix, recommendations }}
+            onApply={applyMerit}
           />
         )}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
