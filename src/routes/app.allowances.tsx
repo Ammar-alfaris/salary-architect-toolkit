@@ -11,6 +11,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { calculateAllowances, exportCSV } from "@/lib/comp";
 import { fmtCurrency } from "@/lib/format";
 import { Wallet, Download } from "lucide-react";
+import { ApplyOrApprove } from "@/components/apply-or-approve";
+import { logAudit } from "@/lib/audit";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/allowances")({ component: AllowancesPage });
 
