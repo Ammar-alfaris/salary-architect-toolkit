@@ -183,16 +183,96 @@ export type Database = {
         }
         Relationships: []
       }
+      approval_chain_steps: {
+        Row: {
+          approver_email: string | null
+          approver_label: string | null
+          approver_role: string | null
+          approver_user_id: string | null
+          chain_id: string
+          created_at: string
+          id: string
+          name: string | null
+          step_order: number
+        }
+        Insert: {
+          approver_email?: string | null
+          approver_label?: string | null
+          approver_role?: string | null
+          approver_user_id?: string | null
+          chain_id: string
+          created_at?: string
+          id?: string
+          name?: string | null
+          step_order: number
+        }
+        Update: {
+          approver_email?: string | null
+          approver_label?: string | null
+          approver_role?: string | null
+          approver_user_id?: string | null
+          chain_id?: string
+          created_at?: string
+          id?: string
+          name?: string | null
+          step_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "approval_chain_steps_chain_id_fkey"
+            columns: ["chain_id"]
+            isOneToOne: false
+            referencedRelation: "approval_chains"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      approval_chains: {
+        Row: {
+          applies_to: string[]
+          created_at: string
+          created_by: string | null
+          id: string
+          is_default: boolean
+          name: string
+          organization_id: string
+        }
+        Insert: {
+          applies_to?: string[]
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_default?: boolean
+          name: string
+          organization_id: string
+        }
+        Update: {
+          applies_to?: string[]
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_default?: boolean
+          name?: string
+          organization_id?: string
+        }
+        Relationships: []
+      }
       approval_requests: {
         Row: {
+          applied_at: string | null
+          applied_by: string | null
+          chain_id: string | null
           created_at: string
+          current_step: number
           decision_note: string | null
           entity_id: string
           entity_label: string | null
           entity_type: string
+          final_payload: Json | null
           id: string
           organization_id: string
           payload: Json
+          proposed_payload: Json
           reason: string | null
           requested_by: string
           requested_by_email: string | null
@@ -202,14 +282,20 @@ export type Database = {
           status: string
         }
         Insert: {
+          applied_at?: string | null
+          applied_by?: string | null
+          chain_id?: string | null
           created_at?: string
+          current_step?: number
           decision_note?: string | null
           entity_id: string
           entity_label?: string | null
           entity_type: string
+          final_payload?: Json | null
           id?: string
           organization_id: string
           payload?: Json
+          proposed_payload?: Json
           reason?: string | null
           requested_by: string
           requested_by_email?: string | null
@@ -219,14 +305,20 @@ export type Database = {
           status?: string
         }
         Update: {
+          applied_at?: string | null
+          applied_by?: string | null
+          chain_id?: string | null
           created_at?: string
+          current_step?: number
           decision_note?: string | null
           entity_id?: string
           entity_label?: string | null
           entity_type?: string
+          final_payload?: Json | null
           id?: string
           organization_id?: string
           payload?: Json
+          proposed_payload?: Json
           reason?: string | null
           requested_by?: string
           requested_by_email?: string | null
@@ -235,7 +327,59 @@ export type Database = {
           reviewed_by_email?: string | null
           status?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "approval_requests_chain_id_fkey"
+            columns: ["chain_id"]
+            isOneToOne: false
+            referencedRelation: "approval_chains"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      approval_step_decisions: {
+        Row: {
+          created_at: string
+          decided_by: string | null
+          decided_by_email: string | null
+          decision: string
+          edits: Json
+          id: string
+          note: string | null
+          request_id: string
+          step_order: number
+        }
+        Insert: {
+          created_at?: string
+          decided_by?: string | null
+          decided_by_email?: string | null
+          decision: string
+          edits?: Json
+          id?: string
+          note?: string | null
+          request_id: string
+          step_order: number
+        }
+        Update: {
+          created_at?: string
+          decided_by?: string | null
+          decided_by_email?: string | null
+          decision?: string
+          edits?: Json
+          id?: string
+          note?: string | null
+          request_id?: string
+          step_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "approval_step_decisions_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "approval_requests"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       audit_logs: {
         Row: {
