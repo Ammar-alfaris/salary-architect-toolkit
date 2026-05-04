@@ -12,6 +12,7 @@ import { useI18n } from "@/lib/i18n";
 import { useTheme } from "@/lib/theme";
 import { supabase } from "@/integrations/supabase/client";
 import { DEFAULT_APPROVAL_SETTINGS, type ApprovalSettings } from "@/lib/governance";
+import { ApprovalChainEditor } from "@/components/approval-chain-editor";
 import { usePermissions } from "@/lib/rbac";
 import { toast } from "sonner";
 
@@ -138,6 +139,11 @@ function SettingsPage() {
                 <p className="text-xs text-muted-foreground pt-2">Admin role required to change these settings.</p>
               )}
             </div>
+            {perms.canAdmin && (
+              <div className="border rounded-lg bg-card p-5 mt-4">
+                <ApprovalChainEditor />
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="locale" className="mt-4">
