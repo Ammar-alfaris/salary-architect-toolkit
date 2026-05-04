@@ -1,72 +1,109 @@
-# Plan: Light-mode sidebar fix + Public blog + CSV blog import
 
-## 1. Fix admin sidebar text in light mode
+# خطة: تجربة موجَّهة بالهدف + ربط الموظفين بسلم الرواتب تلقائياً
 
-**Problem:** In `src/components/admin/admin-shell.tsx` the sidebar uses `bg-sidebar text-sidebar-foreground`. The dark navy background renders in both themes, but in light mode the `text-sidebar-foreground` token resolves to a dark color → invisible text (as shown in screenshot).
+## المشكلة الحالية
+- بعد رفع 100 موظف عبر القالب، ينشئ المستخدم سلم رواتب جديداً لكن **لا يوجد ربط** بين الموظفين والسلم: حقل `employees.grade_id` يبقى فارغاً، فلا تظهر نتائج Compa-Ratio ولا Range Penetration ولا Out-of-range.
+- السبب التقني: الاستيراد يتطلب أن يحتوي ملف Excel على عمود `grade_code` يطابق درجة موجودة مسبقاً، وعند إنشاء السلم لاحقاً لا يتم إعادة ربط الموظفين الموجودين.
+- لا يوجد أي توجيه للمستخدم الجديد: يدخل لوحة التحكم مباشرة دون معرفة من أين يبدأ ولا ما الهدف من كل شاشة.
 
-**Fix:** Force readable foreground tokens on the admin sidebar regardless of theme. Replace `bg-sidebar text-sidebar-foreground` with explicit dark-surface classes (`bg-slate-900 text-slate-100` + `border-slate-800`, hover `hover:bg-slate-800`, active `bg-slate-800 text-white`). Apply same to mobile drawer and the "Super Admin" header block. This guarantees high contrast in both themes and matches the intended dark-navy admin look.
+## الهدف
+1. سؤال المستخدم عن هدفه فور أول دخول، وتوجيهه للمسار المناسب.
+2. دليل تفاعلي خطوة بخطوة (Tour) يضيء الأزرار ويشرح كيفية الاستخدام.
+3. ربط تلقائي بين الموظفين وسلم الرواتب حتى لو لم يكن الترتيب مثالياً.
 
-## 2. Public blog pages (reader-facing)
+---
 
-Create two new TanStack routes (open to all visitors, no auth required):
+## 1) معالج البداية حسب الهدف (Onboarding Wizard)
 
-**`src/routes/blog.tsx`** — Blog index
-- Fetches `blog_posts` where `status = 'published'` and `publish_at <= now()`, ordered by `publish_at desc`.
-- Hero header with site title + tagline.
-- Featured post card (if `is_featured`) — large cover, title, excerpt, read time.
-- Grid of post cards: cover image, category chip, title, excerpt, author/date, estimated reading time (computed from `content` word count ÷ 200 wpm).
-- Search input + category filter (client-side).
-- Bottom CTA section: "Start using Total Reward" → links to `/auth`.
-- Bilingual (EN/AR) labels via existing `useI18n`.
+ملف جديد: `src/routes/app.onboarding.tsx` (يفتح تلقائياً عند أول دخول إذا لم يُكمل).
 
-**`src/routes/blog.$slug.tsx`** — Single post
-- Fetches post by `slug`.
-- Sticky **reading progress bar** at top (scroll-percentage indicator).
-- Hero: featured image, category, title, excerpt, author, publish date, reading time.
-- Markdown body rendered with `react-markdown` + `remark-gfm` (bold, italic, lists, tables, code blocks, blockquotes, headings, links, images). Tailwind `prose` typography with dark-mode variant.
-- Auto-generated **Table of Contents** sidebar (sticky on desktop) from H2/H3 headings.
-- Share buttons (X, LinkedIn, copy link).
-- "Related posts" section (3 most recent posts in same category, excluding current).
-- Bottom **CTA card**: gradient banner "Subscribe / Start free trial" → `/auth`.
-- `head()` with SEO meta (`seo_title`, `seo_description`, `og:image` from `featured_image_url`).
-- 404 state if slug not found / not published.
+السؤال الأول: **"ما الذي تريد تحقيقه؟"** مع 4 خيارات:
 
-**Dependencies to add:** `react-markdown`, `remark-gfm`.
+| الهدف | المسار الموصى به |
+|---|---|
+| أ) شركة جديدة — أبني هيكل رواتب من الصفر | إنشاء سلم → إضافة موظفين → ربط → تحليلات |
+| ب) لدي موظفون وسلم حالي — أريد مراجعة/ترقية | استيراد موظفين → استيراد/إنشاء سلم → ربط تلقائي → تقارير الفجوات |
+| ج) لدي موظفون فقط — أحتاج بناء سلم يناسبهم | استيراد موظفين → اقتراح سلم تلقائي مبني على بياناتهم → مراجعة → ربط |
+| د) أريد فقط تشغيل دورة Merit/Bonus | الذهاب مباشرة إلى Merit Matrix أو Bonus |
 
-**Header link:** add "Blog" link in the public landing header (`src/routes/index.tsx`) so visitors can reach `/blog`.
+أسئلة إضافية مختصرة (3 كحد أقصى): العملة الافتراضية، عدد الموظفين التقريبي، الدولة.
 
-## 3. CSV import on admin blog page
+يُحفظ الاختيار في عمود جديد `organizations.onboarding` (jsonb): `{ goal, completed_steps[], dismissed_at }`.
 
-In `src/routes/admin.blog.tsx`:
-- Add **"Import CSV"** button next to "New post".
-- Add **"Download template"** button that emits a sample CSV with headers:
-  `title, slug, excerpt, content, status, publish_at, is_featured, seo_title, seo_description, featured_image_url, featured_image_alt, category_slug`
-- File input → parse CSV with `papaparse` (already common; add if missing).
-- Validate rows (require `title` + `slug`; default `status=draft`, `is_featured=false`).
-- Bulk `insert` into `blog_posts`. Show toast with success / error counts. On finish, reload the table.
-- Skip rows where slug already exists (pre-fetch existing slugs and warn).
+---
 
-**Dependency to add:** `papaparse` + `@types/papaparse`.
+## 2) ربط الموظفين بسلم الرواتب (الإصلاح الجوهري)
 
-## Technical notes
+### أ) ربط تلقائي عند إنشاء السلم
+في `app.structures.tsx` بعد `handleGenerate`، اسأل المستخدم في حوار:
+> "تم إنشاء السلم. هل تريد ربط الموظفين الحاليين تلقائياً بدرجاتهم بناءً على راتبهم؟"
 
-- No DB migration required — `blog_posts` table already exists with all needed columns.
-- Public blog routes do not use `AdminShell` or `AppShell`; they get a lightweight reader layout (header with logo + nav, footer with CTA).
-- RLS on `blog_posts` already allows public `select` on published rows (verify in migration; if not, add a public read policy for `status='published' AND publish_at<=now()`).
-- Reading time helper: `Math.max(1, Math.ceil(wordCount / 200))` minutes.
-- Reading progress: `useEffect` listener on `scroll`, computes `(scrollY / (scrollHeight - innerHeight)) * 100`, sets a fixed `<div>` width.
+عند الموافقة، شغّل دالة `autoAssignGrades(orgId, structureId)`:
+- لكل موظف بدون `grade_id`: ابحث عن الدرجة التي يقع راتبه ضمن `[minimum, maximum]`؛ إن لم تطابق، اختر الأقرب إلى `midpoint`.
+- حدّث `grade_id` و `salary_structure_id`.
+- أظهر ملخص: "تم ربط X موظف، Y خارج النطاق".
 
-## Files
+### ب) ربط تلقائي عند استيراد الموظفين
+في `handleImportFile` بـ `app.employees.tsx`: إذا كان `grade_code` فارغاً ووُجد سلم نشط، طبّق نفس منطق `autoAssignGrades` على الصفوف المستوردة قبل الإدراج.
 
-**New**
-- `src/routes/blog.tsx`
-- `src/routes/blog.$slug.tsx`
-- `src/components/blog/reading-progress.tsx`
-- `src/components/blog/post-card.tsx`
+### ج) أداة ربط يدوي/جماعي
+زر "Re-assign grades" أعلى صفحة الموظفين يفتح حوار يسمح بـ:
+- اختيار سلم مرجعي.
+- اختيار طريقة الربط: حسب النطاق / حسب المسمى الوظيفي / يدوي.
+- معاينة قبل التطبيق.
 
-**Edited**
-- `src/components/admin/admin-shell.tsx` — sidebar contrast fix
-- `src/routes/admin.blog.tsx` — CSV import + template download
-- `src/routes/index.tsx` — add Blog link in nav
-- `package.json` — add `react-markdown`, `remark-gfm`, `papaparse`, `@types/papaparse`
-- Possibly new migration if public-read RLS for blog is missing.
+### د) اقتراح سلم من بيانات الموظفين (للهدف ج)
+دالة جديدة في `src/lib/comp.ts`: `suggestStructureFromEmployees(employees)`:
+- استخرج min/max للرواتب.
+- اقترح `gradeCount` (10 افتراضياً) و `startingMidpoint` و `progressionPercent` بحيث تغطي كل الرواتب.
+- افتح صفحة Structures مع الحقول معبأة مسبقاً.
+
+---
+
+## 3) دليل تفاعلي خطوة بخطوة (Guided Tour)
+
+مكوّن جديد `src/components/guided-tour.tsx`:
+- يعرض tooltip فوق العنصر المستهدف (يستخدم `data-tour="step-id"` على الأزرار).
+- أزرار: السابق / التالي / تخطّي.
+- يحفظ التقدّم في `organizations.onboarding.completed_steps`.
+
+تعريف الجولات في `src/lib/tours.ts` — جولة لكل هدف. مثال للهدف (أ):
+
+```
+1. لوحة التحكم → "ابدأ بإنشاء سلم الرواتب" يضيء زر Create Salary Structure
+2. صفحة Structures → اشرح حقول: عدد الدرجات، نقطة البداية، التدرّج، الانتشار + معاينة
+3. بعد الحفظ → "أضف الموظفين الآن" يفتح صفحة Employees
+4. Employees → زر "تحميل قالب Excel" ثم "استيراد"
+5. بعد الاستيراد → "اربط الموظفين بالسلم" (auto-assign)
+6. التحليلات → اشرح Compa-Ratio و Range Penetration
+7. Merit / Bonus → كيف تشغّل الدورة
+```
+
+عناصر مساعدة:
+- شريط تقدّم ثابت أعلى التطبيق: "الخطوة 3 من 7" مع زر "متابعة الجولة".
+- زر مساعدة عائم (؟) في كل صفحة يعيد فتح الجولة الخاصة بها.
+
+---
+
+## 4) قاعدة البيانات (Migration)
+
+```sql
+ALTER TABLE organizations
+  ADD COLUMN onboarding jsonb NOT NULL DEFAULT '{}'::jsonb;
+```
+
+(لا حاجة لجدول جديد؛ كل شيء داخل `onboarding` jsonb.)
+
+---
+
+## 5) الترجمة
+إضافة كل مفاتيح النصوص الجديدة إلى `src/lib/i18n.tsx` بالعربية والإنجليزية (أهداف، أزرار الجولة، الرسائل، حوار الربط التلقائي).
+
+---
+
+## الملفات المتأثرة
+- جديد: `src/routes/app.onboarding.tsx`، `src/components/guided-tour.tsx`، `src/lib/tours.ts`، `src/lib/auto-assign.ts`، migration SQL.
+- تعديل: `src/routes/app.tsx` (تحقق من حالة onboarding وتوجيه)، `src/routes/app.index.tsx` (شريط التقدم + data-tour)، `src/routes/app.structures.tsx` (حوار الربط بعد الإنشاء + إعداد مسبق من اقتراح السلم + data-tour)، `src/routes/app.employees.tsx` (ربط تلقائي عند الاستيراد + زر Re-assign + data-tour)، `src/lib/auth.tsx` (تحميل onboarding)، `src/lib/comp.ts` (suggestStructureFromEmployees)، `src/lib/i18n.tsx`.
+
+## ملاحظة على الحساب التجريبي
+حساب `hr.alfares@gmail.com` لديه 100 موظف بدون `grade_id` وسلم منشأ غير مربوط — بعد تطبيق هذه الخطة سيظهر له زر "اربط الموظفين الآن" وسيتم تعبئة كل الـ KPIs والتحليلات تلقائياً.

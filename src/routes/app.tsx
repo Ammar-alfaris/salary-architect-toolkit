@@ -1,7 +1,9 @@
-import { Outlet, redirect, createFileRoute } from "@tanstack/react-router";
+import { Outlet, redirect, createFileRoute, useLocation, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/app-shell";
+import { OnboardingProvider, useOnboarding } from "@/lib/onboarding";
+import { GuidedTour } from "@/components/guided-tour";
 
 export const Route = createFileRoute("/app")({
   component: AppLayout,
@@ -26,8 +28,28 @@ function AppLayout() {
   if (!authed) return null;
 
   return (
-    <AppShell>
-      <Outlet />
-    </AppShell>
+    <OnboardingProvider>
+      <OnboardingGate>
+        <AppShell>
+          <Outlet />
+        </AppShell>
+        <GuidedTour />
+      </OnboardingGate>
+    </OnboardingProvider>
   );
+}
+
+function OnboardingGate({ children }: { children: React.ReactNode }) {
+  const { loaded, state } = useOnboarding();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loaded) return;
+    const onOnboarding = location.pathname === "/app/onboarding";
+    const needsGoal = !state.goal && !state.dismissed_at;
+    if (needsGoal && !onOnboarding) navigate({ to: "/app/onboarding" });
+  }, [loaded, state.goal, state.dismissed_at, location.pathname]);
+
+  return <>{children}</>;
 }

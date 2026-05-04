@@ -16,8 +16,10 @@ import { exportXLSX, parseXLSX, downloadEmployeeTemplate } from "@/lib/excel";
 import { fmtCurrency } from "@/lib/format";
 import { logAudit } from "@/lib/audit";
 import { usePermissions, maskSalary } from "@/lib/rbac";
-import { Plus, Download, Search, Eye, Sparkles, FileSpreadsheet, Trash2, ChevronLeft, ChevronRight, ShieldAlert, Upload, FileDown, Pencil } from "lucide-react";
+import { Plus, Download, Search, Eye, Sparkles, FileSpreadsheet, Trash2, ChevronLeft, ChevronRight, ShieldAlert, Upload, FileDown, Pencil, Link2 } from "lucide-react";
 import { toast } from "sonner";
+import { autoAssignGrades, suggestStructureFromSalaries } from "@/lib/auto-assign";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 
 export const Route = createFileRoute("/app/employees")({ component: EmployeesPage });
@@ -331,7 +333,7 @@ function EmployeesPage() {
                   <FileDown className="w-4 h-4 me-1" />
                   {t("download_template")}
                 </Button>
-                <Button size="sm" variant="outline" onClick={() => fileRef.current?.click()}>
+                <Button data-tour="import-employees" size="sm" variant="outline" onClick={() => fileRef.current?.click()}>
                   <Upload className="w-4 h-4 me-1" />
                   {t("import_excel")}
                 </Button>
@@ -342,12 +344,14 @@ function EmployeesPage() {
                   className="hidden"
                   onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImportFile(f); }}
                 />
+                <ReassignGradesButton organizationId={organizationId} onDone={refresh} />
+                <SuggestStructureButton employees={employees} />
               </>
             )}
             {perms.canEdit && (
               <Dialog open={open} onOpenChange={setOpen}>
                 <DialogTrigger asChild>
-                  <Button size="sm">
+                  <Button data-tour="add-employee" size="sm">
                     <Plus className="w-4 h-4 me-1" />
                     {t("add_employee")}
                   </Button>
@@ -570,5 +574,85 @@ function EmployeesPage() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+function ReassignGradesButton({ organizationId, onDone }: { organizationId: string | null; onDone: () => void }) {
+  const { t } = useI18n();
+  const [busy, setBusy] = useState(false);
+  const [structures, setStructures] = useState<any[]>([]);
+  const [structureId, setStructureId] = useState<string>("");
+  const [open, setOpen] = useState(false);
+
+  const load = async () => {
+    if (!organizationId) return;
+    const { data } = await supabase.from("salary_structures").select("id,name,grade_count").eq("organization_id", organizationId).eq("archived", false).order("created_at", { ascending: false });
+    setStructures(data ?? []);
+    if (data && data.length && !structureId) setStructureId(data[0].id);
+  };
+
+  const run = async () => {
+    if (!organizationId || !structureId) return;
+    setBusy(true);
+    try {
+      const res = await autoAssignGrades(organizationId, structureId);
+      toast.success(t("autolink_done", { matched: res.matched, out: res.outOfRange }));
+      onDone();
+      setOpen(false);
+    } catch (e: any) { toast.error(e.message); }
+    finally { setBusy(false); }
+  };
+
+  return (
+    <AlertDialog open={open} onOpenChange={(o) => { setOpen(o); if (o) load(); }}>
+      <AlertDialogTrigger asChild>
+        <Button data-tour="reassign-grades" size="sm" variant="outline">
+          <Link2 className="w-4 h-4 me-1" />{t("reassign_grades")}
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{t("reassign_grades")}</AlertDialogTitle>
+          <AlertDialogDescription>{t("reassign_grades_desc")}</AlertDialogDescription>
+        </AlertDialogHeader>
+        <div className="space-y-2">
+          <Label>{t("salary_structures")}</Label>
+          <Select value={structureId} onValueChange={setStructureId}>
+            <SelectTrigger><SelectValue placeholder={t("pick_grade")} /></SelectTrigger>
+            <SelectContent>
+              {structures.map((s) => <SelectItem key={s.id} value={s.id}>{s.name} ({s.grade_count})</SelectItem>)}
+            </SelectContent>
+          </Select>
+          {!structures.length && <p className="text-xs text-muted-foreground">{t("no_structures_yet")}</p>}
+        </div>
+        <AlertDialogFooter>
+          <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
+          <AlertDialogAction onClick={run} disabled={busy || !structureId}>{busy ? t("loading") : t("apply")}</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+function SuggestStructureButton({ employees }: { employees: any[] }) {
+  const { t } = useI18n();
+  if (!employees.length) return null;
+  const handle = () => {
+    const salaries = employees.map((e) => Number(e.base_salary)).filter(Boolean);
+    const s = suggestStructureFromSalaries(salaries);
+    if (!s) { toast.error(t("not_enough_data")); return; }
+    const params = new URLSearchParams({
+      grades: String(s.gradeCount),
+      mid: String(s.startingMidpoint),
+      prog: String(s.progressionPercent),
+      spread: String(s.spreadPercent),
+      round: String(s.rounding),
+    });
+    window.location.href = `/app/structures?${params.toString()}`;
+  };
+  return (
+    <Button size="sm" variant="outline" onClick={handle}>
+      <Sparkles className="w-4 h-4 me-1" />{t("suggest_structure")}
+    </Button>
   );
 }

@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { autoAssignGrades } from "@/lib/auto-assign";
 import { PageHeader } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,15 +28,29 @@ function StructuresPage() {
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
 
-  // Builder form state
+  // Builder form state — accept ?grades=&mid=&prog=&spread=&round= presets (used by "Suggest structure")
+  const initial = (() => {
+    if (typeof window === "undefined") return null;
+    const u = new URLSearchParams(window.location.search);
+    if (!u.get("grades")) return null;
+    return {
+      gradeCount: +u.get("grades")! || 10,
+      startingMidpoint: +u.get("mid")! || 30000,
+      progressionPercent: +u.get("prog")! || 12,
+      spreadPercent: +u.get("spread")! || 40,
+      rounding: +u.get("round")! || 100,
+    };
+  })();
   const [name, setName] = useState(t("default_structure_name"));
   const [currency, setCurrency] = useState("USD");
   const [country, setCountry] = useState("");
-  const [gradeCount, setGradeCount] = useState(10);
-  const [startingMidpoint, setStartingMidpoint] = useState(30000);
-  const [progressionPercent, setProgressionPercent] = useState(12);
-  const [spreadPercent, setSpreadPercent] = useState(40);
-  const [rounding, setRounding] = useState(100);
+  const [gradeCount, setGradeCount] = useState(initial?.gradeCount ?? 10);
+  const [startingMidpoint, setStartingMidpoint] = useState(initial?.startingMidpoint ?? 30000);
+  const [progressionPercent, setProgressionPercent] = useState(initial?.progressionPercent ?? 12);
+  const [spreadPercent, setSpreadPercent] = useState(initial?.spreadPercent ?? 40);
+  const [rounding, setRounding] = useState(initial?.rounding ?? 100);
+  useEffect(() => { if (initial) setOpen(true); }, []);
+  const [linkPrompt, setLinkPrompt] = useState<{ structureId: string } | null>(null);
 
   const refresh = async () => {
     if (!organizationId) return;
@@ -89,6 +104,16 @@ function StructuresPage() {
     });
     setOpen(false);
     refresh();
+    // Offer to auto-link existing employees to this fresh structure.
+    const { count } = await supabase.from("employees").select("id", { count: "exact", head: true }).eq("organization_id", organizationId).eq("archived", false);
+    if ((count ?? 0) > 0) setLinkPrompt({ structureId: structure.id });
+  };
+
+  const runAutoLink = async () => {
+    if (!organizationId || !linkPrompt) return;
+    const res = await autoAssignGrades(organizationId, linkPrompt.structureId);
+    toast.success(t("autolink_done", { matched: res.matched, out: res.outOfRange }));
+    setLinkPrompt(null);
   };
 
   const handleArchive = async (s: any) => {
@@ -143,7 +168,7 @@ function StructuresPage() {
               <FileSpreadsheet className="w-4 h-4 me-1" />{t("excel")}
             </Button>
             {perms.canEdit && (
-              <Button size="sm" onClick={() => setOpen(!open)}>
+              <Button data-tour="create-structure" size="sm" onClick={() => setOpen(!open)}>
                 <Plus className="w-4 h-4 me-1" />{open ? t("cancel") : t("create_structure")}
               </Button>
             )}
@@ -153,7 +178,7 @@ function StructuresPage() {
 
       <div className="p-4 md:p-6 space-y-4">
         {open && (
-          <div className="border rounded-lg bg-card p-5 space-y-5">
+          <div data-tour="structure-fields" className="border rounded-lg bg-card p-5 space-y-5">
             <h3 className="font-semibold text-sm">{t("structure_basics")}</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div className="space-y-1.5"><Label>{t("structure_name_label")}</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
@@ -274,6 +299,19 @@ function StructuresPage() {
           )}
         </div>
       </div>
+
+      <AlertDialog open={!!linkPrompt} onOpenChange={(o) => { if (!o) setLinkPrompt(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("autolink_prompt_title")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("autolink_prompt_body")}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("not_now")}</AlertDialogCancel>
+            <AlertDialogAction onClick={runAutoLink}>{t("link_now")}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

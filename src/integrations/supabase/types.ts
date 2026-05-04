@@ -900,6 +900,7 @@ export type Database = {
           id: string
           locale: string
           name: string
+          onboarding: Json
         }
         Insert: {
           approval_settings?: Json
@@ -910,6 +911,7 @@ export type Database = {
           id?: string
           locale?: string
           name: string
+          onboarding?: Json
         }
         Update: {
           approval_settings?: Json
@@ -920,6 +922,7 @@ export type Database = {
           id?: string
           locale?: string
           name?: string
+          onboarding?: Json
         }
         Relationships: []
       }
