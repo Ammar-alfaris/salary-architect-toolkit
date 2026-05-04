@@ -576,3 +576,83 @@ function EmployeesPage() {
     </div>
   );
 }
+
+function ReassignGradesButton({ organizationId, onDone }: { organizationId: string | null; onDone: () => void }) {
+  const { t } = useI18n();
+  const [busy, setBusy] = useState(false);
+  const [structures, setStructures] = useState<any[]>([]);
+  const [structureId, setStructureId] = useState<string>("");
+  const [open, setOpen] = useState(false);
+
+  const load = async () => {
+    if (!organizationId) return;
+    const { data } = await supabase.from("salary_structures").select("id,name,grade_count").eq("organization_id", organizationId).eq("archived", false).order("created_at", { ascending: false });
+    setStructures(data ?? []);
+    if (data && data.length && !structureId) setStructureId(data[0].id);
+  };
+
+  const run = async () => {
+    if (!organizationId || !structureId) return;
+    setBusy(true);
+    try {
+      const res = await autoAssignGrades(organizationId, structureId);
+      toast.success(t("autolink_done", { matched: res.matched, out: res.outOfRange }));
+      onDone();
+      setOpen(false);
+    } catch (e: any) { toast.error(e.message); }
+    finally { setBusy(false); }
+  };
+
+  return (
+    <AlertDialog open={open} onOpenChange={(o) => { setOpen(o); if (o) load(); }}>
+      <AlertDialogTrigger asChild>
+        <Button data-tour="reassign-grades" size="sm" variant="outline">
+          <Link2 className="w-4 h-4 me-1" />{t("reassign_grades")}
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{t("reassign_grades")}</AlertDialogTitle>
+          <AlertDialogDescription>{t("reassign_grades_desc")}</AlertDialogDescription>
+        </AlertDialogHeader>
+        <div className="space-y-2">
+          <Label>{t("salary_structures")}</Label>
+          <Select value={structureId} onValueChange={setStructureId}>
+            <SelectTrigger><SelectValue placeholder={t("pick_grade")} /></SelectTrigger>
+            <SelectContent>
+              {structures.map((s) => <SelectItem key={s.id} value={s.id}>{s.name} ({s.grade_count})</SelectItem>)}
+            </SelectContent>
+          </Select>
+          {!structures.length && <p className="text-xs text-muted-foreground">{t("no_structures_yet")}</p>}
+        </div>
+        <AlertDialogFooter>
+          <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
+          <AlertDialogAction onClick={run} disabled={busy || !structureId}>{busy ? t("loading") : t("apply")}</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+function SuggestStructureButton({ employees }: { employees: any[] }) {
+  const { t } = useI18n();
+  if (!employees.length) return null;
+  const handle = () => {
+    const salaries = employees.map((e) => Number(e.base_salary)).filter(Boolean);
+    const s = suggestStructureFromSalaries(salaries);
+    if (!s) { toast.error(t("not_enough_data")); return; }
+    const params = new URLSearchParams({
+      grades: String(s.gradeCount),
+      mid: String(s.startingMidpoint),
+      prog: String(s.progressionPercent),
+      spread: String(s.spreadPercent),
+      round: String(s.rounding),
+    });
+    window.location.href = `/app/structures?${params.toString()}`;
+  };
+  return (
+    <Button size="sm" variant="outline" onClick={handle}>
+      <Sparkles className="w-4 h-4 me-1" />{t("suggest_structure")}
+    </Button>
+  );
+}
