@@ -161,7 +161,7 @@ export function downloadEmployeeTemplate(filename = "employees_template.xlsx") {
   XLSX.utils.book_append_sheet(wb, wsRate, "Performance Mapping");
 
   // ---- Sheet 4: Instructions (EN) ----
-  const enLines: (string | string[])[] = [
+  const enLines: string[][] = [
     ["TotalReward — Employee Import Template"],
     [""],
     ["1. Sheet 'Employees' — one row per employee. Required: employee_code, first_name, last_name, base_salary."],
@@ -182,7 +182,7 @@ export function downloadEmployeeTemplate(filename = "employees_template.xlsx") {
   XLSX.utils.book_append_sheet(wb, wsEn, "Instructions (EN)");
 
   // ---- Sheet 5: Instructions (AR) ----
-  const arLines: (string | string[])[] = [
+  const arLines: string[][] = [
     ["TotalReward — قالب رفع الموظفين"],
     [""],
     ["١. ورقة «Employees» — صف لكل موظف. الحقول الإلزامية: employee_code، first_name، last_name، base_salary."],
