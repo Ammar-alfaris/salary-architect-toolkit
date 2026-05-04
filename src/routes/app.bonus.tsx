@@ -160,8 +160,17 @@ function BonusPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div className="border rounded-lg bg-card p-4"><div className="text-xs text-muted-foreground">{t("total_budget")}</div><div className="text-2xl font-semibold num mt-1">{fmtCurrency(totalBudget, defaultCurrency, locale)}</div></div>
                   <div className="border rounded-lg bg-card p-4"><div className="text-xs text-muted-foreground">{t("avg_bonus")}</div><div className="text-2xl font-semibold num mt-1">{fmtCurrency(totalBudget / bulkResults.length, defaultCurrency, locale)}</div></div>
-                  <div className="border rounded-lg bg-card p-4 flex items-end justify-end"><Button variant="outline" size="sm" onClick={() => exportCSV("bonus.csv", bulkResults)}><Download className="w-4 h-4 me-1" />{t("export_csv")}</Button></div>
+                  <div className="border rounded-lg bg-card p-4 flex items-end justify-end gap-2"><Button variant="outline" size="sm" onClick={() => exportCSV("bonus.csv", bulkResults)}><Download className="w-4 h-4 me-1" />{t("export_csv")}</Button><Button variant="outline" size="sm" onClick={ensureCycle}><Save className="w-4 h-4 me-1" />{t("bonus_save_snapshot")}</Button></div>
                 </div>
+                <ApplyOrApprove
+                  entityType="bonus_cycle"
+                  entityKey="bonus_cycle"
+                  entityId={cycleId}
+                  entityLabel={`Bonus ${new Date().getFullYear()}`}
+                  proposedPayload={{ results: bulkResults, bulkPerf, bulkBiz }}
+                  onApply={applyBonus}
+                />
+
                 <div className="border rounded-lg bg-card overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm min-w-[640px]">
