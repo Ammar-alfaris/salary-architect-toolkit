@@ -36,9 +36,9 @@ import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AdminPlansRouteImport } from './routes/admin.plans'
 import { Route as AdminOrganizationsRouteImport } from './routes/admin.organizations'
 import { Route as AdminMessagesRouteImport } from './routes/admin.messages'
-import { Route as AdminBlogRouteImport } from './routes/admin.blog'
 import { Route as AdminAuditRouteImport } from './routes/admin.audit'
 import { Route as AdminAnnouncementsRouteImport } from './routes/admin.announcements'
+import { Route as AdminBlogIndexRouteImport } from './routes/admin.blog.index'
 import { Route as AppEmployeesIdRouteImport } from './routes/app.employees.$id'
 import { Route as AppAnalyticsPenetrationRouteImport } from './routes/app.analytics.penetration'
 import { Route as AppAnalyticsEquityRouteImport } from './routes/app.analytics.equity'
@@ -182,11 +182,6 @@ const AdminMessagesRoute = AdminMessagesRouteImport.update({
   path: '/messages',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminBlogRoute = AdminBlogRouteImport.update({
-  id: '/blog',
-  path: '/blog',
-  getParentRoute: () => AdminRoute,
-} as any)
 const AdminAuditRoute = AdminAuditRouteImport.update({
   id: '/audit',
   path: '/audit',
@@ -195,6 +190,11 @@ const AdminAuditRoute = AdminAuditRouteImport.update({
 const AdminAnnouncementsRoute = AdminAnnouncementsRouteImport.update({
   id: '/announcements',
   path: '/announcements',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminBlogIndexRoute = AdminBlogIndexRouteImport.update({
+  id: '/blog/',
+  path: '/blog/',
   getParentRoute: () => AdminRoute,
 } as any)
 const AppEmployeesIdRoute = AppEmployeesIdRouteImport.update({
@@ -228,9 +228,9 @@ const AdminOrganizationsIdRoute = AdminOrganizationsIdRouteImport.update({
   getParentRoute: () => AdminOrganizationsRoute,
 } as any)
 const AdminBlogIdRoute = AdminBlogIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => AdminBlogRoute,
+  id: '/blog/$id',
+  path: '/blog/$id',
+  getParentRoute: () => AdminRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -241,7 +241,6 @@ export interface FileRoutesByFullPath {
   '/blog': typeof BlogRouteWithChildren
   '/admin/announcements': typeof AdminAnnouncementsRoute
   '/admin/audit': typeof AdminAuditRoute
-  '/admin/blog': typeof AdminBlogRouteWithChildren
   '/admin/messages': typeof AdminMessagesRoute
   '/admin/organizations': typeof AdminOrganizationsRouteWithChildren
   '/admin/plans': typeof AdminPlansRoute
@@ -271,6 +270,7 @@ export interface FileRoutesByFullPath {
   '/app/analytics/equity': typeof AppAnalyticsEquityRoute
   '/app/analytics/penetration': typeof AppAnalyticsPenetrationRoute
   '/app/employees/$id': typeof AppEmployeesIdRoute
+  '/admin/blog/': typeof AdminBlogIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -278,7 +278,6 @@ export interface FileRoutesByTo {
   '/blog': typeof BlogRouteWithChildren
   '/admin/announcements': typeof AdminAnnouncementsRoute
   '/admin/audit': typeof AdminAuditRoute
-  '/admin/blog': typeof AdminBlogRouteWithChildren
   '/admin/messages': typeof AdminMessagesRoute
   '/admin/organizations': typeof AdminOrganizationsRouteWithChildren
   '/admin/plans': typeof AdminPlansRoute
@@ -308,6 +307,7 @@ export interface FileRoutesByTo {
   '/app/analytics/equity': typeof AppAnalyticsEquityRoute
   '/app/analytics/penetration': typeof AppAnalyticsPenetrationRoute
   '/app/employees/$id': typeof AppEmployeesIdRoute
+  '/admin/blog': typeof AdminBlogIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -318,7 +318,6 @@ export interface FileRoutesById {
   '/blog': typeof BlogRouteWithChildren
   '/admin/announcements': typeof AdminAnnouncementsRoute
   '/admin/audit': typeof AdminAuditRoute
-  '/admin/blog': typeof AdminBlogRouteWithChildren
   '/admin/messages': typeof AdminMessagesRoute
   '/admin/organizations': typeof AdminOrganizationsRouteWithChildren
   '/admin/plans': typeof AdminPlansRoute
@@ -348,6 +347,7 @@ export interface FileRoutesById {
   '/app/analytics/equity': typeof AppAnalyticsEquityRoute
   '/app/analytics/penetration': typeof AppAnalyticsPenetrationRoute
   '/app/employees/$id': typeof AppEmployeesIdRoute
+  '/admin/blog/': typeof AdminBlogIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -359,7 +359,6 @@ export interface FileRouteTypes {
     | '/blog'
     | '/admin/announcements'
     | '/admin/audit'
-    | '/admin/blog'
     | '/admin/messages'
     | '/admin/organizations'
     | '/admin/plans'
@@ -389,6 +388,7 @@ export interface FileRouteTypes {
     | '/app/analytics/equity'
     | '/app/analytics/penetration'
     | '/app/employees/$id'
+    | '/admin/blog/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -396,7 +396,6 @@ export interface FileRouteTypes {
     | '/blog'
     | '/admin/announcements'
     | '/admin/audit'
-    | '/admin/blog'
     | '/admin/messages'
     | '/admin/organizations'
     | '/admin/plans'
@@ -426,6 +425,7 @@ export interface FileRouteTypes {
     | '/app/analytics/equity'
     | '/app/analytics/penetration'
     | '/app/employees/$id'
+    | '/admin/blog'
   id:
     | '__root__'
     | '/'
@@ -435,7 +435,6 @@ export interface FileRouteTypes {
     | '/blog'
     | '/admin/announcements'
     | '/admin/audit'
-    | '/admin/blog'
     | '/admin/messages'
     | '/admin/organizations'
     | '/admin/plans'
@@ -465,6 +464,7 @@ export interface FileRouteTypes {
     | '/app/analytics/equity'
     | '/app/analytics/penetration'
     | '/app/employees/$id'
+    | '/admin/blog/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -666,13 +666,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminMessagesRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/blog': {
-      id: '/admin/blog'
-      path: '/blog'
-      fullPath: '/admin/blog'
-      preLoaderRoute: typeof AdminBlogRouteImport
-      parentRoute: typeof AdminRoute
-    }
     '/admin/audit': {
       id: '/admin/audit'
       path: '/audit'
@@ -685,6 +678,13 @@ declare module '@tanstack/react-router' {
       path: '/announcements'
       fullPath: '/admin/announcements'
       preLoaderRoute: typeof AdminAnnouncementsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/blog/': {
+      id: '/admin/blog/'
+      path: '/blog'
+      fullPath: '/admin/blog/'
+      preLoaderRoute: typeof AdminBlogIndexRouteImport
       parentRoute: typeof AdminRoute
     }
     '/app/employees/$id': {
@@ -731,25 +731,13 @@ declare module '@tanstack/react-router' {
     }
     '/admin/blog/$id': {
       id: '/admin/blog/$id'
-      path: '/$id'
+      path: '/blog/$id'
       fullPath: '/admin/blog/$id'
       preLoaderRoute: typeof AdminBlogIdRouteImport
-      parentRoute: typeof AdminBlogRoute
+      parentRoute: typeof AdminRoute
     }
   }
 }
-
-interface AdminBlogRouteChildren {
-  AdminBlogIdRoute: typeof AdminBlogIdRoute
-}
-
-const AdminBlogRouteChildren: AdminBlogRouteChildren = {
-  AdminBlogIdRoute: AdminBlogIdRoute,
-}
-
-const AdminBlogRouteWithChildren = AdminBlogRoute._addFileChildren(
-  AdminBlogRouteChildren,
-)
 
 interface AdminOrganizationsRouteChildren {
   AdminOrganizationsIdRoute: typeof AdminOrganizationsIdRoute
@@ -777,7 +765,6 @@ const AdminTicketsRouteWithChildren = AdminTicketsRoute._addFileChildren(
 interface AdminRouteChildren {
   AdminAnnouncementsRoute: typeof AdminAnnouncementsRoute
   AdminAuditRoute: typeof AdminAuditRoute
-  AdminBlogRoute: typeof AdminBlogRouteWithChildren
   AdminMessagesRoute: typeof AdminMessagesRoute
   AdminOrganizationsRoute: typeof AdminOrganizationsRouteWithChildren
   AdminPlansRoute: typeof AdminPlansRoute
@@ -787,12 +774,13 @@ interface AdminRouteChildren {
   AdminUnauthorizedRoute: typeof AdminUnauthorizedRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminIndexRoute: typeof AdminIndexRoute
+  AdminBlogIdRoute: typeof AdminBlogIdRoute
+  AdminBlogIndexRoute: typeof AdminBlogIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAnnouncementsRoute: AdminAnnouncementsRoute,
   AdminAuditRoute: AdminAuditRoute,
-  AdminBlogRoute: AdminBlogRouteWithChildren,
   AdminMessagesRoute: AdminMessagesRoute,
   AdminOrganizationsRoute: AdminOrganizationsRouteWithChildren,
   AdminPlansRoute: AdminPlansRoute,
@@ -802,6 +790,8 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminUnauthorizedRoute: AdminUnauthorizedRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminIndexRoute: AdminIndexRoute,
+  AdminBlogIdRoute: AdminBlogIdRoute,
+  AdminBlogIndexRoute: AdminBlogIndexRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)

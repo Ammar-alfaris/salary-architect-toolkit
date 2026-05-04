@@ -10,7 +10,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Pencil, Trash2, Upload, Download } from "lucide-react";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/admin/blog")({ component: BlogList });
+export const Route = createFileRoute("/admin/blog/")({ component: BlogList });
 
 interface Post { id: string; title: string; slug: string; status: string; publish_at: string | null; updated_at: string; is_featured: boolean; }
 
