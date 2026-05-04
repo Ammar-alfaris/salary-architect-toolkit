@@ -147,23 +147,33 @@ export function GuidedTour() {
   const prev = async () => { if (idx > 0) await setStepIndex(idx - 1); };
   const skip = async () => { await stopTour(); };
   const isLast = idx + 1 >= steps.length;
-  const hasAutoAdvance = !!step.advanceOn;
 
-  // Tooltip position
+  // Tooltip position — mobile-aware, never overlaps the highlighted target.
   const pad = 12;
-  const tipW = 320;
-  const tipH = 220;
   const vw = typeof window !== "undefined" ? window.innerWidth : 800;
   const vh = typeof window !== "undefined" ? window.innerHeight : 600;
-  let tipTop = 80, tipLeft = 12;
+  const isMobile = vw < 480;
+  const tipW = isMobile ? Math.min(vw - 24, 360) : 320;
+  const tipH = 240; // estimate; card is fixed-ish height
+  let tipTop = 12, tipLeft = 12;
   if (rect) {
-    const below = rect.top + rect.height + pad;
-    const above = rect.top - tipH - pad;
-    tipTop = below + tipH < vh ? below : Math.max(12, above);
-    tipLeft = Math.max(12, Math.min(vw - tipW - 12, rect.left));
+    const spaceBelow = vh - (rect.top + rect.height) - pad;
+    const spaceAbove = rect.top - pad;
+    if (isMobile) {
+      // Pin to whichever edge is farther from the target so we never cover it.
+      tipTop = spaceBelow >= spaceAbove ? Math.min(vh - tipH - 12, rect.top + rect.height + pad) : Math.max(12, rect.top - tipH - pad);
+      tipLeft = Math.max(12, (vw - tipW) / 2);
+    } else {
+      if (spaceBelow >= tipH) tipTop = rect.top + rect.height + pad;
+      else if (spaceAbove >= tipH) tipTop = rect.top - tipH - pad;
+      else tipTop = Math.max(12, vh - tipH - 12);
+      tipLeft = Math.max(12, Math.min(vw - tipW - 12, rect.left));
+    }
+  } else {
+    tipLeft = isMobile ? Math.max(12, (vw - tipW) / 2) : 12;
   }
 
-  const hintKey = step.advanceOn?.type === "click" ? "tour_hint_click_target" : hasAutoAdvance ? "tour_hint_do_action" : "";
+  const hintKey = step.advanceOn?.type === "click" ? "tour_hint_click_target" : step.advanceOn ? "tour_hint_do_action" : "";
 
   return (
     <>
@@ -173,15 +183,15 @@ export function GuidedTour() {
           clipPath: `polygon(0 0, 100% 0, 100% 100%, 0 100%, 0 ${rect.top - 6}px, ${rect.left - 6}px ${rect.top - 6}px, ${rect.left - 6}px ${rect.top + rect.height + 6}px, ${rect.left + rect.width + 6}px ${rect.top + rect.height + 6}px, ${rect.left + rect.width + 6}px ${rect.top - 6}px, 0 ${rect.top - 6}px)`,
         } : undefined} />
         {rect && (
-          <div className="absolute rounded-lg ring-2 ring-primary shadow-[0_0_0_4px_rgba(59,130,246,0.25)] transition-[top,left,width,height] duration-200"
+          <div className="absolute rounded-lg ring-2 ring-primary shadow-[0_0_0_4px_rgba(59,130,246,0.25)] transition-[top,left,width,height] duration-200 pointer-events-none"
                style={{ top: rect.top - 4, left: rect.left - 4, width: rect.width + 8, height: rect.height + 8 }} />
         )}
       </div>
 
-      {/* Tooltip card — fixed in size, no jitter */}
+      {/* Tooltip card */}
       <div
-        className="fixed z-[61] w-[320px] rounded-xl border bg-card shadow-2xl p-4 transition-[top,left] duration-200"
-        style={{ top: tipTop, left: tipLeft }}
+        className="fixed z-[61] rounded-xl border bg-card shadow-2xl p-4 transition-[top,left] duration-200"
+        style={{ top: tipTop, left: tipLeft, width: tipW }}
       >
         <div className="flex items-start justify-between gap-2 mb-2">
           <div className="text-xs text-muted-foreground">{t("step_n_of_m", { n: idx + 1, m: steps.length })}</div>
@@ -197,15 +207,13 @@ export function GuidedTour() {
         )}
 
         <div className="flex items-center justify-between gap-2">
-          <button onClick={dismiss} className="text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline">{t("tour_skip")}</button>
+          <button onClick={skip} className="text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline">{t("tour_skip")}</button>
           <div className="flex gap-1.5">
-            {idx > 0 && <Button size="sm" variant="ghost" onClick={prev}><ChevronLeft className="w-4 h-4" /></Button>}
-            {(!hasAutoAdvance || isLast) && (
-              <Button size="sm" onClick={advance}>
-                {isLast ? t("tour_finish") : t("tour_next")}
-                {!isLast && <ChevronRight className="w-4 h-4 ms-1" />}
-              </Button>
-            )}
+            <Button size="sm" variant="ghost" onClick={prev} disabled={idx === 0}><ChevronLeft className="w-4 h-4 rtl:rotate-180" /></Button>
+            <Button size="sm" onClick={advance}>
+              {isLast ? t("tour_finish") : t("tour_next")}
+              {!isLast && <ChevronRight className="w-4 h-4 ms-1 rtl:rotate-180" />}
+            </Button>
           </div>
         </div>
       </div>
