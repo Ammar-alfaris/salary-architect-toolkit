@@ -11,7 +11,11 @@ import { useI18n } from "@/lib/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { calculateBonus, exportCSV } from "@/lib/comp";
 import { fmtCurrency, fmtPercent } from "@/lib/format";
-import { Download, Calculator } from "lucide-react";
+import { Download, Calculator, Save } from "lucide-react";
+import { ApplyOrApprove } from "@/components/apply-or-approve";
+import { snapshotVersion } from "@/lib/governance";
+import { logAudit } from "@/lib/audit";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/bonus")({ component: BonusPage });
 
