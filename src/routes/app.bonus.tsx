@@ -37,6 +37,52 @@ function BonusPage() {
   const [bulkPerf, setBulkPerf] = useState(1);
   const [bulkBiz, setBulkBiz] = useState(1);
   const [bulkResults, setBulkResults] = useState<any[]>([]);
+  const [cycleId, setCycleId] = useState<string | null>(null);
+
+  const ensureCycle = async () => {
+    if (!organizationId) return null;
+    if (cycleId) return cycleId;
+    const { data, error } = await supabase.from("bonus_cycles").insert({
+      organization_id: organizationId,
+      name: `Bonus ${new Date().getFullYear()}`,
+      year: new Date().getFullYear(),
+      default_target_bonus_percent: target,
+      business_multiplier: bulkBiz,
+      status: "draft",
+    }).select().single();
+    if (error) { toast.error(error.message); return null; }
+    setCycleId(data.id);
+    return data.id as string;
+  };
+
+  const applyBonus = async () => {
+    if (!bulkResults.length) { toast.error(t("no_employees_yet")); return; }
+    const id = await ensureCycle();
+    if (!id || !organizationId) return;
+    try {
+      await supabase.from("bonus_results").insert(
+        bulkResults.map((r) => ({
+          bonus_cycle_id: id,
+          employee_id: r.id,
+          base_salary: r.base,
+          target_bonus_percent: r.target,
+          performance_multiplier: bulkPerf,
+          business_multiplier: bulkBiz,
+          individual_modifier: 1,
+          calculated_bonus: r.bonus,
+          proration_factor: 1,
+        })) as never,
+      );
+      await snapshotVersion({
+        orgId: organizationId, entityType: "bonus_cycle", entityId: id,
+        snapshot: { results: bulkResults, bulkPerf, bulkBiz },
+        changeSummary: `${bulkResults.length} employees, total ${bulkResults.reduce((s, r) => s + r.bonus, 0)}`,
+      });
+      await logAudit({ organizationId, action: "update", entityType: "bonus_cycle", entityId: id, entityLabel: `Bonus ${new Date().getFullYear()}` });
+      toast.success(t("apply_bonus_done"));
+    } catch (e: any) { toast.error(e.message); }
+  };
+
 
   useEffect(() => {
     if (!organizationId) return;
