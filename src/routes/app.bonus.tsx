@@ -11,7 +11,11 @@ import { useI18n } from "@/lib/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { calculateBonus, exportCSV } from "@/lib/comp";
 import { fmtCurrency, fmtPercent } from "@/lib/format";
-import { Download, Calculator } from "lucide-react";
+import { Download, Calculator, Save } from "lucide-react";
+import { ApplyOrApprove } from "@/components/apply-or-approve";
+import { snapshotVersion } from "@/lib/governance";
+import { logAudit } from "@/lib/audit";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/bonus")({ component: BonusPage });
 
@@ -33,6 +37,52 @@ function BonusPage() {
   const [bulkPerf, setBulkPerf] = useState(1);
   const [bulkBiz, setBulkBiz] = useState(1);
   const [bulkResults, setBulkResults] = useState<any[]>([]);
+  const [cycleId, setCycleId] = useState<string | null>(null);
+
+  const ensureCycle = async () => {
+    if (!organizationId) return null;
+    if (cycleId) return cycleId;
+    const { data, error } = await supabase.from("bonus_cycles").insert({
+      organization_id: organizationId,
+      name: `Bonus ${new Date().getFullYear()}`,
+      year: new Date().getFullYear(),
+      default_target_bonus_percent: target,
+      business_multiplier: bulkBiz,
+      status: "draft",
+    }).select().single();
+    if (error) { toast.error(error.message); return null; }
+    setCycleId(data.id);
+    return data.id as string;
+  };
+
+  const applyBonus = async () => {
+    if (!bulkResults.length) { toast.error(t("no_employees_yet")); return; }
+    const id = await ensureCycle();
+    if (!id || !organizationId) return;
+    try {
+      await supabase.from("bonus_results").insert(
+        bulkResults.map((r) => ({
+          bonus_cycle_id: id,
+          employee_id: r.id,
+          base_salary: r.base,
+          target_bonus_percent: r.target,
+          performance_multiplier: bulkPerf,
+          business_multiplier: bulkBiz,
+          individual_modifier: 1,
+          calculated_bonus: r.bonus,
+          proration_factor: 1,
+        })) as never,
+      );
+      await snapshotVersion({
+        orgId: organizationId, entityType: "bonus_cycle", entityId: id,
+        snapshot: { results: bulkResults, bulkPerf, bulkBiz },
+        changeSummary: `${bulkResults.length} employees, total ${bulkResults.reduce((s, r) => s + r.bonus, 0)}`,
+      });
+      await logAudit({ organizationId, action: "update", entityType: "bonus_cycle", entityId: id, entityLabel: `Bonus ${new Date().getFullYear()}` });
+      toast.success(t("apply_bonus_done"));
+    } catch (e: any) { toast.error(e.message); }
+  };
+
 
   useEffect(() => {
     if (!organizationId) return;
@@ -110,8 +160,17 @@ function BonusPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div className="border rounded-lg bg-card p-4"><div className="text-xs text-muted-foreground">{t("total_budget")}</div><div className="text-2xl font-semibold num mt-1">{fmtCurrency(totalBudget, defaultCurrency, locale)}</div></div>
                   <div className="border rounded-lg bg-card p-4"><div className="text-xs text-muted-foreground">{t("avg_bonus")}</div><div className="text-2xl font-semibold num mt-1">{fmtCurrency(totalBudget / bulkResults.length, defaultCurrency, locale)}</div></div>
-                  <div className="border rounded-lg bg-card p-4 flex items-end justify-end"><Button variant="outline" size="sm" onClick={() => exportCSV("bonus.csv", bulkResults)}><Download className="w-4 h-4 me-1" />{t("export_csv")}</Button></div>
+                  <div className="border rounded-lg bg-card p-4 flex items-end justify-end gap-2"><Button variant="outline" size="sm" onClick={() => exportCSV("bonus.csv", bulkResults)}><Download className="w-4 h-4 me-1" />{t("export_csv")}</Button><Button variant="outline" size="sm" onClick={ensureCycle}><Save className="w-4 h-4 me-1" />{t("bonus_save_snapshot")}</Button></div>
                 </div>
+                <ApplyOrApprove
+                  entityType="bonus_cycle"
+                  entityKey="bonus_cycle"
+                  entityId={cycleId}
+                  entityLabel={`Bonus ${new Date().getFullYear()}`}
+                  proposedPayload={{ results: bulkResults, bulkPerf, bulkBiz }}
+                  onApply={applyBonus}
+                />
+
                 <div className="border rounded-lg bg-card overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm min-w-[640px]">
