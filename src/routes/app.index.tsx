@@ -97,7 +97,7 @@ function Dashboard() {
           <div className="text-sm text-muted-foreground">{t("loading")}</div>
         ) : (
           <>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            <div data-tour="kpis" className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
               <Kpi label={t("total_employees")} value={fmtNumber(employees.length, locale)} icon={Users} />
               <Kpi label={t("active_structures")} value={fmtNumber(structures.length, locale)} icon={Layers} />
               <Kpi label={t("payroll_snapshot")} value={fmtCurrency(totalPayroll, defaultCurrency, locale)} icon={DollarSign} hint={t("annual_base")} />
