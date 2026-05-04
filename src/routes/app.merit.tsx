@@ -127,7 +127,7 @@ function MeritPage() {
   };
 
   const applyMerit = async () => {
-    if (!recommendations.length) return toast.error(t("no_employees_yet"));
+    if (!recommendations.length) { toast.error(t("no_employees_yet")); return; }
     if (!confirm(t("apply_merit_confirm"))) return;
     await saveCycle();
     try {
