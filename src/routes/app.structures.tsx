@@ -28,15 +28,29 @@ function StructuresPage() {
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
 
-  // Builder form state
+  // Builder form state — accept ?grades=&mid=&prog=&spread=&round= presets (used by "Suggest structure")
+  const initial = (() => {
+    if (typeof window === "undefined") return null;
+    const u = new URLSearchParams(window.location.search);
+    if (!u.get("grades")) return null;
+    return {
+      gradeCount: +u.get("grades")! || 10,
+      startingMidpoint: +u.get("mid")! || 30000,
+      progressionPercent: +u.get("prog")! || 12,
+      spreadPercent: +u.get("spread")! || 40,
+      rounding: +u.get("round")! || 100,
+    };
+  })();
   const [name, setName] = useState(t("default_structure_name"));
   const [currency, setCurrency] = useState("USD");
   const [country, setCountry] = useState("");
-  const [gradeCount, setGradeCount] = useState(10);
-  const [startingMidpoint, setStartingMidpoint] = useState(30000);
-  const [progressionPercent, setProgressionPercent] = useState(12);
-  const [spreadPercent, setSpreadPercent] = useState(40);
-  const [rounding, setRounding] = useState(100);
+  const [gradeCount, setGradeCount] = useState(initial?.gradeCount ?? 10);
+  const [startingMidpoint, setStartingMidpoint] = useState(initial?.startingMidpoint ?? 30000);
+  const [progressionPercent, setProgressionPercent] = useState(initial?.progressionPercent ?? 12);
+  const [spreadPercent, setSpreadPercent] = useState(initial?.spreadPercent ?? 40);
+  const [rounding, setRounding] = useState(initial?.rounding ?? 100);
+  useEffect(() => { if (initial) setOpen(true); }, []);
+  const [linkPrompt, setLinkPrompt] = useState<{ structureId: string } | null>(null);
 
   const refresh = async () => {
     if (!organizationId) return;
