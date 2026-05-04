@@ -24,6 +24,7 @@ import { Route as AppReportsRouteImport } from './routes/app.reports'
 import { Route as AppOnboardingRouteImport } from './routes/app.onboarding'
 import { Route as AppMeritRouteImport } from './routes/app.merit'
 import { Route as AppMatrixRouteImport } from './routes/app.matrix'
+import { Route as AppHelpRouteImport } from './routes/app.help'
 import { Route as AppEmployeesRouteImport } from './routes/app.employees'
 import { Route as AppBonusRouteImport } from './routes/app.bonus'
 import { Route as AppAuditRouteImport } from './routes/app.audit'
@@ -122,6 +123,11 @@ const AppMeritRoute = AppMeritRouteImport.update({
 const AppMatrixRoute = AppMatrixRouteImport.update({
   id: '/matrix',
   path: '/matrix',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppHelpRoute = AppHelpRouteImport.update({
+  id: '/help',
+  path: '/help',
   getParentRoute: () => AppRoute,
 } as any)
 const AppEmployeesRoute = AppEmployeesRouteImport.update({
@@ -267,6 +273,7 @@ export interface FileRoutesByFullPath {
   '/app/audit': typeof AppAuditRoute
   '/app/bonus': typeof AppBonusRoute
   '/app/employees': typeof AppEmployeesRouteWithChildren
+  '/app/help': typeof AppHelpRoute
   '/app/matrix': typeof AppMatrixRoute
   '/app/merit': typeof AppMeritRoute
   '/app/onboarding': typeof AppOnboardingRoute
@@ -305,6 +312,7 @@ export interface FileRoutesByTo {
   '/app/audit': typeof AppAuditRoute
   '/app/bonus': typeof AppBonusRoute
   '/app/employees': typeof AppEmployeesRouteWithChildren
+  '/app/help': typeof AppHelpRoute
   '/app/matrix': typeof AppMatrixRoute
   '/app/merit': typeof AppMeritRoute
   '/app/onboarding': typeof AppOnboardingRoute
@@ -347,6 +355,7 @@ export interface FileRoutesById {
   '/app/audit': typeof AppAuditRoute
   '/app/bonus': typeof AppBonusRoute
   '/app/employees': typeof AppEmployeesRouteWithChildren
+  '/app/help': typeof AppHelpRoute
   '/app/matrix': typeof AppMatrixRoute
   '/app/merit': typeof AppMeritRoute
   '/app/onboarding': typeof AppOnboardingRoute
@@ -390,6 +399,7 @@ export interface FileRouteTypes {
     | '/app/audit'
     | '/app/bonus'
     | '/app/employees'
+    | '/app/help'
     | '/app/matrix'
     | '/app/merit'
     | '/app/onboarding'
@@ -428,6 +438,7 @@ export interface FileRouteTypes {
     | '/app/audit'
     | '/app/bonus'
     | '/app/employees'
+    | '/app/help'
     | '/app/matrix'
     | '/app/merit'
     | '/app/onboarding'
@@ -469,6 +480,7 @@ export interface FileRouteTypes {
     | '/app/audit'
     | '/app/bonus'
     | '/app/employees'
+    | '/app/help'
     | '/app/matrix'
     | '/app/merit'
     | '/app/onboarding'
@@ -602,6 +614,13 @@ declare module '@tanstack/react-router' {
       path: '/matrix'
       fullPath: '/app/matrix'
       preLoaderRoute: typeof AppMatrixRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/help': {
+      id: '/app/help'
+      path: '/help'
+      fullPath: '/app/help'
+      preLoaderRoute: typeof AppHelpRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/employees': {
@@ -862,6 +881,7 @@ interface AppRouteChildren {
   AppAuditRoute: typeof AppAuditRoute
   AppBonusRoute: typeof AppBonusRoute
   AppEmployeesRoute: typeof AppEmployeesRouteWithChildren
+  AppHelpRoute: typeof AppHelpRoute
   AppMatrixRoute: typeof AppMatrixRoute
   AppMeritRoute: typeof AppMeritRoute
   AppOnboardingRoute: typeof AppOnboardingRoute
@@ -881,6 +901,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAuditRoute: AppAuditRoute,
   AppBonusRoute: AppBonusRoute,
   AppEmployeesRoute: AppEmployeesRouteWithChildren,
+  AppHelpRoute: AppHelpRoute,
   AppMatrixRoute: AppMatrixRoute,
   AppMeritRoute: AppMeritRoute,
   AppOnboardingRoute: AppOnboardingRoute,
