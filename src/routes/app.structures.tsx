@@ -104,6 +104,16 @@ function StructuresPage() {
     });
     setOpen(false);
     refresh();
+    // Offer to auto-link existing employees to this fresh structure.
+    const { count } = await supabase.from("employees").select("id", { count: "exact", head: true }).eq("organization_id", organizationId).eq("archived", false);
+    if ((count ?? 0) > 0) setLinkPrompt({ structureId: structure.id });
+  };
+
+  const runAutoLink = async () => {
+    if (!organizationId || !linkPrompt) return;
+    const res = await autoAssignGrades(organizationId, linkPrompt.structureId);
+    toast.success(t("autolink_done", { matched: res.matched, out: res.outOfRange }));
+    setLinkPrompt(null);
   };
 
   const handleArchive = async (s: any) => {
