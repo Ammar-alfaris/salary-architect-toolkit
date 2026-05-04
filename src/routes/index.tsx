@@ -132,13 +132,21 @@ function Landing() {
 
       {/* CTA */}
       <section id="cta" className="container mx-auto px-4 py-16">
-        <div className="rounded-2xl p-10 md:p-14 text-center text-primary-foreground" style={{ background: "var(--gradient-hero)" }}>
-          <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">{t("cta_headline")}</h2>
-          <p className="mt-3 opacity-90 max-w-xl mx-auto">{t("cta_sub")}</p>
+        <div
+          className="rounded-2xl p-10 md:p-14 text-center text-white shadow-2xl"
+          style={{
+            background:
+              "linear-gradient(135deg, oklch(0.32 0.08 255), oklch(0.5 0.13 215))",
+          }}
+        >
+          <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-white">{t("cta_headline")}</h2>
+          <p className="mt-3 text-white/85 max-w-xl mx-auto">{t("cta_sub")}</p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-            <Button size="lg" variant="secondary" asChild><Link to="/auth">{t("start_free")}</Link></Button>
+            <Button size="lg" asChild className="bg-white text-slate-900 hover:bg-white/90">
+              <Link to="/auth">{t("start_free")}</Link>
+            </Button>
           </div>
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs opacity-90">
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-white/85">
             <div className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5" /> {t("cta_no_cc")}</div>
             <div className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5" /> {t("cta_bilingual")}</div>
             <div className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5" /> {t("cta_export_ready")}</div>
