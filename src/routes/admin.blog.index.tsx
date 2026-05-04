@@ -33,11 +33,12 @@ function BlogList() {
   };
   useEffect(() => { load(); }, []);
 
+  const navigate = useNavigate();
   const create = async () => {
     const slug = "post-" + Date.now();
     const { data, error } = await supabase.from("blog_posts").insert({ title: "Untitled", slug, status: "draft" }).select("id").single();
     if (error) return toast.error(error.message);
-    window.location.href = `/admin/blog/${data!.id}`;
+    navigate({ to: "/admin/blog/$id", params: { id: data!.id } });
   };
 
   const remove = async (id: string) => {
