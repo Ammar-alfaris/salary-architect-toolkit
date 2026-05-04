@@ -104,6 +104,7 @@ function StructuresPage() {
     });
     setOpen(false);
     refresh();
+    window.dispatchEvent(new CustomEvent("tour:structure-created"));
     // Offer to auto-link existing employees to this fresh structure.
     const { count } = await supabase.from("employees").select("id", { count: "exact", head: true }).eq("organization_id", organizationId).eq("archived", false);
     if ((count ?? 0) > 0) setLinkPrompt({ structureId: structure.id });

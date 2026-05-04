@@ -147,6 +147,7 @@ function EmployeesPage() {
     setOpen(false);
     setForm({ employee_code: "", first_name: "", last_name: "", department: "", job_title: "", job_family: "", location: "", base_salary: 0, target_bonus_percent: 10, grade_id: "", performance_rating: "Meets" });
     refresh();
+    window.dispatchEvent(new CustomEvent("tour:employee-added"));
   };
 
   const seedSample = async () => {
@@ -264,6 +265,7 @@ function EmployeesPage() {
       if (unmappedRatings.size) toast.warning(t("unmapped_ratings_warn", { list: Array.from(unmappedRatings).slice(0, 8).join(", ") }));
       await logAudit({ organizationId, action: "create", entityType: "employee", entityLabel: `Excel import (${ok} added, ${fail} skipped)`, metadata: { ok, fail, unmappedGrades: Array.from(unmappedGrades), unmappedRatings: Array.from(unmappedRatings) } });
       refresh();
+      if (ok > 0) window.dispatchEvent(new CustomEvent("tour:employees-imported"));
     } catch (e: any) {
       toast.error(e.message);
     } finally {
@@ -616,6 +618,7 @@ function ReassignGradesButton({ organizationId, onDone }: { organizationId: stri
       toast.success(t("autolink_done", { matched: res.matched, out: res.outOfRange }));
       onDone();
       setOpen(false);
+      window.dispatchEvent(new CustomEvent("tour:grades-linked"));
     } catch (e: any) { toast.error(e.message); }
     finally { setBusy(false); }
   };

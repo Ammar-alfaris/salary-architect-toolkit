@@ -118,6 +118,7 @@ function MeritPage() {
         metadata: { budget, employees: recommendations.length },
       });
       toast.success(t("settings_saved"));
+      window.dispatchEvent(new CustomEvent("tour:merit-created"));
     } catch (e: any) {
       toast.error(e.message);
     } finally {
@@ -132,7 +133,7 @@ function MeritPage() {
         subtitle={t("merit_subtitle")}
         actions={
           <>
-            <Button variant="outline" size="sm" onClick={saveCycle} disabled={saving}>
+            <Button data-tour="merit-cycle" variant="outline" size="sm" onClick={saveCycle} disabled={saving}>
               <Save className="w-4 h-4 me-1" />{t("save")}
             </Button>
             <Button variant="outline" size="sm" onClick={() => exportCSV("merit.csv", recommendations)}>

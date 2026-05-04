@@ -102,7 +102,7 @@ function BonusPage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
                 <div className="space-y-1.5"><Label>{t("perf_multiplier_all")}</Label><Input type="number" step="0.05" value={bulkPerf} onChange={(e) => setBulkPerf(+e.target.value || 0)} /></div>
                 <div className="space-y-1.5"><Label>{t("business_multiplier")}</Label><Input type="number" step="0.05" value={bulkBiz} onChange={(e) => setBulkBiz(+e.target.value || 0)} /></div>
-                <Button onClick={runBulk}><Calculator className="w-4 h-4 me-1" /> {t("run_for_n_employees", { n: employees.length })}</Button>
+                <Button data-tour="bonus-cycle" onClick={runBulk}><Calculator className="w-4 h-4 me-1" /> {t("run_for_n_employees", { n: employees.length })}</Button>
               </div>
             </div>
             {bulkResults.length > 0 && (
