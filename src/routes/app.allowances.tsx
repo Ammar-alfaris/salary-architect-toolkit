@@ -49,6 +49,27 @@ function AllowancesPage() {
 
   const monthly = result.total / 12;
 
+  const applyAllowance = async () => {
+    if (!employeeId || !organizationId) { toast.error(t("select_employee_or_manual")); return; }
+    if (!confirm(t("apply_allowance_confirm"))) return;
+    try {
+      await supabase.from("employee_allowances").insert({
+        employee_id: employeeId,
+        housing_amount: result.housing,
+        transport_amount: result.transport,
+        mobile_amount: result.mobile,
+        education_amount: result.education,
+        shift_amount: result.shift,
+        hardship_amount: result.hardship,
+        custom_amount: result.custom,
+        total_allowance_amount: result.total,
+      } as never);
+      await logAudit({ organizationId, action: "update", entityType: "employee" as any, entityId: employeeId, entityLabel: "Allowance change", metadata: { total: result.total } });
+      toast.success(t("apply_allowance_done"));
+    } catch (e: any) { toast.error(e.message); }
+  };
+
+
   const breakdown = [
     { label: t("housing"), value: result.housing }, { label: t("transportation"), value: result.transport },
     { label: t("mobile"), value: result.mobile }, { label: t("education"), value: result.education },
