@@ -16,8 +16,10 @@ import { exportXLSX, parseXLSX, downloadEmployeeTemplate } from "@/lib/excel";
 import { fmtCurrency } from "@/lib/format";
 import { logAudit } from "@/lib/audit";
 import { usePermissions, maskSalary } from "@/lib/rbac";
-import { Plus, Download, Search, Eye, Sparkles, FileSpreadsheet, Trash2, ChevronLeft, ChevronRight, ShieldAlert, Upload, FileDown, Pencil } from "lucide-react";
+import { Plus, Download, Search, Eye, Sparkles, FileSpreadsheet, Trash2, ChevronLeft, ChevronRight, ShieldAlert, Upload, FileDown, Pencil, Link2 } from "lucide-react";
 import { toast } from "sonner";
+import { autoAssignGrades, suggestStructureFromSalaries } from "@/lib/auto-assign";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 
 export const Route = createFileRoute("/app/employees")({ component: EmployeesPage });
