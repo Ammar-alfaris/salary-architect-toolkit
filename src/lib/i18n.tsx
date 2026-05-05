@@ -60,6 +60,8 @@ const en: Dict = {
   welcome_back: "Welcome back",
   account_created: "Account created — you're signed in",
   google_signin_failed: "Google sign-in failed",
+  check_email_to_verify: "Account created. Please check your email to verify your account before signing in.",
+  email_confirmed_signin: "Email verified — you can now sign in.",
 
   // Sidebar / nav
   dashboard: "Dashboard",
@@ -805,6 +807,8 @@ const ar: Dict = {
   welcome_back: "مرحبًا بعودتك",
   account_created: "تم إنشاء الحساب — تم تسجيل دخولك",
   google_signin_failed: "تعذّر تسجيل الدخول عبر Google",
+  check_email_to_verify: "تم إنشاء الحساب. يُرجى التحقق من بريدك الإلكتروني لتفعيل الحساب قبل تسجيل الدخول.",
+  email_confirmed_signin: "تم تفعيل البريد الإلكتروني — يمكنك الآن تسجيل الدخول.",
 
   // Sidebar / nav
   dashboard: "لوحة التحكم",

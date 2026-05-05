@@ -29,7 +29,10 @@ function AuthPage() {
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) navigate({ to: "/app" });
     });
-  }, [navigate]);
+    if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("confirmed") === "1") {
+      toast.success(t("email_confirmed_signin"));
+    }
+  }, [navigate, t]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,16 +47,22 @@ function AuthPage() {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/app`,
+        emailRedirectTo: `${window.location.origin}/auth?confirmed=1`,
         data: { full_name: fullName, org_name: `${fullName || email}'s Organization` },
       },
     });
     setLoading(false);
     if (error) return toast.error(error.message);
+    // If no session returned, email confirmation is required
+    if (!data.session) {
+      toast.success(t("check_email_to_verify"), { duration: 8000 });
+      setTab("signin");
+      return;
+    }
     toast.success(t("account_created"));
     navigate({ to: "/app" });
   };
