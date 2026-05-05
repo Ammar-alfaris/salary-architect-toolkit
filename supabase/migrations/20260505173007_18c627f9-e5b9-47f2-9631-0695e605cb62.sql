@@ -1,0 +1,1 @@
+ALTER FUNCTION public.set_ticket_number() SET search_path = public;
