@@ -15,8 +15,9 @@ import { logAudit } from "@/lib/audit";
 import { usePermissions } from "@/lib/rbac";
 import { exportXLSX } from "@/lib/excel";
 import { toast } from "sonner";
-import { Plus, Layers, Trash2, Eye, FileSpreadsheet, X } from "lucide-react";
+import { Plus, Layers, Trash2, Eye, FileSpreadsheet, X, Pencil } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/app/structures")({ component: StructuresPage });
 
