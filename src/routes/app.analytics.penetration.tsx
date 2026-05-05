@@ -210,6 +210,27 @@ function PenetrationAnalytics() {
         </div>
 
         <InsightCard items={insights} />
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <PenOutlierTable
+            title={t("employees_below_range")}
+            tone="warn"
+            rows={lowEmployees}
+            currency={defaultCurrency}
+            locale={locale}
+            tName={t("name")}
+            tBase={t("base_salary")}
+          />
+          <PenOutlierTable
+            title={t("employees_above_range")}
+            tone="risk"
+            rows={aboveEmployees}
+            currency={defaultCurrency}
+            locale={locale}
+            tName={t("name")}
+            tBase={t("base_salary")}
+          />
+        </div>
       </div>
     </div>
   );
