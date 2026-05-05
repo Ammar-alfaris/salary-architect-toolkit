@@ -18,7 +18,7 @@ export const Route = createFileRoute("/app/analytics/penetration")({ component: 
 type GroupBy = "overall" | "grade" | "department" | "structure";
 
 function PenetrationAnalytics() {
-  const { organizationId } = useAuth();
+  const { organizationId, defaultCurrency } = useAuth();
   const { t, locale } = useI18n();
   const [employees, setEmployees] = useState<any[]>([]);
   const [grades, setGrades] = useState<any[]>([]);
