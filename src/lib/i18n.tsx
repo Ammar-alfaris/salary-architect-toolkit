@@ -742,6 +742,11 @@ const en: Dict = {
   help_email_support: "Email support",
   unmapped_grades_warn: "Unmapped grades — fix in the Grade Mapping sheet: {list}",
   unmapped_ratings_warn: "Unmapped ratings — fix in the Performance Mapping sheet: {list}",
+  edit_structure: "Edit structure",
+  update_structure: "Update structure",
+  employees_below_range: "Employees below range",
+  employees_above_range: "Employees above range",
+  view_profile: "View profile",
 };
 
 const ar: Dict = {
