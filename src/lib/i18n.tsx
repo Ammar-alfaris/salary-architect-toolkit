@@ -1487,6 +1487,11 @@ const ar: Dict = {
   help_email_support: "راسل الدعم",
   unmapped_grades_warn: "درجات لم تُطابَق — صحّحها في ورقة Grade Mapping: {list}",
   unmapped_ratings_warn: "تقييمات لم تُطابَق — صحّحها في ورقة Performance Mapping: {list}",
+  edit_structure: "تعديل الهيكل",
+  update_structure: "تحديث الهيكل",
+  employees_below_range: "موظفون أدنى من النطاق",
+  employees_above_range: "موظفون أعلى من النطاق",
+  view_profile: "عرض الملف",
 };
 
 const dictionaries: Record<Locale, Dict> = { en, ar };
