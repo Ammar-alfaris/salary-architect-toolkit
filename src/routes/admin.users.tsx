@@ -24,18 +24,55 @@ function UsersPage() {
 
   const load = async () => {
     setLoading(true);
-    const [{ data: profiles }, { data: roles }, { data: orgs }] = await Promise.all([
+    const [{ data: profiles, error: pErr }, { data: roles }, { data: orgs }, { data: padmins }] = await Promise.all([
       supabase.from("profiles").select("id,full_name,email,created_at").order("created_at", { ascending: false }),
       supabase.from("user_roles").select("user_id,role,organization_id"),
       supabase.from("organizations").select("id,name"),
+      supabase.from("platform_admins").select("user_id,role,status"),
     ]);
+    if (pErr) { toast.error(pErr.message); console.error(pErr); }
     const orgMap = Object.fromEntries((orgs || []).map((o: any) => [o.id, o.name]));
-    const roleMap: Record<string, { role: string; org: string }> = {};
-    (roles || []).forEach((r: any) => { roleMap[r.user_id] = { role: r.role, org: orgMap[r.organization_id] || "—" }; });
-    setRows((profiles || []).map((p: any) => ({ ...p, role: roleMap[p.id]?.role, org_name: roleMap[p.id]?.org })));
+    const roleMap: Record<string, { role: string; org: string; orgId: string }> = {};
+    (roles || []).forEach((r: any) => { roleMap[r.user_id] = { role: r.role, org: orgMap[r.organization_id] || "—", orgId: r.organization_id }; });
+    const adminMap: Record<string, string> = {};
+    (padmins || []).forEach((a: any) => { if (a.status === "active") adminMap[a.user_id] = a.role; });
+    setRows((profiles || []).map((p: any) => ({
+      ...p,
+      role: roleMap[p.id]?.role,
+      org_name: roleMap[p.id]?.org,
+      org_id: roleMap[p.id]?.orgId,
+      is_platform_admin: !!adminMap[p.id],
+      platform_role: adminMap[p.id],
+    })));
     setLoading(false);
   };
   useEffect(() => { load(); }, []);
+
+  const sendReset = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + "/auth" });
+    if (error) toast.error(error.message); else toast.success(`Password reset email sent to ${email}`);
+  };
+
+  const togglePlatformAdmin = async (r: Row) => {
+    if (r.is_platform_admin) {
+      const { error } = await supabase.from("platform_admins").delete().eq("user_id", r.id);
+      if (error) return toast.error(error.message);
+      toast.success("Removed platform admin");
+    } else {
+      const { error } = await supabase.from("platform_admins").insert({ user_id: r.id, role: "platform_admin", status: "active" });
+      if (error) return toast.error(error.message);
+      toast.success("Granted platform admin");
+    }
+    load();
+  };
+
+  const changeRole = async (r: Row, newRole: string) => {
+    if (!r.org_id) return toast.error("User has no organization");
+    const { error } = await supabase.from("user_roles").update({ role: newRole as any }).eq("user_id", r.id).eq("organization_id", r.org_id);
+    if (error) return toast.error(error.message);
+    toast.success("Role updated");
+    load();
+  };
 
   const filtered = roleFilter === "all" ? rows : rows.filter((r) => r.role === roleFilter);
 
