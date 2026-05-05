@@ -126,12 +126,31 @@ function UsersPage() {
           <div className="mt-6 space-y-3 text-sm">
             <Field label="Organization" value={active?.org_name || "—"} />
             <Field label="Role" value={active?.role || "—"} />
+            <Field label="Platform admin" value={active?.is_platform_admin ? (active.platform_role || "yes") : "no"} />
             <Field label="Joined" value={active ? new Date(active.created_at).toLocaleString() : "—"} />
             <Field label="User ID" value={<code className="text-xs">{active?.id}</code>} />
+            {active?.org_id && (
+              <div className="pt-3 border-t space-y-1.5">
+                <span className="text-xs text-muted-foreground">Change organization role</span>
+                <Select value={active.role} onValueChange={(v) => active && changeRole(active, v)}>
+                  <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="manager">Manager</SelectItem>
+                    <SelectItem value="analyst">Analyst</SelectItem>
+                    <SelectItem value="viewer">Viewer</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div className="pt-3 border-t space-y-2">
-              <Button variant="outline" size="sm" className="w-full" disabled>Reset password (placeholder)</Button>
-              <Button variant="outline" size="sm" className="w-full" disabled>Impersonate (placeholder)</Button>
-              <Button variant="destructive" size="sm" className="w-full" disabled>Suspend user (placeholder)</Button>
+              <Button variant="outline" size="sm" className="w-full" onClick={() => active?.email && sendReset(active.email)}>
+                <KeyRound className="w-4 h-4 me-2" />Send password reset
+              </Button>
+              <Button variant={active?.is_platform_admin ? "destructive" : "outline"} size="sm" className="w-full" onClick={() => active && togglePlatformAdmin(active)}>
+                {active?.is_platform_admin ? <ShieldOff className="w-4 h-4 me-2" /> : <ShieldCheck className="w-4 h-4 me-2" />}
+                {active?.is_platform_admin ? "Revoke platform admin" : "Grant platform admin"}
+              </Button>
             </div>
           </div>
         </SheetContent>
