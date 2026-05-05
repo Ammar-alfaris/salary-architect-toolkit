@@ -352,6 +352,34 @@ function StructuresPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={!!editing} onOpenChange={(o) => { if (!o) setEditing(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("edit_structure")}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5"><Label>{t("structure_name_label")}</Label><Input value={editName} onChange={(e) => setEditName(e.target.value)} /></div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>{t("currency")}</Label>
+                <Select value={editCurrency} onValueChange={setEditCurrency}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {["USD", "EUR", "GBP", "AED", "SAR", "EGP", "JOD", "KWD"].map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5"><Label>{t("country_optional")}</Label><Input value={editCountry} onChange={(e) => setEditCountry(e.target.value)} /></div>
+            </div>
+            <div className="space-y-1.5"><Label>{t("effective")}</Label><Input type="date" value={editEffective} onChange={(e) => setEditEffective(e.target.value)} /></div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setEditing(null)}>{t("cancel")}</Button>
+            <Button onClick={saveEdit}>{t("update_structure")}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
