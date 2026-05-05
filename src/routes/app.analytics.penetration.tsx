@@ -93,6 +93,9 @@ function PenetrationAnalytics() {
 
   const insights = penetrationInsights({ total, highCount, lowCount, aboveCount });
 
+  const lowEmployees = useMemo(() => penValues.filter((v) => v.p < 0.33).sort((a, b) => a.p - b.p), [penValues]);
+  const aboveEmployees = useMemo(() => penValues.filter((v) => v.p > 1).sort((a, b) => b.p - a.p), [penValues]);
+
   // Heatmap by grade
   const heat = useMemo(() => {
     const byGrade = new Map<string, { early: number; mid: number; high: number; above: number; total: number }>();
