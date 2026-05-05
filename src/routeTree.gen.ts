@@ -18,6 +18,7 @@ import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as AppTeamRouteImport } from './routes/app.team'
+import { Route as AppSupportRouteImport } from './routes/app.support'
 import { Route as AppStructuresRouteImport } from './routes/app.structures'
 import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as AppReportsRouteImport } from './routes/app.reports'
@@ -95,6 +96,11 @@ const BlogSlugRoute = BlogSlugRouteImport.update({
 const AppTeamRoute = AppTeamRouteImport.update({
   id: '/team',
   path: '/team',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSupportRoute = AppSupportRouteImport.update({
+  id: '/support',
+  path: '/support',
   getParentRoute: () => AppRoute,
 } as any)
 const AppStructuresRoute = AppStructuresRouteImport.update({
@@ -293,6 +299,7 @@ export interface FileRoutesByFullPath {
   '/app/reports': typeof AppReportsRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/structures': typeof AppStructuresRoute
+  '/app/support': typeof AppSupportRoute
   '/app/team': typeof AppTeamRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/admin/': typeof AdminIndexRoute
@@ -334,6 +341,7 @@ export interface FileRoutesByTo {
   '/app/reports': typeof AppReportsRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/structures': typeof AppStructuresRoute
+  '/app/support': typeof AppSupportRoute
   '/app/team': typeof AppTeamRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/admin': typeof AdminIndexRoute
@@ -379,6 +387,7 @@ export interface FileRoutesById {
   '/app/reports': typeof AppReportsRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/structures': typeof AppStructuresRoute
+  '/app/support': typeof AppSupportRoute
   '/app/team': typeof AppTeamRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/admin/': typeof AdminIndexRoute
@@ -425,6 +434,7 @@ export interface FileRouteTypes {
     | '/app/reports'
     | '/app/settings'
     | '/app/structures'
+    | '/app/support'
     | '/app/team'
     | '/blog/$slug'
     | '/admin/'
@@ -466,6 +476,7 @@ export interface FileRouteTypes {
     | '/app/reports'
     | '/app/settings'
     | '/app/structures'
+    | '/app/support'
     | '/app/team'
     | '/blog/$slug'
     | '/admin'
@@ -510,6 +521,7 @@ export interface FileRouteTypes {
     | '/app/reports'
     | '/app/settings'
     | '/app/structures'
+    | '/app/support'
     | '/app/team'
     | '/blog/$slug'
     | '/admin/'
@@ -596,6 +608,13 @@ declare module '@tanstack/react-router' {
       path: '/team'
       fullPath: '/app/team'
       preLoaderRoute: typeof AppTeamRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/support': {
+      id: '/app/support'
+      path: '/support'
+      fullPath: '/app/support'
+      preLoaderRoute: typeof AppSupportRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/structures': {
@@ -940,6 +959,7 @@ interface AppRouteChildren {
   AppReportsRoute: typeof AppReportsRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppStructuresRoute: typeof AppStructuresRoute
+  AppSupportRoute: typeof AppSupportRoute
   AppTeamRoute: typeof AppTeamRoute
   AppIndexRoute: typeof AppIndexRoute
   AppAnalyticsCompaRoute: typeof AppAnalyticsCompaRoute
@@ -960,6 +980,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppReportsRoute: AppReportsRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppStructuresRoute: AppStructuresRoute,
+  AppSupportRoute: AppSupportRoute,
   AppTeamRoute: AppTeamRoute,
   AppIndexRoute: AppIndexRoute,
   AppAnalyticsCompaRoute: AppAnalyticsCompaRoute,
