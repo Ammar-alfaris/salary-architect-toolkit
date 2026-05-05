@@ -3,7 +3,7 @@ import { useState } from "react";
 import {
   LayoutDashboard, Users, Building2, Package, CreditCard, FileText, Inbox,
   LifeBuoy, Megaphone, ScrollText, Settings as SettingsIcon, LogOut, Moon, Sun,
-  Languages, Search, Bell, Menu, ShieldCheck, ArrowLeft,
+  Languages, Search, Bell, Menu, ShieldCheck, ArrowLeft, Mail,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
