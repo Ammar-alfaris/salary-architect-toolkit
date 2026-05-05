@@ -219,3 +219,60 @@ function Kpi({ label, value, tone }: { label: string; value: string; tone?: "ok"
     </div>
   );
 }
+
+function OutlierTable({
+  title, tone, rows, currency, locale, tBand, tName, tBase,
+}: {
+  title: string;
+  tone: "warn" | "risk";
+  rows: { id: string; name: string; dept?: string; grade: string; base: number; compa: number }[];
+  currency: string;
+  locale: string;
+  tBand: string;
+  tName: string;
+  tBase: string;
+}) {
+  const dotClass = tone === "risk" ? "bg-destructive" : "bg-warning";
+  return (
+    <div className="border rounded-lg bg-card p-4">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="font-semibold text-sm flex items-center gap-2">
+          <span className={`inline-block w-2 h-2 rounded-full ${dotClass}`} />
+          {title}
+        </h3>
+        <span className="text-xs text-muted-foreground num">{rows.length}</span>
+      </div>
+      {rows.length === 0 ? (
+        <p className="text-sm text-muted-foreground py-6 text-center">—</p>
+      ) : (
+        <div className="overflow-x-auto max-h-72">
+          <table className="w-full text-sm">
+            <thead className="text-xs uppercase text-muted-foreground">
+              <tr>
+                <th className="text-start py-1.5">{tName}</th>
+                <th className="text-start py-1.5">{tBand}</th>
+                <th className="text-end py-1.5">{tBase}</th>
+                <th className="text-end py-1.5">Compa</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.slice(0, 50).map((r) => (
+                <tr key={r.id} className="border-t hover:bg-muted/20">
+                  <td className="py-1.5">
+                    <Link to="/app/employees/$id" params={{ id: r.id }} className="hover:underline font-medium">
+                      {r.name}
+                    </Link>
+                    {r.dept && <div className="text-xs text-muted-foreground">{r.dept}</div>}
+                  </td>
+                  <td className="py-1.5 text-muted-foreground">{r.grade}</td>
+                  <td className="py-1.5 text-end num">{fmtCurrency(r.base, currency, locale)}</td>
+                  <td className="py-1.5 text-end num font-medium">{r.compa.toFixed(2)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
