@@ -44,6 +44,7 @@ function EmployeesPage() {
   const { t, locale } = useI18n();
   const perms = usePermissions();
   const qc = useQueryClient();
+  const navigate = useNavigate();
 
   const [search, setSearch] = useState("");
   const [deptFilter, setDeptFilter] = useState("all");
