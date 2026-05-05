@@ -182,6 +182,29 @@ function CompaAnalytics() {
         </div>
 
         <InsightCard items={insights} />
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <OutlierTable
+            title={t("employees_below_range")}
+            tone="warn"
+            rows={below}
+            currency={defaultCurrency}
+            locale={locale}
+            tBand={t("band")}
+            tName={t("name")}
+            tBase={t("base_salary")}
+          />
+          <OutlierTable
+            title={t("employees_above_range")}
+            tone="risk"
+            rows={above}
+            currency={defaultCurrency}
+            locale={locale}
+            tBand={t("band")}
+            tName={t("name")}
+            tBase={t("base_salary")}
+          />
+        </div>
       </div>
     </div>
   );
