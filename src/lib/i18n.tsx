@@ -742,6 +742,11 @@ const en: Dict = {
   help_email_support: "Email support",
   unmapped_grades_warn: "Unmapped grades — fix in the Grade Mapping sheet: {list}",
   unmapped_ratings_warn: "Unmapped ratings — fix in the Performance Mapping sheet: {list}",
+  edit_structure: "Edit structure",
+  update_structure: "Update structure",
+  employees_below_range: "Employees below range",
+  employees_above_range: "Employees above range",
+  view_profile: "View profile",
 };
 
 const ar: Dict = {
@@ -1482,6 +1487,11 @@ const ar: Dict = {
   help_email_support: "راسل الدعم",
   unmapped_grades_warn: "درجات لم تُطابَق — صحّحها في ورقة Grade Mapping: {list}",
   unmapped_ratings_warn: "تقييمات لم تُطابَق — صحّحها في ورقة Performance Mapping: {list}",
+  edit_structure: "تعديل الهيكل",
+  update_structure: "تحديث الهيكل",
+  employees_below_range: "موظفون أدنى من النطاق",
+  employees_above_range: "موظفون أعلى من النطاق",
+  view_profile: "عرض الملف",
 };
 
 const dictionaries: Record<Locale, Dict> = { en, ar };

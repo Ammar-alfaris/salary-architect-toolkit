@@ -15,8 +15,9 @@ import { logAudit } from "@/lib/audit";
 import { usePermissions } from "@/lib/rbac";
 import { exportXLSX } from "@/lib/excel";
 import { toast } from "sonner";
-import { Plus, Layers, Trash2, Eye, FileSpreadsheet, X } from "lucide-react";
+import { Plus, Layers, Trash2, Eye, FileSpreadsheet, X, Pencil } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/app/structures")({ component: StructuresPage });
 
@@ -51,6 +52,41 @@ function StructuresPage() {
   const [rounding, setRounding] = useState(initial?.rounding ?? 100);
   useEffect(() => { if (initial) setOpen(true); }, []);
   const [linkPrompt, setLinkPrompt] = useState<{ structureId: string } | null>(null);
+  const [editing, setEditing] = useState<any>(null);
+  const [editName, setEditName] = useState("");
+  const [editCurrency, setEditCurrency] = useState("USD");
+  const [editCountry, setEditCountry] = useState("");
+  const [editEffective, setEditEffective] = useState("");
+
+  const openEdit = (s: any) => {
+    setEditing(s);
+    setEditName(s.name);
+    setEditCurrency(s.currency);
+    setEditCountry(s.country ?? "");
+    setEditEffective((s.effective_date ?? "").slice(0, 10));
+  };
+
+  const saveEdit = async () => {
+    if (!editing || !organizationId) return;
+    if (!perms.canEdit) return toast.error(t("insufficient_permissions"));
+    const before = { name: editing.name, currency: editing.currency, country: editing.country, effective_date: editing.effective_date };
+    const patch: any = { name: editName, currency: editCurrency, country: editCountry || null };
+    if (editEffective) patch.effective_date = editEffective;
+    const { error } = await supabase.from("salary_structures").update(patch).eq("id", editing.id);
+    if (error) return toast.error(error.message);
+    await logAudit({
+      organizationId,
+      action: "update",
+      entityType: "salary_structure",
+      entityId: editing.id,
+      entityLabel: editName,
+      before,
+      after: patch,
+    });
+    toast.success(t("settings_saved"));
+    setEditing(null);
+    refresh();
+  };
 
   const refresh = async () => {
     if (!organizationId) return;
@@ -272,6 +308,9 @@ function StructuresPage() {
                       <td className="px-4 py-2.5 text-end">
                         <div className="flex gap-1 justify-end">
                           <Button asChild size="icon" variant="ghost"><Link to="/app/matrix"><Eye className="w-4 h-4" /></Link></Button>
+                          {perms.canEdit && !s.archived && (
+                            <Button size="icon" variant="ghost" onClick={() => openEdit(s)} title={t("edit_structure")}><Pencil className="w-4 h-4" /></Button>
+                          )}
                           {!s.archived && perms.canDelete && <Button size="icon" variant="ghost" onClick={() => handleArchive(s)} title={t("archived")}><Trash2 className="w-4 h-4" /></Button>}
                           {perms.canDelete && (
                             <AlertDialog>
@@ -313,6 +352,34 @@ function StructuresPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={!!editing} onOpenChange={(o) => { if (!o) setEditing(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("edit_structure")}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5"><Label>{t("structure_name_label")}</Label><Input value={editName} onChange={(e) => setEditName(e.target.value)} /></div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>{t("currency")}</Label>
+                <Select value={editCurrency} onValueChange={setEditCurrency}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {["USD", "EUR", "GBP", "AED", "SAR", "EGP", "JOD", "KWD"].map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5"><Label>{t("country_optional")}</Label><Input value={editCountry} onChange={(e) => setEditCountry(e.target.value)} /></div>
+            </div>
+            <div className="space-y-1.5"><Label>{t("effective")}</Label><Input type="date" value={editEffective} onChange={(e) => setEditEffective(e.target.value)} /></div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setEditing(null)}>{t("cancel")}</Button>
+            <Button onClick={saveEdit}>{t("update_structure")}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

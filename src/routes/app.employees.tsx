@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "@/components/app-shell";
@@ -44,6 +44,7 @@ function EmployeesPage() {
   const { t, locale } = useI18n();
   const perms = usePermissions();
   const qc = useQueryClient();
+  const navigate = useNavigate();
 
   const [search, setSearch] = useState("");
   const [deptFilter, setDeptFilter] = useState("all");
@@ -517,8 +518,13 @@ function EmployeesPage() {
                                   <Pencil className="w-4 h-4" />
                                 </Button>
                               )}
-                              <Button asChild size="icon" variant="ghost">
-                                <Link to="/app/employees/$id" params={{ id: e.id }}><Eye className="w-4 h-4" /></Link>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                aria-label={t("view_profile")}
+                                onClick={() => navigate({ to: "/app/employees/$id", params: { id: e.id } })}
+                              >
+                                <Eye className="w-4 h-4" />
                               </Button>
                             </div>
                           </td>

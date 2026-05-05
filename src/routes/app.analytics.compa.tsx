@@ -1,11 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { PageHeader } from "@/components/app-shell";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { compaRatio, COMPA_BANDS } from "@/lib/comp";
-import { fmtPercent, fmtNumber } from "@/lib/format";
+import { fmtPercent, fmtNumber, fmtCurrency } from "@/lib/format";
 import { bucketCompaCounts, distributionInsights } from "@/lib/insights";
 import { InsightCard, WhyThisMatters } from "@/components/insight-card";
 import {
@@ -18,7 +18,7 @@ export const Route = createFileRoute("/app/analytics/compa")({ component: CompaA
 type GroupBy = "overall" | "grade" | "department" | "structure";
 
 function CompaAnalytics() {
-  const { organizationId } = useAuth();
+  const { organizationId, defaultCurrency } = useAuth();
   const { t, locale } = useI18n();
   const [employees, setEmployees] = useState<any[]>([]);
   const [grades, setGrades] = useState<any[]>([]);
@@ -63,15 +63,20 @@ function CompaAnalytics() {
     return employees;
   }, [employees, grades, groupBy, filter]);
 
-  const compaValues = useMemo(() =>
-    filtered
-      .map((e) => {
-        const g = gradeMap.get(e.grade_id);
-        return g ? compaRatio(Number(e.base_salary), Number(g.midpoint)) : null;
-      })
-      .filter((v): v is number => v != null && !isNaN(v) && isFinite(v)),
+  const employeeRows = useMemo(() =>
+    filtered.map((e) => {
+      const g = gradeMap.get(e.grade_id);
+      if (!g) return null;
+      const c = compaRatio(Number(e.base_salary), Number(g.midpoint));
+      if (!isFinite(c)) return null;
+      return { id: e.id, name: e.full_name, dept: e.department, grade: g.grade_code, base: Number(e.base_salary), compa: c };
+    }).filter((v): v is NonNullable<typeof v> => v != null),
     [filtered, gradeMap],
   );
+  const compaValues = useMemo(() => employeeRows.map((r) => r.compa), [employeeRows]);
+
+  const below = useMemo(() => employeeRows.filter((r) => r.compa < 0.8).sort((a, b) => a.compa - b.compa), [employeeRows]);
+  const above = useMemo(() => employeeRows.filter((r) => r.compa > 1.1).sort((a, b) => b.compa - a.compa), [employeeRows]);
 
   const total = compaValues.length;
   const bandCounts = useMemo(() => bucketCompaCounts(compaValues), [compaValues]);
@@ -177,6 +182,29 @@ function CompaAnalytics() {
         </div>
 
         <InsightCard items={insights} />
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <OutlierTable
+            title={t("employees_below_range")}
+            tone="warn"
+            rows={below}
+            currency={defaultCurrency}
+            locale={locale}
+            tBand={t("band")}
+            tName={t("name")}
+            tBase={t("base_salary")}
+          />
+          <OutlierTable
+            title={t("employees_above_range")}
+            tone="risk"
+            rows={above}
+            currency={defaultCurrency}
+            locale={locale}
+            tBand={t("band")}
+            tName={t("name")}
+            tBase={t("base_salary")}
+          />
+        </div>
       </div>
     </div>
   );
@@ -188,6 +216,63 @@ function Kpi({ label, value, tone }: { label: string; value: string; tone?: "ok"
     <div className="border rounded-lg bg-card p-3">
       <div className="text-xs text-muted-foreground">{label}</div>
       <div className={`text-xl font-semibold num mt-1 ${color}`}>{value}</div>
+    </div>
+  );
+}
+
+function OutlierTable({
+  title, tone, rows, currency, locale, tBand, tName, tBase,
+}: {
+  title: string;
+  tone: "warn" | "risk";
+  rows: { id: string; name: string; dept?: string; grade: string; base: number; compa: number }[];
+  currency: string;
+  locale: string;
+  tBand: string;
+  tName: string;
+  tBase: string;
+}) {
+  const dotClass = tone === "risk" ? "bg-destructive" : "bg-warning";
+  return (
+    <div className="border rounded-lg bg-card p-4">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="font-semibold text-sm flex items-center gap-2">
+          <span className={`inline-block w-2 h-2 rounded-full ${dotClass}`} />
+          {title}
+        </h3>
+        <span className="text-xs text-muted-foreground num">{rows.length}</span>
+      </div>
+      {rows.length === 0 ? (
+        <p className="text-sm text-muted-foreground py-6 text-center">—</p>
+      ) : (
+        <div className="overflow-x-auto max-h-72">
+          <table className="w-full text-sm">
+            <thead className="text-xs uppercase text-muted-foreground">
+              <tr>
+                <th className="text-start py-1.5">{tName}</th>
+                <th className="text-start py-1.5">{tBand}</th>
+                <th className="text-end py-1.5">{tBase}</th>
+                <th className="text-end py-1.5">Compa</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.slice(0, 50).map((r) => (
+                <tr key={r.id} className="border-t hover:bg-muted/20">
+                  <td className="py-1.5">
+                    <Link to="/app/employees/$id" params={{ id: r.id }} className="hover:underline font-medium">
+                      {r.name}
+                    </Link>
+                    {r.dept && <div className="text-xs text-muted-foreground">{r.dept}</div>}
+                  </td>
+                  <td className="py-1.5 text-muted-foreground">{r.grade}</td>
+                  <td className="py-1.5 text-end num">{fmtCurrency(r.base, currency, locale)}</td>
+                  <td className="py-1.5 text-end num font-medium">{r.compa.toFixed(2)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

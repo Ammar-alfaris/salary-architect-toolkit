@@ -1,11 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { PageHeader } from "@/components/app-shell";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { rangePenetration } from "@/lib/comp";
-import { fmtPercent, fmtNumber } from "@/lib/format";
+import { fmtPercent, fmtNumber, fmtCurrency } from "@/lib/format";
 import { penetrationBand, PENETRATION_BANDS, penetrationInsights } from "@/lib/insights";
 import { InsightCard, WhyThisMatters } from "@/components/insight-card";
 import {
@@ -18,7 +18,7 @@ export const Route = createFileRoute("/app/analytics/penetration")({ component: 
 type GroupBy = "overall" | "grade" | "department" | "structure";
 
 function PenetrationAnalytics() {
-  const { organizationId } = useAuth();
+  const { organizationId, defaultCurrency } = useAuth();
   const { t, locale } = useI18n();
   const [employees, setEmployees] = useState<any[]>([]);
   const [grades, setGrades] = useState<any[]>([]);
@@ -92,6 +92,9 @@ function PenetrationAnalytics() {
   const colors = ["var(--accent)", "var(--success)", "var(--warning)", "var(--destructive)"];
 
   const insights = penetrationInsights({ total, highCount, lowCount, aboveCount });
+
+  const lowEmployees = useMemo(() => penValues.filter((v) => v.p < 0.33).sort((a, b) => a.p - b.p), [penValues]);
+  const aboveEmployees = useMemo(() => penValues.filter((v) => v.p > 1).sort((a, b) => b.p - a.p), [penValues]);
 
   // Heatmap by grade
   const heat = useMemo(() => {
@@ -207,6 +210,27 @@ function PenetrationAnalytics() {
         </div>
 
         <InsightCard items={insights} />
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <PenOutlierTable
+            title={t("employees_below_range")}
+            tone="warn"
+            rows={lowEmployees}
+            currency={defaultCurrency}
+            locale={locale}
+            tName={t("name")}
+            tBase={t("base_salary")}
+          />
+          <PenOutlierTable
+            title={t("employees_above_range")}
+            tone="risk"
+            rows={aboveEmployees}
+            currency={defaultCurrency}
+            locale={locale}
+            tName={t("name")}
+            tBase={t("base_salary")}
+          />
+        </div>
       </div>
     </div>
   );
@@ -218,6 +242,62 @@ function Kpi({ label, value, tone }: { label: string; value: string; tone?: "ok"
     <div className="border rounded-lg bg-card p-3">
       <div className="text-xs text-muted-foreground">{label}</div>
       <div className={`text-xl font-semibold num mt-1 ${color}`}>{value}</div>
+    </div>
+  );
+}
+
+function PenOutlierTable({
+  title, tone, rows, currency, locale, tName, tBase,
+}: {
+  title: string;
+  tone: "warn" | "risk";
+  rows: { id: string; name: string; dept?: string; grade: string; base: number; p: number }[];
+  currency: string;
+  locale: string;
+  tName: string;
+  tBase: string;
+}) {
+  const dotClass = tone === "risk" ? "bg-destructive" : "bg-warning";
+  return (
+    <div className="border rounded-lg bg-card p-4">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="font-semibold text-sm flex items-center gap-2">
+          <span className={`inline-block w-2 h-2 rounded-full ${dotClass}`} />
+          {title}
+        </h3>
+        <span className="text-xs text-muted-foreground num">{rows.length}</span>
+      </div>
+      {rows.length === 0 ? (
+        <p className="text-sm text-muted-foreground py-6 text-center">—</p>
+      ) : (
+        <div className="overflow-x-auto max-h-72">
+          <table className="w-full text-sm">
+            <thead className="text-xs uppercase text-muted-foreground">
+              <tr>
+                <th className="text-start py-1.5">{tName}</th>
+                <th className="text-start py-1.5">Grade</th>
+                <th className="text-end py-1.5">{tBase}</th>
+                <th className="text-end py-1.5">%</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.slice(0, 50).map((r) => (
+                <tr key={r.id} className="border-t hover:bg-muted/20">
+                  <td className="py-1.5">
+                    <Link to="/app/employees/$id" params={{ id: r.id }} className="hover:underline font-medium">
+                      {r.name}
+                    </Link>
+                    {r.dept && <div className="text-xs text-muted-foreground">{r.dept}</div>}
+                  </td>
+                  <td className="py-1.5 text-muted-foreground">{r.grade}</td>
+                  <td className="py-1.5 text-end num">{fmtCurrency(r.base, currency, locale)}</td>
+                  <td className="py-1.5 text-end num font-medium">{fmtPercent(r.p * 100, locale)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
