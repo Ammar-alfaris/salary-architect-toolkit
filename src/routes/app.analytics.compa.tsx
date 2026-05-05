@@ -63,15 +63,20 @@ function CompaAnalytics() {
     return employees;
   }, [employees, grades, groupBy, filter]);
 
-  const compaValues = useMemo(() =>
-    filtered
-      .map((e) => {
-        const g = gradeMap.get(e.grade_id);
-        return g ? compaRatio(Number(e.base_salary), Number(g.midpoint)) : null;
-      })
-      .filter((v): v is number => v != null && !isNaN(v) && isFinite(v)),
+  const employeeRows = useMemo(() =>
+    filtered.map((e) => {
+      const g = gradeMap.get(e.grade_id);
+      if (!g) return null;
+      const c = compaRatio(Number(e.base_salary), Number(g.midpoint));
+      if (!isFinite(c)) return null;
+      return { id: e.id, name: e.full_name, dept: e.department, grade: g.grade_code, base: Number(e.base_salary), compa: c };
+    }).filter((v): v is NonNullable<typeof v> => v != null),
     [filtered, gradeMap],
   );
+  const compaValues = useMemo(() => employeeRows.map((r) => r.compa), [employeeRows]);
+
+  const below = useMemo(() => employeeRows.filter((r) => r.compa < 0.8).sort((a, b) => a.compa - b.compa), [employeeRows]);
+  const above = useMemo(() => employeeRows.filter((r) => r.compa > 1.1).sort((a, b) => b.compa - a.compa), [employeeRows]);
 
   const total = compaValues.length;
   const bandCounts = useMemo(() => bucketCompaCounts(compaValues), [compaValues]);
