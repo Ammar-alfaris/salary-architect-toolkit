@@ -308,6 +308,9 @@ function StructuresPage() {
                       <td className="px-4 py-2.5 text-end">
                         <div className="flex gap-1 justify-end">
                           <Button asChild size="icon" variant="ghost"><Link to="/app/matrix"><Eye className="w-4 h-4" /></Link></Button>
+                          {perms.canEdit && !s.archived && (
+                            <Button size="icon" variant="ghost" onClick={() => openEdit(s)} title={t("edit_structure")}><Pencil className="w-4 h-4" /></Button>
+                          )}
                           {!s.archived && perms.canDelete && <Button size="icon" variant="ghost" onClick={() => handleArchive(s)} title={t("archived")}><Trash2 className="w-4 h-4" /></Button>}
                           {perms.canDelete && (
                             <AlertDialog>
