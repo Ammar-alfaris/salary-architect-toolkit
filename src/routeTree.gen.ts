@@ -18,6 +18,7 @@ import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as AppTeamRouteImport } from './routes/app.team'
+import { Route as AppSupportRouteImport } from './routes/app.support'
 import { Route as AppStructuresRouteImport } from './routes/app.structures'
 import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as AppReportsRouteImport } from './routes/app.reports'
@@ -38,6 +39,7 @@ import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AdminPlansRouteImport } from './routes/admin.plans'
 import { Route as AdminOrganizationsRouteImport } from './routes/admin.organizations'
 import { Route as AdminMessagesRouteImport } from './routes/admin.messages'
+import { Route as AdminEmailsRouteImport } from './routes/admin.emails'
 import { Route as AdminBlogRouteImport } from './routes/admin.blog'
 import { Route as AdminAuditRouteImport } from './routes/admin.audit'
 import { Route as AdminAnnouncementsRouteImport } from './routes/admin.announcements'
@@ -48,6 +50,7 @@ import { Route as AppAnalyticsEquityRouteImport } from './routes/app.analytics.e
 import { Route as AppAnalyticsCompaRouteImport } from './routes/app.analytics.compa'
 import { Route as AdminTicketsIdRouteImport } from './routes/admin.tickets.$id'
 import { Route as AdminOrganizationsIdRouteImport } from './routes/admin.organizations.$id'
+import { Route as AdminEmailsKeyRouteImport } from './routes/admin.emails.$key'
 import { Route as AdminBlogIdRouteImport } from './routes/admin.blog.$id'
 
 const BlogRoute = BlogRouteImport.update({
@@ -93,6 +96,11 @@ const BlogSlugRoute = BlogSlugRouteImport.update({
 const AppTeamRoute = AppTeamRouteImport.update({
   id: '/team',
   path: '/team',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSupportRoute = AppSupportRouteImport.update({
+  id: '/support',
+  path: '/support',
   getParentRoute: () => AppRoute,
 } as any)
 const AppStructuresRoute = AppStructuresRouteImport.update({
@@ -195,6 +203,11 @@ const AdminMessagesRoute = AdminMessagesRouteImport.update({
   path: '/messages',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminEmailsRoute = AdminEmailsRouteImport.update({
+  id: '/emails',
+  path: '/emails',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminBlogRoute = AdminBlogRouteImport.update({
   id: '/blog',
   path: '/blog',
@@ -245,6 +258,11 @@ const AdminOrganizationsIdRoute = AdminOrganizationsIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AdminOrganizationsRoute,
 } as any)
+const AdminEmailsKeyRoute = AdminEmailsKeyRouteImport.update({
+  id: '/$key',
+  path: '/$key',
+  getParentRoute: () => AdminEmailsRoute,
+} as any)
 const AdminBlogIdRoute = AdminBlogIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -260,6 +278,7 @@ export interface FileRoutesByFullPath {
   '/admin/announcements': typeof AdminAnnouncementsRoute
   '/admin/audit': typeof AdminAuditRoute
   '/admin/blog': typeof AdminBlogRouteWithChildren
+  '/admin/emails': typeof AdminEmailsRouteWithChildren
   '/admin/messages': typeof AdminMessagesRoute
   '/admin/organizations': typeof AdminOrganizationsRouteWithChildren
   '/admin/plans': typeof AdminPlansRoute
@@ -280,11 +299,13 @@ export interface FileRoutesByFullPath {
   '/app/reports': typeof AppReportsRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/structures': typeof AppStructuresRoute
+  '/app/support': typeof AppSupportRoute
   '/app/team': typeof AppTeamRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/admin/': typeof AdminIndexRoute
   '/app/': typeof AppIndexRoute
   '/admin/blog/$id': typeof AdminBlogIdRoute
+  '/admin/emails/$key': typeof AdminEmailsKeyRoute
   '/admin/organizations/$id': typeof AdminOrganizationsIdRoute
   '/admin/tickets/$id': typeof AdminTicketsIdRoute
   '/app/analytics/compa': typeof AppAnalyticsCompaRoute
@@ -299,6 +320,7 @@ export interface FileRoutesByTo {
   '/blog': typeof BlogRouteWithChildren
   '/admin/announcements': typeof AdminAnnouncementsRoute
   '/admin/audit': typeof AdminAuditRoute
+  '/admin/emails': typeof AdminEmailsRouteWithChildren
   '/admin/messages': typeof AdminMessagesRoute
   '/admin/organizations': typeof AdminOrganizationsRouteWithChildren
   '/admin/plans': typeof AdminPlansRoute
@@ -319,11 +341,13 @@ export interface FileRoutesByTo {
   '/app/reports': typeof AppReportsRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/structures': typeof AppStructuresRoute
+  '/app/support': typeof AppSupportRoute
   '/app/team': typeof AppTeamRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/admin': typeof AdminIndexRoute
   '/app': typeof AppIndexRoute
   '/admin/blog/$id': typeof AdminBlogIdRoute
+  '/admin/emails/$key': typeof AdminEmailsKeyRoute
   '/admin/organizations/$id': typeof AdminOrganizationsIdRoute
   '/admin/tickets/$id': typeof AdminTicketsIdRoute
   '/app/analytics/compa': typeof AppAnalyticsCompaRoute
@@ -342,6 +366,7 @@ export interface FileRoutesById {
   '/admin/announcements': typeof AdminAnnouncementsRoute
   '/admin/audit': typeof AdminAuditRoute
   '/admin/blog': typeof AdminBlogRouteWithChildren
+  '/admin/emails': typeof AdminEmailsRouteWithChildren
   '/admin/messages': typeof AdminMessagesRoute
   '/admin/organizations': typeof AdminOrganizationsRouteWithChildren
   '/admin/plans': typeof AdminPlansRoute
@@ -362,11 +387,13 @@ export interface FileRoutesById {
   '/app/reports': typeof AppReportsRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/structures': typeof AppStructuresRoute
+  '/app/support': typeof AppSupportRoute
   '/app/team': typeof AppTeamRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/admin/': typeof AdminIndexRoute
   '/app/': typeof AppIndexRoute
   '/admin/blog/$id': typeof AdminBlogIdRoute
+  '/admin/emails/$key': typeof AdminEmailsKeyRoute
   '/admin/organizations/$id': typeof AdminOrganizationsIdRoute
   '/admin/tickets/$id': typeof AdminTicketsIdRoute
   '/app/analytics/compa': typeof AppAnalyticsCompaRoute
@@ -386,6 +413,7 @@ export interface FileRouteTypes {
     | '/admin/announcements'
     | '/admin/audit'
     | '/admin/blog'
+    | '/admin/emails'
     | '/admin/messages'
     | '/admin/organizations'
     | '/admin/plans'
@@ -406,11 +434,13 @@ export interface FileRouteTypes {
     | '/app/reports'
     | '/app/settings'
     | '/app/structures'
+    | '/app/support'
     | '/app/team'
     | '/blog/$slug'
     | '/admin/'
     | '/app/'
     | '/admin/blog/$id'
+    | '/admin/emails/$key'
     | '/admin/organizations/$id'
     | '/admin/tickets/$id'
     | '/app/analytics/compa'
@@ -425,6 +455,7 @@ export interface FileRouteTypes {
     | '/blog'
     | '/admin/announcements'
     | '/admin/audit'
+    | '/admin/emails'
     | '/admin/messages'
     | '/admin/organizations'
     | '/admin/plans'
@@ -445,11 +476,13 @@ export interface FileRouteTypes {
     | '/app/reports'
     | '/app/settings'
     | '/app/structures'
+    | '/app/support'
     | '/app/team'
     | '/blog/$slug'
     | '/admin'
     | '/app'
     | '/admin/blog/$id'
+    | '/admin/emails/$key'
     | '/admin/organizations/$id'
     | '/admin/tickets/$id'
     | '/app/analytics/compa'
@@ -467,6 +500,7 @@ export interface FileRouteTypes {
     | '/admin/announcements'
     | '/admin/audit'
     | '/admin/blog'
+    | '/admin/emails'
     | '/admin/messages'
     | '/admin/organizations'
     | '/admin/plans'
@@ -487,11 +521,13 @@ export interface FileRouteTypes {
     | '/app/reports'
     | '/app/settings'
     | '/app/structures'
+    | '/app/support'
     | '/app/team'
     | '/blog/$slug'
     | '/admin/'
     | '/app/'
     | '/admin/blog/$id'
+    | '/admin/emails/$key'
     | '/admin/organizations/$id'
     | '/admin/tickets/$id'
     | '/app/analytics/compa'
@@ -572,6 +608,13 @@ declare module '@tanstack/react-router' {
       path: '/team'
       fullPath: '/app/team'
       preLoaderRoute: typeof AppTeamRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/support': {
+      id: '/app/support'
+      path: '/support'
+      fullPath: '/app/support'
+      preLoaderRoute: typeof AppSupportRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/structures': {
@@ -714,6 +757,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminMessagesRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/emails': {
+      id: '/admin/emails'
+      path: '/emails'
+      fullPath: '/admin/emails'
+      preLoaderRoute: typeof AdminEmailsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/blog': {
       id: '/admin/blog'
       path: '/blog'
@@ -784,6 +834,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminOrganizationsIdRouteImport
       parentRoute: typeof AdminOrganizationsRoute
     }
+    '/admin/emails/$key': {
+      id: '/admin/emails/$key'
+      path: '/$key'
+      fullPath: '/admin/emails/$key'
+      preLoaderRoute: typeof AdminEmailsKeyRouteImport
+      parentRoute: typeof AdminEmailsRoute
+    }
     '/admin/blog/$id': {
       id: '/admin/blog/$id'
       path: '/$id'
@@ -806,6 +863,18 @@ const AdminBlogRouteChildren: AdminBlogRouteChildren = {
 
 const AdminBlogRouteWithChildren = AdminBlogRoute._addFileChildren(
   AdminBlogRouteChildren,
+)
+
+interface AdminEmailsRouteChildren {
+  AdminEmailsKeyRoute: typeof AdminEmailsKeyRoute
+}
+
+const AdminEmailsRouteChildren: AdminEmailsRouteChildren = {
+  AdminEmailsKeyRoute: AdminEmailsKeyRoute,
+}
+
+const AdminEmailsRouteWithChildren = AdminEmailsRoute._addFileChildren(
+  AdminEmailsRouteChildren,
 )
 
 interface AdminOrganizationsRouteChildren {
@@ -835,6 +904,7 @@ interface AdminRouteChildren {
   AdminAnnouncementsRoute: typeof AdminAnnouncementsRoute
   AdminAuditRoute: typeof AdminAuditRoute
   AdminBlogRoute: typeof AdminBlogRouteWithChildren
+  AdminEmailsRoute: typeof AdminEmailsRouteWithChildren
   AdminMessagesRoute: typeof AdminMessagesRoute
   AdminOrganizationsRoute: typeof AdminOrganizationsRouteWithChildren
   AdminPlansRoute: typeof AdminPlansRoute
@@ -850,6 +920,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAnnouncementsRoute: AdminAnnouncementsRoute,
   AdminAuditRoute: AdminAuditRoute,
   AdminBlogRoute: AdminBlogRouteWithChildren,
+  AdminEmailsRoute: AdminEmailsRouteWithChildren,
   AdminMessagesRoute: AdminMessagesRoute,
   AdminOrganizationsRoute: AdminOrganizationsRouteWithChildren,
   AdminPlansRoute: AdminPlansRoute,
@@ -888,6 +959,7 @@ interface AppRouteChildren {
   AppReportsRoute: typeof AppReportsRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppStructuresRoute: typeof AppStructuresRoute
+  AppSupportRoute: typeof AppSupportRoute
   AppTeamRoute: typeof AppTeamRoute
   AppIndexRoute: typeof AppIndexRoute
   AppAnalyticsCompaRoute: typeof AppAnalyticsCompaRoute
@@ -908,6 +980,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppReportsRoute: AppReportsRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppStructuresRoute: AppStructuresRoute,
+  AppSupportRoute: AppSupportRoute,
   AppTeamRoute: AppTeamRoute,
   AppIndexRoute: AppIndexRoute,
   AppAnalyticsCompaRoute: AppAnalyticsCompaRoute,

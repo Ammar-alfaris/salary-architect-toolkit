@@ -708,6 +708,146 @@ export type Database = {
         }
         Relationships: []
       }
+      email_campaign_recipients: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          email: string
+          error: string | null
+          id: string
+          sent_at: string | null
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          email: string
+          error?: string | null
+          id?: string
+          sent_at?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          email?: string
+          error?: string | null
+          id?: string
+          sent_at?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_campaign_recipients_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "email_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_campaigns: {
+        Row: {
+          audience_filter: Json
+          audience_type: string
+          body_ar: string
+          body_en: string
+          created_at: string
+          created_by: string | null
+          created_by_email: string | null
+          id: string
+          recipient_count: number
+          status: string
+          subject_ar: string
+          subject_en: string
+          template_key: string | null
+        }
+        Insert: {
+          audience_filter?: Json
+          audience_type?: string
+          body_ar?: string
+          body_en?: string
+          created_at?: string
+          created_by?: string | null
+          created_by_email?: string | null
+          id?: string
+          recipient_count?: number
+          status?: string
+          subject_ar?: string
+          subject_en?: string
+          template_key?: string | null
+        }
+        Update: {
+          audience_filter?: Json
+          audience_type?: string
+          body_ar?: string
+          body_en?: string
+          created_at?: string
+          created_by?: string | null
+          created_by_email?: string | null
+          id?: string
+          recipient_count?: number
+          status?: string
+          subject_ar?: string
+          subject_en?: string
+          template_key?: string | null
+        }
+        Relationships: []
+      }
+      email_templates: {
+        Row: {
+          body_ar: string
+          body_en: string
+          category: string
+          created_at: string
+          description: string | null
+          display_name: string
+          enabled: boolean
+          id: string
+          is_system: boolean
+          key: string
+          subject_ar: string
+          subject_en: string
+          updated_at: string
+          variables: Json
+        }
+        Insert: {
+          body_ar?: string
+          body_en?: string
+          category?: string
+          created_at?: string
+          description?: string | null
+          display_name: string
+          enabled?: boolean
+          id?: string
+          is_system?: boolean
+          key: string
+          subject_ar?: string
+          subject_en?: string
+          updated_at?: string
+          variables?: Json
+        }
+        Update: {
+          body_ar?: string
+          body_en?: string
+          category?: string
+          created_at?: string
+          description?: string | null
+          display_name?: string
+          enabled?: boolean
+          id?: string
+          is_system?: boolean
+          key?: string
+          subject_ar?: string
+          subject_en?: string
+          updated_at?: string
+          variables?: Json
+        }
+        Relationships: []
+      }
       employee_allowances: {
         Row: {
           allowance_policy_id: string | null
@@ -1410,9 +1550,13 @@ export type Database = {
         Row: {
           assigned_to: string | null
           category: string | null
+          closed_at: string | null
           created_at: string
+          created_by: string | null
           description: string | null
           id: string
+          last_reply_at: string | null
+          locale: string
           organization_id: string | null
           priority: string
           requester_email: string
@@ -1420,14 +1564,19 @@ export type Database = {
           status: string
           subject: string
           tags: string[]
+          ticket_number: string | null
           updated_at: string
         }
         Insert: {
           assigned_to?: string | null
           category?: string | null
+          closed_at?: string | null
           created_at?: string
+          created_by?: string | null
           description?: string | null
           id?: string
+          last_reply_at?: string | null
+          locale?: string
           organization_id?: string | null
           priority?: string
           requester_email: string
@@ -1435,14 +1584,19 @@ export type Database = {
           status?: string
           subject: string
           tags?: string[]
+          ticket_number?: string | null
           updated_at?: string
         }
         Update: {
           assigned_to?: string | null
           category?: string | null
+          closed_at?: string | null
           created_at?: string
+          created_by?: string | null
           description?: string | null
           id?: string
+          last_reply_at?: string | null
+          locale?: string
           organization_id?: string | null
           priority?: string
           requester_email?: string
@@ -1450,6 +1604,7 @@ export type Database = {
           status?: string
           subject?: string
           tags?: string[]
+          ticket_number?: string | null
           updated_at?: string
         }
         Relationships: []
