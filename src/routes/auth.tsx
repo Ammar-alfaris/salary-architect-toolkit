@@ -29,7 +29,10 @@ function AuthPage() {
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) navigate({ to: "/app" });
     });
-  }, [navigate]);
+    if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("confirmed") === "1") {
+      toast.success(t("email_confirmed_signin"));
+    }
+  }, [navigate, t]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
