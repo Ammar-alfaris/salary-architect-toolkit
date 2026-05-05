@@ -1443,6 +1443,7 @@ const ar: Dict = {
 
   // الدعم والمساندة
   help_support: "الدعم والمساندة",
+  support_tickets: "تذاكر الدعم",
   help_title: "الدعم والمساندة",
   help_subtitle: "أدلة خطوة بخطوة لتستفيد من TotalReward بأقصى صورة.",
   help_search_placeholder: "ابحث في الدعم…",
