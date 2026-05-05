@@ -5,7 +5,7 @@ import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { compaRatio, COMPA_BANDS } from "@/lib/comp";
-import { fmtPercent, fmtNumber } from "@/lib/format";
+import { fmtPercent, fmtNumber, fmtCurrency } from "@/lib/format";
 import { bucketCompaCounts, distributionInsights } from "@/lib/insights";
 import { InsightCard, WhyThisMatters } from "@/components/insight-card";
 import {
