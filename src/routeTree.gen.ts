@@ -43,6 +43,7 @@ import { Route as AdminEmailsRouteImport } from './routes/admin.emails'
 import { Route as AdminBlogRouteImport } from './routes/admin.blog'
 import { Route as AdminAuditRouteImport } from './routes/admin.audit'
 import { Route as AdminAnnouncementsRouteImport } from './routes/admin.announcements'
+import { Route as AdminTicketsIndexRouteImport } from './routes/admin.tickets.index'
 import { Route as AdminEmailsIndexRouteImport } from './routes/admin.emails.index'
 import { Route as AdminBlogIndexRouteImport } from './routes/admin.blog.index'
 import { Route as AppEmployeesIdRouteImport } from './routes/app.employees.$id'
@@ -226,6 +227,11 @@ const AdminAnnouncementsRoute = AdminAnnouncementsRouteImport.update({
   path: '/announcements',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminTicketsIndexRoute = AdminTicketsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminTicketsRoute,
+} as any)
 const AdminEmailsIndexRoute = AdminEmailsIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -332,6 +338,7 @@ export interface FileRoutesByFullPath {
   '/app/employees/$id': typeof AppEmployeesIdRoute
   '/admin/blog/': typeof AdminBlogIndexRoute
   '/admin/emails/': typeof AdminEmailsIndexRoute
+  '/admin/tickets/': typeof AdminTicketsIndexRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
 }
@@ -346,7 +353,6 @@ export interface FileRoutesByTo {
   '/admin/plans': typeof AdminPlansRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/subscriptions': typeof AdminSubscriptionsRoute
-  '/admin/tickets': typeof AdminTicketsRouteWithChildren
   '/admin/unauthorized': typeof AdminUnauthorizedRoute
   '/admin/users': typeof AdminUsersRoute
   '/app/allowances': typeof AppAllowancesRoute
@@ -376,6 +382,7 @@ export interface FileRoutesByTo {
   '/app/employees/$id': typeof AppEmployeesIdRoute
   '/admin/blog': typeof AdminBlogIndexRoute
   '/admin/emails': typeof AdminEmailsIndexRoute
+  '/admin/tickets': typeof AdminTicketsIndexRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
 }
@@ -425,6 +432,7 @@ export interface FileRoutesById {
   '/app/employees/$id': typeof AppEmployeesIdRoute
   '/admin/blog/': typeof AdminBlogIndexRoute
   '/admin/emails/': typeof AdminEmailsIndexRoute
+  '/admin/tickets/': typeof AdminTicketsIndexRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
 }
@@ -475,6 +483,7 @@ export interface FileRouteTypes {
     | '/app/employees/$id'
     | '/admin/blog/'
     | '/admin/emails/'
+    | '/admin/tickets/'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
   fileRoutesByTo: FileRoutesByTo
@@ -489,7 +498,6 @@ export interface FileRouteTypes {
     | '/admin/plans'
     | '/admin/settings'
     | '/admin/subscriptions'
-    | '/admin/tickets'
     | '/admin/unauthorized'
     | '/admin/users'
     | '/app/allowances'
@@ -519,6 +527,7 @@ export interface FileRouteTypes {
     | '/app/employees/$id'
     | '/admin/blog'
     | '/admin/emails'
+    | '/admin/tickets'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
   id:
@@ -567,6 +576,7 @@ export interface FileRouteTypes {
     | '/app/employees/$id'
     | '/admin/blog/'
     | '/admin/emails/'
+    | '/admin/tickets/'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
   fileRoutesById: FileRoutesById
@@ -821,6 +831,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAnnouncementsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/tickets/': {
+      id: '/admin/tickets/'
+      path: '/'
+      fullPath: '/admin/tickets/'
+      preLoaderRoute: typeof AdminTicketsIndexRouteImport
+      parentRoute: typeof AdminTicketsRoute
+    }
     '/admin/emails/': {
       id: '/admin/emails/'
       path: '/'
@@ -949,10 +966,12 @@ const AdminOrganizationsRouteWithChildren =
 
 interface AdminTicketsRouteChildren {
   AdminTicketsIdRoute: typeof AdminTicketsIdRoute
+  AdminTicketsIndexRoute: typeof AdminTicketsIndexRoute
 }
 
 const AdminTicketsRouteChildren: AdminTicketsRouteChildren = {
   AdminTicketsIdRoute: AdminTicketsIdRoute,
+  AdminTicketsIndexRoute: AdminTicketsIndexRoute,
 }
 
 const AdminTicketsRouteWithChildren = AdminTicketsRoute._addFileChildren(

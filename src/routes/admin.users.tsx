@@ -9,12 +9,12 @@ import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
 } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Download, Eye } from "lucide-react";
+import { Download, Eye, KeyRound, ShieldCheck, ShieldOff } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/users")({ component: UsersPage });
 
-interface Row { id: string; full_name: string | null; email: string | null; created_at: string; org_name?: string; role?: string; }
+interface Row { id: string; full_name: string | null; email: string | null; created_at: string; org_name?: string; org_id?: string; role?: string; is_platform_admin?: boolean; platform_role?: string; }
 
 function UsersPage() {
   const [rows, setRows] = useState<Row[]>([]);
