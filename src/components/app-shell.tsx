@@ -30,6 +30,7 @@ const nav = [
   { to: "/app/audit", icon: ShieldCheck, key: "audit_log" },
   { to: "/app/team", icon: UsersRound, key: "team" },
   { to: "/app/help", icon: LifeBuoy, key: "help_support" },
+  { to: "/app/support", icon: LifeBuoy, key: "support_tickets" },
   { to: "/app/settings", icon: SettingsIcon, key: "settings" },
 ] as const;
 
