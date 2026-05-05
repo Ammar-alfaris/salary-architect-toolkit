@@ -807,6 +807,8 @@ const ar: Dict = {
   welcome_back: "مرحبًا بعودتك",
   account_created: "تم إنشاء الحساب — تم تسجيل دخولك",
   google_signin_failed: "تعذّر تسجيل الدخول عبر Google",
+  check_email_to_verify: "تم إنشاء الحساب. يُرجى التحقق من بريدك الإلكتروني لتفعيل الحساب قبل تسجيل الدخول.",
+  email_confirmed_signin: "تم تفعيل البريد الإلكتروني — يمكنك الآن تسجيل الدخول.",
 
   // Sidebar / nav
   dashboard: "لوحة التحكم",
