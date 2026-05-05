@@ -695,6 +695,7 @@ const en: Dict = {
 
   // Help & Support
   help_support: "Help & Support",
+  support_tickets: "Support Tickets",
   help_title: "Help & Support",
   help_subtitle: "Step-by-step guides to get the most out of TotalReward.",
   help_search_placeholder: "Search help…",
