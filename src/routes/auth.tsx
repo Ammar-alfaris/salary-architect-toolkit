@@ -44,7 +44,7 @@ function AuthPage() {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -54,6 +54,12 @@ function AuthPage() {
     });
     setLoading(false);
     if (error) return toast.error(error.message);
+    // If no session returned, email confirmation is required
+    if (!data.session) {
+      toast.success(t("check_email_to_verify"), { duration: 8000 });
+      setTab("signin");
+      return;
+    }
     toast.success(t("account_created"));
     navigate({ to: "/app" });
   };
