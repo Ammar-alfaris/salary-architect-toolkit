@@ -14,13 +14,18 @@ export const Route = createFileRoute("/app/")({ component: Dashboard });
 
 function Kpi({ label, value, icon: Icon, hint }: { label: string; value: string; icon: any; hint?: string }) {
   return (
-    <div className="border rounded-lg bg-card p-4">
-      <div className="flex items-center justify-between">
-        <div className="text-xs text-muted-foreground">{label}</div>
-        <div className="w-7 h-7 rounded-md bg-accent/10 text-accent flex items-center justify-center"><Icon className="w-4 h-4" /></div>
+    <div className="border rounded-lg bg-card p-4 min-w-0">
+      <div className="flex items-center justify-between gap-2">
+        <div className="text-xs text-muted-foreground truncate">{label}</div>
+        <div className="w-7 h-7 shrink-0 rounded-md bg-accent/10 text-accent flex items-center justify-center"><Icon className="w-4 h-4" /></div>
       </div>
-      <div className="text-2xl font-semibold mt-2 num">{value}</div>
-      {hint && <div className="text-xs text-muted-foreground mt-1">{hint}</div>}
+      <div
+        className="text-xl md:text-2xl font-semibold mt-2 num break-words leading-tight"
+        title={value}
+      >
+        {value}
+      </div>
+      {hint && <div className="text-xs text-muted-foreground mt-1 truncate">{hint}</div>}
     </div>
   );
 }
