@@ -48,7 +48,7 @@ function AuthPage() {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/app`,
+        emailRedirectTo: `${window.location.origin}/auth?confirmed=1`,
         data: { full_name: fullName, org_name: `${fullName || email}'s Organization` },
       },
     });
