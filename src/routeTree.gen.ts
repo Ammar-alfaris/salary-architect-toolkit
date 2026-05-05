@@ -49,6 +49,7 @@ import { Route as AppAnalyticsEquityRouteImport } from './routes/app.analytics.e
 import { Route as AppAnalyticsCompaRouteImport } from './routes/app.analytics.compa'
 import { Route as AdminTicketsIdRouteImport } from './routes/admin.tickets.$id'
 import { Route as AdminOrganizationsIdRouteImport } from './routes/admin.organizations.$id'
+import { Route as AdminEmailsKeyRouteImport } from './routes/admin.emails.$key'
 import { Route as AdminBlogIdRouteImport } from './routes/admin.blog.$id'
 
 const BlogRoute = BlogRouteImport.update({
@@ -251,6 +252,11 @@ const AdminOrganizationsIdRoute = AdminOrganizationsIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AdminOrganizationsRoute,
 } as any)
+const AdminEmailsKeyRoute = AdminEmailsKeyRouteImport.update({
+  id: '/$key',
+  path: '/$key',
+  getParentRoute: () => AdminEmailsRoute,
+} as any)
 const AdminBlogIdRoute = AdminBlogIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -266,7 +272,7 @@ export interface FileRoutesByFullPath {
   '/admin/announcements': typeof AdminAnnouncementsRoute
   '/admin/audit': typeof AdminAuditRoute
   '/admin/blog': typeof AdminBlogRouteWithChildren
-  '/admin/emails': typeof AdminEmailsRoute
+  '/admin/emails': typeof AdminEmailsRouteWithChildren
   '/admin/messages': typeof AdminMessagesRoute
   '/admin/organizations': typeof AdminOrganizationsRouteWithChildren
   '/admin/plans': typeof AdminPlansRoute
@@ -292,6 +298,7 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AdminIndexRoute
   '/app/': typeof AppIndexRoute
   '/admin/blog/$id': typeof AdminBlogIdRoute
+  '/admin/emails/$key': typeof AdminEmailsKeyRoute
   '/admin/organizations/$id': typeof AdminOrganizationsIdRoute
   '/admin/tickets/$id': typeof AdminTicketsIdRoute
   '/app/analytics/compa': typeof AppAnalyticsCompaRoute
@@ -306,7 +313,7 @@ export interface FileRoutesByTo {
   '/blog': typeof BlogRouteWithChildren
   '/admin/announcements': typeof AdminAnnouncementsRoute
   '/admin/audit': typeof AdminAuditRoute
-  '/admin/emails': typeof AdminEmailsRoute
+  '/admin/emails': typeof AdminEmailsRouteWithChildren
   '/admin/messages': typeof AdminMessagesRoute
   '/admin/organizations': typeof AdminOrganizationsRouteWithChildren
   '/admin/plans': typeof AdminPlansRoute
@@ -332,6 +339,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminIndexRoute
   '/app': typeof AppIndexRoute
   '/admin/blog/$id': typeof AdminBlogIdRoute
+  '/admin/emails/$key': typeof AdminEmailsKeyRoute
   '/admin/organizations/$id': typeof AdminOrganizationsIdRoute
   '/admin/tickets/$id': typeof AdminTicketsIdRoute
   '/app/analytics/compa': typeof AppAnalyticsCompaRoute
@@ -350,7 +358,7 @@ export interface FileRoutesById {
   '/admin/announcements': typeof AdminAnnouncementsRoute
   '/admin/audit': typeof AdminAuditRoute
   '/admin/blog': typeof AdminBlogRouteWithChildren
-  '/admin/emails': typeof AdminEmailsRoute
+  '/admin/emails': typeof AdminEmailsRouteWithChildren
   '/admin/messages': typeof AdminMessagesRoute
   '/admin/organizations': typeof AdminOrganizationsRouteWithChildren
   '/admin/plans': typeof AdminPlansRoute
@@ -376,6 +384,7 @@ export interface FileRoutesById {
   '/admin/': typeof AdminIndexRoute
   '/app/': typeof AppIndexRoute
   '/admin/blog/$id': typeof AdminBlogIdRoute
+  '/admin/emails/$key': typeof AdminEmailsKeyRoute
   '/admin/organizations/$id': typeof AdminOrganizationsIdRoute
   '/admin/tickets/$id': typeof AdminTicketsIdRoute
   '/app/analytics/compa': typeof AppAnalyticsCompaRoute
@@ -421,6 +430,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/app/'
     | '/admin/blog/$id'
+    | '/admin/emails/$key'
     | '/admin/organizations/$id'
     | '/admin/tickets/$id'
     | '/app/analytics/compa'
@@ -461,6 +471,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/app'
     | '/admin/blog/$id'
+    | '/admin/emails/$key'
     | '/admin/organizations/$id'
     | '/admin/tickets/$id'
     | '/app/analytics/compa'
@@ -504,6 +515,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/app/'
     | '/admin/blog/$id'
+    | '/admin/emails/$key'
     | '/admin/organizations/$id'
     | '/admin/tickets/$id'
     | '/app/analytics/compa'
@@ -803,6 +815,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminOrganizationsIdRouteImport
       parentRoute: typeof AdminOrganizationsRoute
     }
+    '/admin/emails/$key': {
+      id: '/admin/emails/$key'
+      path: '/$key'
+      fullPath: '/admin/emails/$key'
+      preLoaderRoute: typeof AdminEmailsKeyRouteImport
+      parentRoute: typeof AdminEmailsRoute
+    }
     '/admin/blog/$id': {
       id: '/admin/blog/$id'
       path: '/$id'
@@ -825,6 +844,18 @@ const AdminBlogRouteChildren: AdminBlogRouteChildren = {
 
 const AdminBlogRouteWithChildren = AdminBlogRoute._addFileChildren(
   AdminBlogRouteChildren,
+)
+
+interface AdminEmailsRouteChildren {
+  AdminEmailsKeyRoute: typeof AdminEmailsKeyRoute
+}
+
+const AdminEmailsRouteChildren: AdminEmailsRouteChildren = {
+  AdminEmailsKeyRoute: AdminEmailsKeyRoute,
+}
+
+const AdminEmailsRouteWithChildren = AdminEmailsRoute._addFileChildren(
+  AdminEmailsRouteChildren,
 )
 
 interface AdminOrganizationsRouteChildren {
@@ -854,7 +885,7 @@ interface AdminRouteChildren {
   AdminAnnouncementsRoute: typeof AdminAnnouncementsRoute
   AdminAuditRoute: typeof AdminAuditRoute
   AdminBlogRoute: typeof AdminBlogRouteWithChildren
-  AdminEmailsRoute: typeof AdminEmailsRoute
+  AdminEmailsRoute: typeof AdminEmailsRouteWithChildren
   AdminMessagesRoute: typeof AdminMessagesRoute
   AdminOrganizationsRoute: typeof AdminOrganizationsRouteWithChildren
   AdminPlansRoute: typeof AdminPlansRoute
@@ -870,7 +901,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAnnouncementsRoute: AdminAnnouncementsRoute,
   AdminAuditRoute: AdminAuditRoute,
   AdminBlogRoute: AdminBlogRouteWithChildren,
-  AdminEmailsRoute: AdminEmailsRoute,
+  AdminEmailsRoute: AdminEmailsRouteWithChildren,
   AdminMessagesRoute: AdminMessagesRoute,
   AdminOrganizationsRoute: AdminOrganizationsRouteWithChildren,
   AdminPlansRoute: AdminPlansRoute,
