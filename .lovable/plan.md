@@ -1,97 +1,70 @@
-# Branded emails, template manager, messaging center & support tickets
+## Root causes found
 
-The goal is to keep the entire email flow (verification, reset, notifications) on **totalreward.app**, give the super admin full control over email content in AR/EN, and build a real user↔admin support channel. Existing Total Reward branding stays unchanged.
+1. **Cannot open/edit email templates · Cannot open ticket detail**
+   `src/routes/admin.emails.tsx` and `src/routes/admin.tickets.tsx` have child routes (`admin.emails.$key.tsx`, `admin.tickets.$id.tsx`) but their components render a full page **without `<Outlet />`**. In TanStack Start, when a parent route has children, its component MUST render `<Outlet />` or the child route matches but nothing appears. This is exactly why clicking a template or a ticket "does nothing" — the URL changes but the parent keeps rendering its own list.
 
----
+   Fix: split each into a layout + index pattern:
+   - `admin.emails.tsx` → tiny layout exporting `<Outlet />` only.
+   - Move current list UI to `admin.emails.index.tsx`.
+   - Same for `admin.tickets.tsx` → `admin.tickets.index.tsx`.
 
-## 1) Auth flow stays on your domain
+2. **Only one user shows up although there are 5 in the database**
+   DB has 5 profiles + 5 user_roles. RLS policies (`Platform admins view all profiles`, `Platform admins view all user_roles`, `Platform admins view all organizations`) are present, so the super admin should see them. The likely cause is a stale browser session before those policies were added. We will:
+   - Add a small diagnostic `console.error` if the profiles query returns fewer rows than expected.
+   - Re-verify RLS via the linter and add a safety policy if missing.
+   - Force a re-fetch + clearer empty-state.
 
-- Set up email infrastructure for `totalreward.app` and scaffold custom **auth email templates** (signup confirmation, magic link, password reset, email change, reauthentication, invite).
-- Templates rendered server-side as branded HTML (Total Reward logo centered, RTL for Arabic, LTR for English, current color tokens).
-- The verification link in those emails will point to `https://totalreward.app/auth/confirm?...` (a new public route inside the app) instead of any external page. That route exchanges the token, signs the user in, and routes them to `/app` — never to Lovable.
-- A **resend verification** action is added to the sign-in screen (`auth.tsx`) for users who didn't click the email in time.
+3. **Missing super-admin abilities** (currently placeholders)
+   - Reset password (admin-triggered)
+   - Suspend / re-activate user
+   - Change user role inside an organization
+   - Promote user to platform admin (super_admin can manage `platform_admins`)
+   - Change the recipient email for ticket notifications (already field `admin_settings.support_email`, but no UI control yet)
+   - Test email send from a template
 
-## 2) Email templates editable by super admin (AR + EN)
+## Changes
 
-New tables:
-- `email_templates` — `key` (e.g. `auth_signup`, `auth_recovery`, `ticket_received`, `ticket_status_in_progress`, `renewal_reminder`, `cancellation_notice`, `custom_message`), `display_name`, `description`, `subject_ar`, `subject_en`, `body_ar`, `body_en`, `variables jsonb`, `is_system bool`, `enabled bool`.
-- Seeded with all auth templates + ticket lifecycle templates + marketing ones (renewal reminder, cancellation, promo).
+### A. Routing fix (the biggest user-visible bug)
+- Replace `src/routes/admin.emails.tsx` content with a layout: `() => <Outlet />`.
+- Create `src/routes/admin.emails.index.tsx` containing today's list + "New template" dialog.
+- Replace `src/routes/admin.tickets.tsx` with a layout: `() => <Outlet />`.
+- Create `src/routes/admin.tickets.index.tsx` containing today's list/filters.
 
-New super-admin route **`/admin/emails`**:
-- List templates, edit subject + body in both languages, RTL preview, live variable picker (`{{userName}}`, `{{userEmail}}`, `{{planName}}`, `{{ticketNumber}}`, `{{subject}}`, `{{status}}`, `{{verifyUrl}}`, `{{appName}}`, …), and a **New template** button for custom keys.
-- Brand-aware HTML wrapper (logo centered, brand colors from theme tokens, footer with unsubscribe placeholder for marketing templates only).
+### B. Users page upgrades (`src/routes/admin.users.tsx`)
+- Add row-level actions for super_admin:
+  - "Send password reset" → `supabase.auth.resetPasswordForEmail(email)`.
+  - "Change role" select inside the side sheet (writes to `user_roles`).
+  - "Make platform admin" / "Revoke" toggle (writes to `platform_admins`, gated by `has_platform_role(_, 'super_admin')`).
+- Better empty-state + log when query returns 0/1 rows so we can debug RLS in the field.
 
-The auth-email server route reads from `email_templates` by key with EN/AR fallback so the super admin can change wording without redeploys.
+### C. Email templates editor
+- Add **"Send test email"** button in `admin.emails.$key.tsx` that posts to a new server function which renders the template and enqueues via the existing email queue.
+- Keep current AR/EN editor and live preview.
 
-## 3) Messaging / broadcast center
+### D. Tickets
+- In `admin.tickets.$id.tsx` keep current reply/internal-note flow and on status change to `in_progress` / `resolved` / `closed`, enqueue a notification email to the requester using the corresponding template (`ticket_status_in_progress`, `ticket_status_resolved`, `ticket_status_closed`). Templates already exist; we'll wire them.
+- New ticket created → email super-admin notification address (from `admin_settings.support_email`).
 
-New super-admin route **`/admin/messages/compose`** (separate from the existing inbox at `/admin/messages`):
-- Choose a saved template or write a one-off.
-- Audience: **All users**, **Plan = X**, **Status = active/trial/cancelled**, **Specific user** (search by email).
-- Shows recipient count before send.
-- Sends via the queued email pipeline.
-- `email_campaigns` table records each send with audience snapshot, recipient count, status; shown in a "Recent campaigns" list.
+### E. Settings
+- In `src/routes/admin.settings.tsx` expose a **"Ticket notifications email"** input bound to `admin_settings.support_email`, editable only by `super_admin`.
 
-## 4) Full support ticket system (user-facing)
+### F. Auth flow stays on our domain
+- Keep custom auth email templates already scaffolded under `src/routes/lovable/email/auth/*` and `src/lib/email-templates/*`. No changes needed to authentication paths — they already use our `notify.totalreward.app` sender after DNS verifies.
 
-Existing `support_tickets` / `ticket_messages` tables are admin-only today. We extend them:
-- Add `ticket_number text unique` (format `TKT-YYYY-NNNNN`, generated by trigger), `created_by uuid`, `closed_at`, `last_reply_at`.
-- Add RLS so a signed-in user can read/insert their own tickets and messages (`requester_email = auth.email()` or `created_by = auth.uid()`); admin/support keeps full access.
+### G. RLS verification
+- Run `supabase--linter` after changes and fix any new warning.
+- No schema changes expected; if the user-list RLS is somehow missing in the Live DB, re-apply the `Platform admins view all profiles/user_roles/organizations` policies via migration (idempotent with `IF NOT EXISTS`).
 
-New routes:
-- **`/app/support`** — user lists their tickets + opens a new one (category, subject, priority, description). On submit:
-  - generates ticket number,
-  - sends `ticket_received` email to the user (AR/EN by their locale),
-  - sends `ticket_admin_alert` email to the configured notification address.
-- **`/app/support/$id`** — ticket thread view: messages, status badge, reply box.
-- **`/admin/tickets`** already exists — extended with ticket-number search, status filter, reply box, status changer (`new → in_progress → resolved → closed`). Each status change & each agent reply triggers the matching email template to the user.
+## Files touched
 
-## 5) Configurable notification address
+- `src/routes/admin.emails.tsx` (becomes layout)
+- `src/routes/admin.emails.index.tsx` (new — list)
+- `src/routes/admin.emails.$key.tsx` (add Test send)
+- `src/routes/admin.tickets.tsx` (becomes layout)
+- `src/routes/admin.tickets.index.tsx` (new — list)
+- `src/routes/admin.tickets.$id.tsx` (auto status emails)
+- `src/routes/admin.users.tsx` (real actions)
+- `src/routes/admin.settings.tsx` (support email field)
+- One small migration only if RLS policies are missing in Live.
 
-`admin_settings.support_email` already exists. The **/admin/settings → Notifications** tab gets a clear "Ticket notification email" field with Save, used by every ticket-related send.
-
----
-
-## Technical details
-
-### Database migration
-- `email_templates`, `email_campaigns`, `email_campaign_recipients` tables + RLS (super_admin manage, support read).
-- Alter `support_tickets`: add `ticket_number`, `created_by`, `closed_at`, `last_reply_at`; trigger `set_ticket_number()` using a per-year sequence-style query.
-- New RLS policies on `support_tickets` / `ticket_messages` for end-users.
-- Seed `email_templates` with all auth + ticket + marketing keys (AR + EN bodies using your brand).
-
-### Email infrastructure
-- Use the managed email pipeline (queue + auth-email-hook + transactional send route).
-- Auth hook reads template by key from DB → renders branded HTML wrapper → enqueues to `auth_emails` priority queue.
-- Transactional send route (`/api/public/email/send-template`) is called from the app for ticket events and broadcast sends; it pulls template by key, substitutes variables, enqueues to `transactional_emails`.
-- All sends include `LOVABLE_API_KEY` server-side only; no secrets in client.
-
-### Frontend
-- New components: `EmailTemplateEditor`, `BroadcastComposer`, `TicketForm`, `TicketThread`, `TicketStatusSelect`.
-- i18n keys added in `src/lib/i18n.tsx` for every new label.
-- Reuses existing `Card`, `Tabs`, `StatusBadge`, `DataTable`.
-
-### Files to create
-- `src/routes/admin.emails.tsx`, `src/routes/admin.emails.$key.tsx`
-- `src/routes/admin.messages.compose.tsx`
-- `src/routes/app.support.tsx`, `src/routes/app.support.$id.tsx`
-- `src/routes/auth.confirm.tsx` (token handler)
-- `src/routes/api/public/email/send-template.ts` (transactional sender)
-- `src/lib/email-templates.ts` (helper: fetch + render)
-- `src/components/email-template-editor.tsx`, `src/components/broadcast-composer.tsx`, `src/components/ticket-form.tsx`, `src/components/ticket-thread.tsx`
-- Auth email hook + branded React Email templates (scaffolded automatically into `src/routes/lovable/email/...`)
-- One SQL migration
-
-### Files to modify
-- `src/routes/auth.tsx` — point `emailRedirectTo` at `/auth/confirm`, add Resend Verification link, surface AR/EN messaging.
-- `src/routes/admin.tickets.tsx` + `admin.tickets.$id.tsx` — search by ticket number, fire status/reply emails.
-- `src/routes/admin.settings.tsx` — surface ticket notification email on the Notifications tab.
-- `src/components/app-shell.tsx` — add **Support** entry in the user nav.
-- `src/lib/i18n.tsx` — new keys.
-
-### What stays unchanged
-- Total Reward visual identity (logo, color tokens, typography, layouts).
-- Existing approval/governance, merit, bonus, allowances, analytics modules.
-- Existing `/admin/messages` inbox keeps working — the new compose page lives next to it.
-
-Once you approve, I'll set up the email domain on totalreward.app, scaffold auth templates, run the migration, build the new routes, and wire everything to the queued send pipeline.
+After this, the Super Admin console will: list every user, open every email template, open and reply to every ticket, change ticket status with automatic branded emails, manage platform admins, and configure the notification recipient — all under your domain `totalreward.app` / `notify.totalreward.app`.
