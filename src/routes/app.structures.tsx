@@ -52,6 +52,41 @@ function StructuresPage() {
   const [rounding, setRounding] = useState(initial?.rounding ?? 100);
   useEffect(() => { if (initial) setOpen(true); }, []);
   const [linkPrompt, setLinkPrompt] = useState<{ structureId: string } | null>(null);
+  const [editing, setEditing] = useState<any>(null);
+  const [editName, setEditName] = useState("");
+  const [editCurrency, setEditCurrency] = useState("USD");
+  const [editCountry, setEditCountry] = useState("");
+  const [editEffective, setEditEffective] = useState("");
+
+  const openEdit = (s: any) => {
+    setEditing(s);
+    setEditName(s.name);
+    setEditCurrency(s.currency);
+    setEditCountry(s.country ?? "");
+    setEditEffective((s.effective_date ?? "").slice(0, 10));
+  };
+
+  const saveEdit = async () => {
+    if (!editing || !organizationId) return;
+    if (!perms.canEdit) return toast.error(t("insufficient_permissions"));
+    const before = { name: editing.name, currency: editing.currency, country: editing.country, effective_date: editing.effective_date };
+    const patch: any = { name: editName, currency: editCurrency, country: editCountry || null };
+    if (editEffective) patch.effective_date = editEffective;
+    const { error } = await supabase.from("salary_structures").update(patch).eq("id", editing.id);
+    if (error) return toast.error(error.message);
+    await logAudit({
+      organizationId,
+      action: "update",
+      entityType: "salary_structure",
+      entityId: editing.id,
+      entityLabel: editName,
+      before,
+      after: patch,
+    });
+    toast.success(t("settings_saved"));
+    setEditing(null);
+    refresh();
+  };
 
   const refresh = async () => {
     if (!organizationId) return;
