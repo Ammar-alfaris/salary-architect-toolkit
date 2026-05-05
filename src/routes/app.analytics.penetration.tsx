@@ -1,11 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { PageHeader } from "@/components/app-shell";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { rangePenetration } from "@/lib/comp";
-import { fmtPercent, fmtNumber } from "@/lib/format";
+import { fmtPercent, fmtNumber, fmtCurrency } from "@/lib/format";
 import { penetrationBand, PENETRATION_BANDS, penetrationInsights } from "@/lib/insights";
 import { InsightCard, WhyThisMatters } from "@/components/insight-card";
 import {
