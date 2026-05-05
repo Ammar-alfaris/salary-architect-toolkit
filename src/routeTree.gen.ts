@@ -43,6 +43,7 @@ import { Route as AdminEmailsRouteImport } from './routes/admin.emails'
 import { Route as AdminBlogRouteImport } from './routes/admin.blog'
 import { Route as AdminAuditRouteImport } from './routes/admin.audit'
 import { Route as AdminAnnouncementsRouteImport } from './routes/admin.announcements'
+import { Route as AdminEmailsIndexRouteImport } from './routes/admin.emails.index'
 import { Route as AdminBlogIndexRouteImport } from './routes/admin.blog.index'
 import { Route as AppEmployeesIdRouteImport } from './routes/app.employees.$id'
 import { Route as AppAnalyticsPenetrationRouteImport } from './routes/app.analytics.penetration'
@@ -225,6 +226,11 @@ const AdminAnnouncementsRoute = AdminAnnouncementsRouteImport.update({
   path: '/announcements',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminEmailsIndexRoute = AdminEmailsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminEmailsRoute,
+} as any)
 const AdminBlogIndexRoute = AdminBlogIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -325,6 +331,7 @@ export interface FileRoutesByFullPath {
   '/app/analytics/penetration': typeof AppAnalyticsPenetrationRoute
   '/app/employees/$id': typeof AppEmployeesIdRoute
   '/admin/blog/': typeof AdminBlogIndexRoute
+  '/admin/emails/': typeof AdminEmailsIndexRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
 }
@@ -334,7 +341,6 @@ export interface FileRoutesByTo {
   '/blog': typeof BlogRouteWithChildren
   '/admin/announcements': typeof AdminAnnouncementsRoute
   '/admin/audit': typeof AdminAuditRoute
-  '/admin/emails': typeof AdminEmailsRouteWithChildren
   '/admin/messages': typeof AdminMessagesRoute
   '/admin/organizations': typeof AdminOrganizationsRouteWithChildren
   '/admin/plans': typeof AdminPlansRoute
@@ -369,6 +375,7 @@ export interface FileRoutesByTo {
   '/app/analytics/penetration': typeof AppAnalyticsPenetrationRoute
   '/app/employees/$id': typeof AppEmployeesIdRoute
   '/admin/blog': typeof AdminBlogIndexRoute
+  '/admin/emails': typeof AdminEmailsIndexRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
 }
@@ -417,6 +424,7 @@ export interface FileRoutesById {
   '/app/analytics/penetration': typeof AppAnalyticsPenetrationRoute
   '/app/employees/$id': typeof AppEmployeesIdRoute
   '/admin/blog/': typeof AdminBlogIndexRoute
+  '/admin/emails/': typeof AdminEmailsIndexRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
 }
@@ -466,6 +474,7 @@ export interface FileRouteTypes {
     | '/app/analytics/penetration'
     | '/app/employees/$id'
     | '/admin/blog/'
+    | '/admin/emails/'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
   fileRoutesByTo: FileRoutesByTo
@@ -475,7 +484,6 @@ export interface FileRouteTypes {
     | '/blog'
     | '/admin/announcements'
     | '/admin/audit'
-    | '/admin/emails'
     | '/admin/messages'
     | '/admin/organizations'
     | '/admin/plans'
@@ -510,6 +518,7 @@ export interface FileRouteTypes {
     | '/app/analytics/penetration'
     | '/app/employees/$id'
     | '/admin/blog'
+    | '/admin/emails'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
   id:
@@ -557,6 +566,7 @@ export interface FileRouteTypes {
     | '/app/analytics/penetration'
     | '/app/employees/$id'
     | '/admin/blog/'
+    | '/admin/emails/'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
   fileRoutesById: FileRoutesById
@@ -811,6 +821,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAnnouncementsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/emails/': {
+      id: '/admin/emails/'
+      path: '/'
+      fullPath: '/admin/emails/'
+      preLoaderRoute: typeof AdminEmailsIndexRouteImport
+      parentRoute: typeof AdminEmailsRoute
+    }
     '/admin/blog/': {
       id: '/admin/blog/'
       path: '/'
@@ -907,10 +924,12 @@ const AdminBlogRouteWithChildren = AdminBlogRoute._addFileChildren(
 
 interface AdminEmailsRouteChildren {
   AdminEmailsKeyRoute: typeof AdminEmailsKeyRoute
+  AdminEmailsIndexRoute: typeof AdminEmailsIndexRoute
 }
 
 const AdminEmailsRouteChildren: AdminEmailsRouteChildren = {
   AdminEmailsKeyRoute: AdminEmailsKeyRoute,
+  AdminEmailsIndexRoute: AdminEmailsIndexRoute,
 }
 
 const AdminEmailsRouteWithChildren = AdminEmailsRoute._addFileChildren(
