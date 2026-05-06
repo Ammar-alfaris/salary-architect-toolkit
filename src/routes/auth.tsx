@@ -24,6 +24,7 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [unverifiedEmail, setUnverifiedEmail] = useState("");
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -39,9 +40,34 @@ function AuthPage() {
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
-    if (error) return toast.error(error.message);
+    if (error) {
+      if (error.message.toLowerCase().includes("email not confirmed")) {
+        setUnverifiedEmail(email);
+        return toast.error("البريد الإلكتروني غير مؤكّد بعد. أعد إرسال رسالة التحقق من الأسفل.");
+      }
+      return toast.error(error.message);
+    }
+    setUnverifiedEmail("");
     toast.success(t("welcome_back"));
     navigate({ to: "/app" });
+  };
+
+  const resendVerification = async () => {
+    const targetEmail = (unverifiedEmail || email).trim();
+    if (!targetEmail) return toast.error("أدخل بريدك الإلكتروني أولاً.");
+
+    setLoading(true);
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: targetEmail,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth?confirmed=1`,
+      },
+    });
+    setLoading(false);
+
+    if (error) return toast.error(error.message);
+    toast.success("تمت إعادة إرسال رسالة التحقق إلى بريدك الإلكتروني.", { duration: 8000 });
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -103,6 +129,11 @@ function AuthPage() {
                   <div className="space-y-1.5"><Label>{t("email")}</Label><Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></div>
                   <div className="space-y-1.5"><Label>{t("password")}</Label><Input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} /></div>
                   <Button type="submit" className="w-full" disabled={loading}>{loading ? "…" : t("sign_in")}</Button>
+                  {unverifiedEmail ? (
+                    <Button type="button" variant="outline" className="w-full" onClick={resendVerification} disabled={loading}>
+                      إعادة إرسال رسالة التحقق
+                    </Button>
+                  ) : null}
                 </form>
               </TabsContent>
               <TabsContent value="signup" className="mt-4">
