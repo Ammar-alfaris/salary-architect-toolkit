@@ -133,7 +133,7 @@ export const Route = createFileRoute("/lovable/email/queue/process")({
           const messageIds = Array.from(
             new Set(
               messages
-                .map((msg) =>
+                .map((msg: QueueMessage) =>
                   msg?.message?.message_id && typeof msg.message.message_id === 'string'
                     ? msg.message.message_id
                     : null
