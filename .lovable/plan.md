@@ -1,70 +1,112 @@
-## Root causes found
 
-1. **Cannot open/edit email templates · Cannot open ticket detail**
-   `src/routes/admin.emails.tsx` and `src/routes/admin.tickets.tsx` have child routes (`admin.emails.$key.tsx`, `admin.tickets.$id.tsx`) but their components render a full page **without `<Outlet />`**. In TanStack Start, when a parent route has children, its component MUST render `<Outlet />` or the child route matches but nothing appears. This is exactly why clicking a template or a ticket "does nothing" — the URL changes but the parent keeps rendering its own list.
+I'll address the eight issues. Here is the breakdown.
 
-   Fix: split each into a layout + index pattern:
-   - `admin.emails.tsx` → tiny layout exporting `<Outlet />` only.
-   - Move current list UI to `admin.emails.index.tsx`.
-   - Same for `admin.tickets.tsx` → `admin.tickets.index.tsx`.
+## 1. Mobile scroll on form pages
+The app shell sets `<main className="flex-1 overflow-auto">` inside a `min-h-screen flex` container. On iOS Safari this can lock the inner scroll height. Fix:
+- Replace `overflow-auto` with `overflow-y-auto overscroll-contain` and add `pb-24` safe-area padding to long form routes.
+- Add `min-h-0` on the flex column so the main pane can scroll properly.
+- Add a `<ScrollToTop />` component (listens to TanStack `useRouterState` location) mounted in `__root.tsx` so navigation always lands at the top.
 
-2. **Only one user shows up although there are 5 in the database**
-   DB has 5 profiles + 5 user_roles. RLS policies (`Platform admins view all profiles`, `Platform admins view all user_roles`, `Platform admins view all organizations`) are present, so the super admin should see them. The likely cause is a stale browser session before those policies were added. We will:
-   - Add a small diagnostic `console.error` if the profiles query returns fewer rows than expected.
-   - Re-verify RLS via the linter and add a safety policy if missing.
-   - Force a re-fetch + clearer empty-state.
+## 2. Approval flow (Merit / Bonus / Allowances)
+Multiple linked fixes in `src/components/apply-or-approve.tsx` + `src/lib/approvals.ts`:
+- **Gate "Request approval"**: load chains for the entity and approval policy; if no chain configured, hide `Request approval` and instead show a `Set approval flow` button that links to `/app/settings#approval-chains`.
+- **Prevent self-approval**: in `createRequest`, validate that the resolved chain has at least one step whose `approver_user_id` ≠ current user (or has email/role). If chain resolves to only the requester, throw a translated error and surface a toast.
+- **Apply now**: ensure `onApply` is awaited; on Allowances, `applyAllowance` already inserts but disables when `employeeId` empty — show clearer toasts, refresh employee row, and bubble up errors. On Merit/Bonus, ensure `applyMerit`/`applyBonus` actually run when no `cycleId`/no-approval path (currently the ApplyOrApprove block on Merit only renders if `cycleId` exists; render the Apply button always, request-approval requires cycleId).
+- **Approver review UI**: replace raw JSON `Textarea` in the Edit & approve dialog with a structured renderer:
+  - For `merit_cycle`: show recommendations table (name, base, recommended %, increase, new salary) with editable % column gated by allowed fields; persist edits back into `final_payload.recommendations`.
+  - For `bonus_cycle`: similar table for results (target, multipliers, calculated bonus).
+  - For `salary_structure`: show side-by-side ApprovalDiff (already exists).
+  - Keep "Show raw JSON" toggle for power users.
+- **Mobile layout in Approvals**: `RequestCard` action row uses `flex-wrap` + `shrink-0`; wrap the card body in `min-w-0` and constrain the dialog `DialogContent` with `max-w-[95vw] sm:max-w-2xl overflow-x-hidden`. The JSON `<pre>` becomes `whitespace-pre-wrap break-all`.
 
-3. **Missing super-admin abilities** (currently placeholders)
-   - Reset password (admin-triggered)
-   - Suspend / re-activate user
-   - Change user role inside an organization
-   - Promote user to platform admin (super_admin can manage `platform_admins`)
-   - Change the recipient email for ticket notifications (already field `admin_settings.support_email`, but no UI control yet)
-   - Test email send from a template
+## 3. Allowances "Apply now" not responding
+Currently disabled silently when no employee selected. Wire it up:
+- Validate employee selection BEFORE rendering Apply (toast + scroll into view if missing).
+- Confirm dialog → insert into `employee_allowances` → also `update employees set ...` for related fields → invalidate React Query / refetch → success toast in current locale.
 
-## Changes
+## 4. Mobile horizontal overflow (tables, tab bars)
+- Add `overflow-x-hidden` on main `<div>` of pages with tables.
+- Wrap every `<DataTable>` and wide table in `<div className="overflow-x-auto -mx-4 px-4">` so only the table scrolls.
+- Add `min-w-0` on flex children that hold long text; use `truncate` on titles.
+- `Tabs` lists get `overflow-x-auto whitespace-nowrap`.
+- Add a global CSS rule in `styles.css`: `html, body { overflow-x: hidden; }` and `*, *::before, *::after { min-width: 0; }` scoped under app shell.
 
-### A. Routing fix (the biggest user-visible bug)
-- Replace `src/routes/admin.emails.tsx` content with a layout: `() => <Outlet />`.
-- Create `src/routes/admin.emails.index.tsx` containing today's list + "New template" dialog.
-- Replace `src/routes/admin.tickets.tsx` with a layout: `() => <Outlet />`.
-- Create `src/routes/admin.tickets.index.tsx` containing today's list/filters.
+## 5. Support ticket creation error (`duplicate key … ticket_number_key`)
+Root cause: the BEFORE INSERT trigger `trg_set_ticket_number` is missing in the live DB (functions exist but triggers list is empty). Migration:
+```sql
+DROP TRIGGER IF EXISTS trg_set_ticket_number ON public.support_tickets;
+CREATE TRIGGER trg_set_ticket_number
+  BEFORE INSERT ON public.support_tickets
+  FOR EACH ROW EXECUTE FUNCTION public.set_ticket_number();
+```
+Also harden `set_ticket_number()` with `LOCK TABLE … IN SHARE ROW EXCLUSIVE MODE` (or use a sequence) to avoid race duplicates.
 
-### B. Users page upgrades (`src/routes/admin.users.tsx`)
-- Add row-level actions for super_admin:
-  - "Send password reset" → `supabase.auth.resetPasswordForEmail(email)`.
-  - "Change role" select inside the side sheet (writes to `user_roles`).
-  - "Make platform admin" / "Revoke" toggle (writes to `platform_admins`, gated by `has_platform_role(_, 'super_admin')`).
-- Better empty-state + log when query returns 0/1 rows so we can debug RLS in the field.
+## 6. Navigation restructure (collapsible, grouped)
+Rewrite `src/components/app-shell.tsx` nav into grouped, collapsible sections using a small `<NavGroup>` (Radix Collapsible). Groups:
+- **Overview** — Dashboard
+- **Compensation** — Salary Structures, Salary Matrix, Allowances
+- **Cycles** — Merit, Bonus, Approvals
+- **People** — Employees, Team
+- **Analytics** — Compa, Penetration, Pay Equity
+- **Operations** — Reports, Audit Log
+- **Help** — Help & Support, Support Tickets
+- **Settings**
+Behavior:
+- Each group has an icon + label + chevron; remembers open state in `localStorage`.
+- The active route auto-expands its group.
+- Mobile sheet uses identical structure but full-height with safe-area + sticky header.
+Same treatment for `admin-shell.tsx` (Platform / Content / Communications / System).
 
-### C. Email templates editor
-- Add **"Send test email"** button in `admin.emails.$key.tsx` that posts to a new server function which renders the template and enqueues via the existing email queue.
-- Keep current AR/EN editor and live preview.
+## 7. Email Campaign / Send Email page
+New route `src/routes/admin.emails.send.tsx` (also linked from `/admin/emails` index as "Send campaign"):
+- **Template selector** populated from `email_templates` (existing helper `listTemplates`).
+- **Audience selector**:
+  - All users / Single user (search) / By role (admin/analyst/manager/viewer) / By organization / By plan tier.
+  - Live "Recipients: N" counter via Supabase queries against `profiles` joined with `user_roles` / `subscriptions`.
+- **Subject AR/EN + Body AR/EN** auto-filled from chosen template via `interpolate`; user can edit before send.
+- **Preview** pane using `brandedWrap()` (existing Total Reward branded HTML wrapper) with locale toggle.
+- **Send**: server function `src/lib/email-campaign.functions.ts` using `createServerFn` that:
+  - resolves recipients on the server (RBAC: requires `super_admin`),
+  - enqueues one row per recipient via existing `enqueue_email` RPC into `transactional_emails` queue with branded HTML,
+  - logs a campaign row in a new `email_campaigns` table (id, template_key, audience_json, recipient_count, sent_by, created_at).
+- Show send progress + final toast with `email_send_log` link.
 
-### D. Tickets
-- In `admin.tickets.$id.tsx` keep current reply/internal-note flow and on status change to `in_progress` / `resolved` / `closed`, enqueue a notification email to the requester using the corresponding template (`ticket_status_in_progress`, `ticket_status_resolved`, `ticket_status_closed`). Templates already exist; we'll wire them.
-- New ticket created → email super-admin notification address (from `admin_settings.support_email`).
+## 8. Admin ticket detail not opening
+Root: `admin.tickets.tsx` is a layout (`<Outlet />`) and `admin.tickets.$id.tsx` exists, but the index list links use `to="/admin/tickets/$id"` correctly. The actual blocker is RLS — `support_tickets` SELECT only allows the requester. Migration:
+```sql
+CREATE POLICY "Platform admins can view all tickets"
+  ON public.support_tickets FOR SELECT
+  USING (public.is_platform_admin(auth.uid()));
+CREATE POLICY "Platform admins can update tickets"
+  ON public.support_tickets FOR UPDATE
+  USING (public.is_platform_admin(auth.uid()));
+CREATE POLICY "Platform admins can read messages"
+  ON public.ticket_messages FOR SELECT
+  USING (public.is_platform_admin(auth.uid()));
+CREATE POLICY "Platform admins can write messages"
+  ON public.ticket_messages FOR INSERT
+  WITH CHECK (public.is_platform_admin(auth.uid()));
+```
+Also fix `admin.tickets.$id.tsx` to surface load errors (currently silently shows "Loading…" forever) and add a "Back to tickets" link that works.
 
-### E. Settings
-- In `src/routes/admin.settings.tsx` expose a **"Ticket notifications email"** input bound to `admin_settings.support_email`, editable only by `super_admin`.
+## Files to create
+- `src/components/scroll-to-top.tsx`
+- `src/components/nav-group.tsx`
+- `src/routes/admin.emails.send.tsx`
+- `src/lib/email-campaign.functions.ts`
+- `supabase/migrations/<ts>_fix_tickets_and_admin_policies.sql`
 
-### F. Auth flow stays on our domain
-- Keep custom auth email templates already scaffolded under `src/routes/lovable/email/auth/*` and `src/lib/email-templates/*`. No changes needed to authentication paths — they already use our `notify.totalreward.app` sender after DNS verifies.
+## Files to modify
+- `src/routes/__root.tsx` (mount ScrollToTop)
+- `src/components/app-shell.tsx`, `src/components/admin/admin-shell.tsx` (grouped nav, mobile scroll fix, overflow-x-hidden)
+- `src/components/apply-or-approve.tsx` (gate request-approval, self-approval block, structured edit dialog)
+- `src/lib/approvals.ts` (validate chain in createRequest)
+- `src/routes/app.approvals.tsx` (structured Edit & approve dialog, mobile dialog sizing)
+- `src/routes/app.allowances.tsx` (Apply now wiring + validation)
+- `src/routes/app.merit.tsx`, `src/routes/app.bonus.tsx` (Apply now always available; better feedback)
+- `src/routes/admin.tickets.index.tsx`, `src/routes/admin.tickets.$id.tsx` (error surfacing, table overflow)
+- `src/routes/admin.emails.index.tsx` (link to new Send campaign page)
+- `src/styles.css` (overflow-x guards, safe-area)
+- `src/lib/i18n.tsx` (new keys: set_approval_flow, no_approval_flow_yet, cannot_approve_self, send_campaign, audience, recipients, etc.)
 
-### G. RLS verification
-- Run `supabase--linter` after changes and fix any new warning.
-- No schema changes expected; if the user-list RLS is somehow missing in the Live DB, re-apply the `Platform admins view all profiles/user_roles/organizations` policies via migration (idempotent with `IF NOT EXISTS`).
-
-## Files touched
-
-- `src/routes/admin.emails.tsx` (becomes layout)
-- `src/routes/admin.emails.index.tsx` (new — list)
-- `src/routes/admin.emails.$key.tsx` (add Test send)
-- `src/routes/admin.tickets.tsx` (becomes layout)
-- `src/routes/admin.tickets.index.tsx` (new — list)
-- `src/routes/admin.tickets.$id.tsx` (auto status emails)
-- `src/routes/admin.users.tsx` (real actions)
-- `src/routes/admin.settings.tsx` (support email field)
-- One small migration only if RLS policies are missing in Live.
-
-After this, the Super Admin console will: list every user, open every email template, open and reply to every ticket, change ticket status with automatic branded emails, manage platform admins, and configure the notification recipient — all under your domain `totalreward.app` / `notify.totalreward.app`.
+After approval I will implement these in order: 5 + 8 (DB) → 1 + 4 (mobile) → 6 (nav) → 2 + 3 (approval/apply) → 7 (campaign).

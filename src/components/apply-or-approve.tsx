@@ -1,14 +1,15 @@
 import { useEffect, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Send, CheckCircle2, Info } from "lucide-react";
+import { Send, CheckCircle2, Info, Settings as SettingsIcon } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { usePermissions } from "@/lib/rbac";
-import { createRequest, fetchPolicy, listChains, type ApprovalChain } from "@/lib/approvals";
+import { createRequest, fetchPolicy, listChains, listSteps, type ApprovalChain } from "@/lib/approvals";
 import type { ApprovalEntity } from "@/lib/governance";
 import { toast } from "sonner";
 

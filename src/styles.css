@@ -196,3 +196,13 @@ html[dir="rtl"] .font-logo *,
 html[lang="ar"] .font-logo * {
   font-family: "Montserrat", ui-sans-serif, system-ui, sans-serif !important;
 }
+
+/* Mobile overflow / safe-area guards */
+html, body { overflow-x: hidden; }
+body { overscroll-behavior-y: contain; }
+.app-main { -webkit-overflow-scrolling: touch; padding-bottom: env(safe-area-inset-bottom); }
+@media (max-width: 768px) {
+  .app-main { padding-bottom: calc(env(safe-area-inset-bottom) + 5rem); }
+}
+.tabs-scroll { overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; }
+.tabs-scroll::-webkit-scrollbar { height: 0; }
