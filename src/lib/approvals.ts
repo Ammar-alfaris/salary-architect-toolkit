@@ -71,6 +71,30 @@ export async function listSteps(chainId: string) {
   return (data ?? []) as ApprovalChainStep[];
 }
 
+function hasRecipient(step: ApprovalChainStep) {
+  return Boolean(step.approver_user_id || step.approver_email?.trim());
+}
+
+function isSelfApprover(step: ApprovalChainStep, userId: string, email?: string | null) {
+  return Boolean(
+    (step.approver_user_id && step.approver_user_id === userId) ||
+    (step.approver_email && email && step.approver_email.toLowerCase() === email.toLowerCase()),
+  );
+}
+
+export async function listValidChainsForEntity(orgId: string, entityType: ApprovalEntity) {
+  const chains = await listChains(orgId);
+  const applicable = chains.filter((chain) => (chain.applies_to ?? []).includes(entityType));
+  const detailed = await Promise.all(
+    applicable.map(async (chain) => ({
+      ...chain,
+      steps: await listSteps(chain.id),
+    })),
+  );
+
+  return detailed.filter((chain) => chain.steps.length > 0 && chain.steps.every(hasRecipient));
+}
+
 export async function upsertChain(input: {
   id?: string;
   organization_id: string;
@@ -132,28 +156,17 @@ export async function createRequest(input: CreateRequestInput) {
   const user = u.user;
   if (!user) throw new Error("Not signed in");
 
-  let chainId = input.chainId ?? null;
-  if (!chainId) {
-    // pick default chain that applies to this entity
-    const { data: ch } = await supabase
-      .from("approval_chains").select("*")
-      .eq("organization_id", input.organizationId)
-      .contains("applies_to", [input.entityType] as never)
-      .order("is_default", { ascending: false })
-      .limit(1).maybeSingle();
-    if (ch) chainId = ch.id;
+  const validChains = await listValidChainsForEntity(input.organizationId, input.entityType);
+  const resolvedChain = input.chainId
+    ? validChains.find((chain) => chain.id === input.chainId)
+    : validChains.find((chain) => chain.is_default) ?? validChains[0];
+
+  if (!resolvedChain) {
+    throw new Error("No valid approval chain is configured for this request yet. Please set one up first.");
   }
 
-  // Block self-approval: requester cannot also be an approver in the chosen chain.
-  if (chainId) {
-    const steps = await listSteps(chainId);
-    const isSelf = steps.some((s) =>
-      (s.approver_user_id && s.approver_user_id === user.id) ||
-      (s.approver_email && user.email && s.approver_email.toLowerCase() === user.email.toLowerCase())
-    );
-    if (isSelf) {
-      throw new Error("You can't request approval on a chain where you're listed as an approver. Please choose a different chain or remove yourself from it.");
-    }
+  if (resolvedChain.steps.some((step) => isSelfApprover(step, user.id, user.email))) {
+    throw new Error("You can't request approval on a chain where you're listed as an approver. Please choose a different chain or remove yourself from it.");
   }
 
   const { data, error } = await supabase.from("approval_requests").insert({
@@ -166,7 +179,7 @@ export async function createRequest(input: CreateRequestInput) {
     reason: input.reason ?? null,
     payload: (input.proposedPayload ?? {}) as never,
     proposed_payload: (input.proposedPayload ?? {}) as never,
-    chain_id: chainId,
+    chain_id: resolvedChain.id,
     current_step: 1,
     status: "pending",
   }).select().single();
