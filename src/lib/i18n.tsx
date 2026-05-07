@@ -567,6 +567,7 @@ const en: Dict = {
   approval_required_for_action: "Approval required for this action.",
   send_request: "Send request",
   no_chains_configured: "No approval chains are configured for this entity. The request will go to admins.",
+  setup_approval_chain: "Set up approval chain",
   approval_chain: "Approval chain",
   approval_chains: "Approval chains",
   new_chain: "New chain",
