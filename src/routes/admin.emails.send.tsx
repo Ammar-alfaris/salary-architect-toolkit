@@ -12,6 +12,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Send, Users } from "lucide-react";
 import { toast } from "sonner";
 import { brandedWrap, fetchTemplate, type EmailTemplate } from "@/lib/email-templates";
+import { useServerFn } from "@tanstack/react-start";
+import { sendEmailCampaign } from "@/lib/email-campaign.functions";
 
 export const Route = createFileRoute("/admin/emails/send")({ component: SendEmailPage });
 
