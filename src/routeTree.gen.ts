@@ -52,6 +52,7 @@ import { Route as AppAnalyticsEquityRouteImport } from './routes/app.analytics.e
 import { Route as AppAnalyticsCompaRouteImport } from './routes/app.analytics.compa'
 import { Route as AdminTicketsIdRouteImport } from './routes/admin.tickets.$id'
 import { Route as AdminOrganizationsIdRouteImport } from './routes/admin.organizations.$id'
+import { Route as AdminEmailsSendRouteImport } from './routes/admin.emails.send'
 import { Route as AdminEmailsKeyRouteImport } from './routes/admin.emails.$key'
 import { Route as AdminBlogIdRouteImport } from './routes/admin.blog.$id'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
@@ -273,6 +274,11 @@ const AdminOrganizationsIdRoute = AdminOrganizationsIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AdminOrganizationsRoute,
 } as any)
+const AdminEmailsSendRoute = AdminEmailsSendRouteImport.update({
+  id: '/send',
+  path: '/send',
+  getParentRoute: () => AdminEmailsRoute,
+} as any)
 const AdminEmailsKeyRoute = AdminEmailsKeyRouteImport.update({
   id: '/$key',
   path: '/$key',
@@ -337,6 +343,7 @@ export interface FileRoutesByFullPath {
   '/app/': typeof AppIndexRoute
   '/admin/blog/$id': typeof AdminBlogIdRoute
   '/admin/emails/$key': typeof AdminEmailsKeyRoute
+  '/admin/emails/send': typeof AdminEmailsSendRoute
   '/admin/organizations/$id': typeof AdminOrganizationsIdRoute
   '/admin/tickets/$id': typeof AdminTicketsIdRoute
   '/app/analytics/compa': typeof AppAnalyticsCompaRoute
@@ -382,6 +389,7 @@ export interface FileRoutesByTo {
   '/app': typeof AppIndexRoute
   '/admin/blog/$id': typeof AdminBlogIdRoute
   '/admin/emails/$key': typeof AdminEmailsKeyRoute
+  '/admin/emails/send': typeof AdminEmailsSendRoute
   '/admin/organizations/$id': typeof AdminOrganizationsIdRoute
   '/admin/tickets/$id': typeof AdminTicketsIdRoute
   '/app/analytics/compa': typeof AppAnalyticsCompaRoute
@@ -433,6 +441,7 @@ export interface FileRoutesById {
   '/app/': typeof AppIndexRoute
   '/admin/blog/$id': typeof AdminBlogIdRoute
   '/admin/emails/$key': typeof AdminEmailsKeyRoute
+  '/admin/emails/send': typeof AdminEmailsSendRoute
   '/admin/organizations/$id': typeof AdminOrganizationsIdRoute
   '/admin/tickets/$id': typeof AdminTicketsIdRoute
   '/app/analytics/compa': typeof AppAnalyticsCompaRoute
@@ -485,6 +494,7 @@ export interface FileRouteTypes {
     | '/app/'
     | '/admin/blog/$id'
     | '/admin/emails/$key'
+    | '/admin/emails/send'
     | '/admin/organizations/$id'
     | '/admin/tickets/$id'
     | '/app/analytics/compa'
@@ -530,6 +540,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/admin/blog/$id'
     | '/admin/emails/$key'
+    | '/admin/emails/send'
     | '/admin/organizations/$id'
     | '/admin/tickets/$id'
     | '/app/analytics/compa'
@@ -580,6 +591,7 @@ export interface FileRouteTypes {
     | '/app/'
     | '/admin/blog/$id'
     | '/admin/emails/$key'
+    | '/admin/emails/send'
     | '/admin/organizations/$id'
     | '/admin/tickets/$id'
     | '/app/analytics/compa'
@@ -908,6 +920,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminOrganizationsIdRouteImport
       parentRoute: typeof AdminOrganizationsRoute
     }
+    '/admin/emails/send': {
+      id: '/admin/emails/send'
+      path: '/send'
+      fullPath: '/admin/emails/send'
+      preLoaderRoute: typeof AdminEmailsSendRouteImport
+      parentRoute: typeof AdminEmailsRoute
+    }
     '/admin/emails/$key': {
       id: '/admin/emails/$key'
       path: '/$key'
@@ -962,11 +981,13 @@ const AdminBlogRouteWithChildren = AdminBlogRoute._addFileChildren(
 
 interface AdminEmailsRouteChildren {
   AdminEmailsKeyRoute: typeof AdminEmailsKeyRoute
+  AdminEmailsSendRoute: typeof AdminEmailsSendRoute
   AdminEmailsIndexRoute: typeof AdminEmailsIndexRoute
 }
 
 const AdminEmailsRouteChildren: AdminEmailsRouteChildren = {
   AdminEmailsKeyRoute: AdminEmailsKeyRoute,
+  AdminEmailsSendRoute: AdminEmailsSendRoute,
   AdminEmailsIndexRoute: AdminEmailsIndexRoute,
 }
 

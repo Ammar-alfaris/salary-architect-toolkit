@@ -144,6 +144,18 @@ export async function createRequest(input: CreateRequestInput) {
     if (ch) chainId = ch.id;
   }
 
+  // Block self-approval: requester cannot also be an approver in the chosen chain.
+  if (chainId) {
+    const steps = await listSteps(chainId);
+    const isSelf = steps.some((s) =>
+      (s.approver_user_id && s.approver_user_id === user.id) ||
+      (s.approver_email && user.email && s.approver_email.toLowerCase() === user.email.toLowerCase())
+    );
+    if (isSelf) {
+      throw new Error("You can't request approval on a chain where you're listed as an approver. Please choose a different chain or remove yourself from it.");
+    }
+  }
+
   const { data, error } = await supabase.from("approval_requests").insert({
     organization_id: input.organizationId,
     entity_type: input.entityType,

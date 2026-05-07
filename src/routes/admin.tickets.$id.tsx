@@ -20,13 +20,19 @@ function TicketDetail() {
   const [msgs, setMsgs] = useState<any[]>([]);
   const [draft, setDraft] = useState("");
   const [internal, setInternal] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const load = async () => {
-    const [{ data: tk }, { data: mm }] = await Promise.all([
+    setLoading(true); setErr(null);
+    const [tkRes, mmRes] = await Promise.all([
       supabase.from("support_tickets").select("*").eq("id", id).maybeSingle(),
       supabase.from("ticket_messages").select("*").eq("ticket_id", id).order("created_at"),
     ]);
-    setT(tk); setMsgs(mm || []);
+    if (tkRes.error) setErr(tkRes.error.message);
+    else if (!tkRes.data) setErr("Ticket not found or you don't have access.");
+    setT(tkRes.data); setMsgs(mmRes.data || []);
+    setLoading(false);
   };
   useEffect(() => { load(); }, [id]);
 
@@ -45,7 +51,13 @@ function TicketDetail() {
     setDraft(""); load();
   };
 
-  if (!t) return <div className="p-6 text-sm text-muted-foreground">Loading…</div>;
+  if (loading) return <div className="p-6 text-sm text-muted-foreground">Loading…</div>;
+  if (err || !t) return (
+    <div className="p-6 space-y-3">
+      <Button asChild variant="outline" size="sm"><Link to="/admin/tickets"><ArrowLeft className="w-4 h-4 me-1" />Back to tickets</Link></Button>
+      <div className="text-sm text-destructive">{err || "Ticket not found."}</div>
+    </div>
+  );
 
   return (
     <div>
