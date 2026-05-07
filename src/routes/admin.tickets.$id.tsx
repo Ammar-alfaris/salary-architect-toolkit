@@ -51,7 +51,13 @@ function TicketDetail() {
     setDraft(""); load();
   };
 
-  if (!t) return <div className="p-6 text-sm text-muted-foreground">Loading…</div>;
+  if (loading) return <div className="p-6 text-sm text-muted-foreground">Loading…</div>;
+  if (err || !t) return (
+    <div className="p-6 space-y-3">
+      <Button asChild variant="outline" size="sm"><Link to="/admin/tickets"><ArrowLeft className="w-4 h-4 me-1" />Back to tickets</Link></Button>
+      <div className="text-sm text-destructive">{err || "Ticket not found."}</div>
+    </div>
+  );
 
   return (
     <div>
