@@ -51,6 +51,7 @@ function EmailsAdmin() {
         actions={
           <div className="flex items-center gap-2">
             <Button asChild variant="outline" size="sm"><Link to="/admin/messages"><Mail className="w-4 h-4 me-1"/>Messages</Link></Button>
+            <Button asChild variant="outline" size="sm"><Link to="/admin/emails/send"><Mail className="w-4 h-4 me-1"/>Send email</Link></Button>
             <Button size="sm" onClick={() => setOpen(true)}><Plus className="w-4 h-4 me-1"/>New template</Button>
           </div>
         } />
