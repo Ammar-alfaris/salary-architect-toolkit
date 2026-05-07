@@ -1337,6 +1337,7 @@ const ar: Dict = {
   approval_required_for_action: "هذا الإجراء يحتاج إلى اعتماد.",
   send_request: "إرسال الطلب",
   no_chains_configured: "لا توجد سلاسل اعتماد لهذا الكيان. سيُرسل الطلب إلى المسؤولين.",
+  setup_approval_chain: "إعداد سلسلة الاعتماد",
   approval_chain: "سلسلة الاعتماد",
   approval_chains: "سلاسل الاعتماد",
   new_chain: "سلسلة جديدة",
