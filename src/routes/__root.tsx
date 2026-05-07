@@ -64,6 +64,7 @@ function RootComponent() {
       <I18nProvider>
         <QueryProvider>
           <AuthProvider>
+            <ScrollToTop />
             <Outlet />
             <Toaster />
           </AuthProvider>
