@@ -9,7 +9,7 @@ import { Send, CheckCircle2, Info, Settings as SettingsIcon } from "lucide-react
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { usePermissions } from "@/lib/rbac";
-import { createRequest, fetchPolicy, listChains, listSteps, type ApprovalChain } from "@/lib/approvals";
+import { createRequest, fetchPolicy, listValidChainsForEntity, type ApprovalChain } from "@/lib/approvals";
 import type { ApprovalEntity } from "@/lib/governance";
 import { toast } from "sonner";
 
@@ -38,8 +38,8 @@ export function ApplyOrApprove({ entityType, entityKey, entityId, entityLabel, p
   useEffect(() => {
     if (!organizationId) return;
     fetchPolicy(organizationId).then((p) => setRequireApproval(!!p.require_approval_for[entityKey]));
-    listChains(organizationId).then((cs) => {
-      const applicable = cs.filter((c) => (c.applies_to ?? []).includes(entityType));
+    listValidChainsForEntity(organizationId, entityType).then((cs) => {
+      const applicable = cs.map(({ steps: _steps, ...chain }) => chain);
       setChains(applicable);
       const def = applicable.find((c) => c.is_default) ?? applicable[0];
       if (def) setChainId(def.id);
@@ -87,14 +87,20 @@ export function ApplyOrApprove({ entityType, entityKey, entityId, entityLabel, p
         <Button asChild size="sm" variant="outline">
           <Link to="/app/settings"><SettingsIcon className="w-4 h-4 me-1" /> {t("setup_approval_chain")}</Link>
         </Button>
-      ) : (
+      ) : chains.length > 0 ? (
         <Button size="sm" variant="outline" onClick={() => setOpen(true)} disabled={!entityId}>
           <Send className="w-4 h-4 me-1" /> {t("request_approval")}
         </Button>
+      ) : null}
+
+      {requireApproval && chains.length === 0 && (
+        <span className="w-full text-xs text-muted-foreground">
+          {t("no_approval_flow_yet")}
+        </span>
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-[95vw] sm:max-w-lg overflow-x-hidden">
           <DialogHeader>
             <DialogTitle>{t("request_approval")}</DialogTitle>
             <DialogDescription>{t("request_approval_helper")}</DialogDescription>
