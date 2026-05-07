@@ -9,7 +9,7 @@ import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import type { ApprovalEntity } from "@/lib/governance";
-import { recordDecision, markApplied, getCurrentApprover } from "@/lib/approvals";
+import { recordDecision, markApplied, getCurrentApprover, isCurrentUserApprover } from "@/lib/approvals";
 import { ApprovalDiff } from "@/components/approval-diff";
 import { usePermissions } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
@@ -149,7 +149,7 @@ function ApprovalsPage() {
         </div>
 
         <Tabs value={tab} onValueChange={setTab}>
-          <TabsList>
+          <TabsList className="tabs-scroll max-w-full">
             <TabsTrigger value="pending">{t("status_pending")} ({counts.pending})</TabsTrigger>
             <TabsTrigger value="approved">{t("status_approved")} ({counts.approved})</TabsTrigger>
             <TabsTrigger value="rejected">{t("status_rejected")} ({counts.rejected})</TabsTrigger>
@@ -182,7 +182,7 @@ function ApprovalsPage() {
       </div>
 
       <Dialog open={!!active} onOpenChange={(o) => !o && setActive(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-[95vw] sm:max-w-2xl overflow-x-hidden">
           <DialogHeader>
             <DialogTitle>
               {active?.action === "approved" && t("confirm_approval")}
@@ -212,7 +212,7 @@ function ApprovalsPage() {
       </Dialog>
 
       <Dialog open={!!diffReq} onOpenChange={(o) => !o && setDiffReq(null)}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-[95vw] sm:max-w-3xl overflow-x-hidden">
           <DialogHeader>
             <DialogTitle>{t("view_diff")}</DialogTitle>
             <DialogDescription>{diffReq?.entity_label}</DialogDescription>
@@ -235,7 +235,12 @@ function RequestCard({ req, fmt, isRequester, canDecide, onAction, onApply, onVi
 }) {
   const { t } = useI18n();
   const [approver, setApprover] = useState<any>(null);
-  useEffect(() => { if (req.status === "pending") getCurrentApprover(req.id).then(setApprover); }, [req.id, req.status]);
+  const [isAssignedApprover, setIsAssignedApprover] = useState(false);
+  useEffect(() => {
+    if (req.status !== "pending") return;
+    getCurrentApprover(req.id).then(setApprover);
+    isCurrentUserApprover(req.id).then(setIsAssignedApprover);
+  }, [req.id, req.status]);
 
   const Icon = ENTITY_ICON[req.entity_type as ApprovalEntity] ?? FileBarChart;
   const tone = req.status === "approved" ? "ring-success/30 bg-success/5"
@@ -243,32 +248,32 @@ function RequestCard({ req, fmt, isRequester, canDecide, onAction, onApply, onVi
     : "ring-warning/30 bg-warning/5";
 
   return (
-    <div className={`border rounded-lg p-4 ring-1 ${tone}`}>
+    <div className={`border rounded-lg p-4 ring-1 overflow-x-hidden ${tone}`}>
       <div className="flex items-start gap-3 flex-wrap">
         <div className="w-9 h-9 rounded-md bg-card border flex items-center justify-center shrink-0">
           <Icon className="w-4 h-4" />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h4 className="font-medium text-sm">{req.entity_label || t(`entity_${req.entity_type}`)}</h4>
+            <h4 className="font-medium text-sm break-words">{req.entity_label || t(`entity_${req.entity_type}`)}</h4>
             <span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded-full ring-1 ring-border bg-muted">{t(`entity_${req.entity_type}`)}</span>
             <StatusBadge status={req.status} />
             {req.status === "pending" && req.chain_id && (
               <span className="text-[10px] px-1.5 py-0.5 rounded-full ring-1 ring-border bg-card">{t("current_step")}: {req.current_step}</span>
             )}
           </div>
-          <p className="text-xs text-muted-foreground mt-1">{t("requested_by")}: {req.requested_by_email ?? "—"} · {fmt(req.created_at)}</p>
+          <p className="text-xs text-muted-foreground mt-1 break-all">{t("requested_by")}: {req.requested_by_email ?? "—"} · {fmt(req.created_at)}</p>
           {approver && req.status === "pending" && (
             <p className="text-xs text-muted-foreground mt-0.5">{t("approver")}: {approver.approver_label || approver.approver_email || "—"}</p>
           )}
-          {req.reason && <p className="text-sm mt-2 text-foreground/80">"{req.reason}"</p>}
+          {req.reason && <p className="text-sm mt-2 text-foreground/80 break-words">"{req.reason}"</p>}
           {req.applied_at && (
             <p className="text-xs text-success mt-1">✓ Applied {fmt(req.applied_at)}</p>
           )}
         </div>
         <div className="flex flex-wrap gap-2 shrink-0">
           <Button size="sm" variant="ghost" onClick={onViewDiff}><Eye className="w-4 h-4 me-1" />{t("view_diff")}</Button>
-          {req.status === "pending" && canDecide && (
+          {req.status === "pending" && canDecide && isAssignedApprover && (
             <>
               <Button size="sm" variant="outline" onClick={() => onAction("sent_back")}><Undo2 className="w-4 h-4 me-1" />{t("send_back")}</Button>
               <Button size="sm" variant="outline" onClick={() => onAction("edited")}><Pencil className="w-4 h-4 me-1" />{t("edit_and_approve")}</Button>
