@@ -20,6 +20,7 @@ export const Route = createFileRoute("/admin/emails/send")({ component: SendEmai
 type Audience = "all" | "single" | "role";
 
 function SendEmailPage() {
+  const sendFn = useServerFn(sendEmailCampaign);
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [tplKey, setTplKey] = useState("custom_message");
   const [tpl, setTpl] = useState<EmailTemplate | null>(null);
