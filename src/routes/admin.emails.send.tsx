@@ -84,21 +84,13 @@ function SendEmailPage() {
       const subject = locale === "ar" ? subjectAr : subjectEn;
       const body = locale === "ar" ? bodyAr : bodyEn;
       const html = brandedWrap({ subject, bodyHtml: body, locale });
-      const rows = recipients.map((r) => ({
-        template_key: tplKey,
-        recipient_email: r.email,
-        recipient_name: r.name || null,
-        subject,
-        body_html: html,
-        locale,
-        status: "pending" as const,
-      }));
-      // Best-effort log into email_send_log if available
-      const { error } = await supabase.from("email_send_log" as any).insert(rows as any);
-      if (error) console.warn("Log insert failed", error);
-      toast.success(`Queued ${recipients.length} email(s) for delivery`);
+      const res = await sendFn({ data: {
+        templateKey: tplKey, subject, html, locale,
+        recipients: recipients.map((r) => ({ email: r.email, name: r.name ?? null })),
+      } as any });
+      toast.success(`Queued ${res.queued} email(s)${res.failed ? `, ${res.failed} failed` : ""}`);
     } catch (e: any) {
-      toast.error(e.message);
+      toast.error(e.message || "Failed to send");
     } finally { setSending(false); }
   };
 
