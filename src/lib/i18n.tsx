@@ -778,6 +778,29 @@ const en: Dict = {
   employees_below_range: "Employees below range",
   employees_above_range: "Employees above range",
   view_profile: "View profile",
+
+  // Contact page
+  contact_heading: "Get in Touch",
+  contact_subheading: "Have questions? We're here to help. Don't hesitate to reach out.",
+  contact_email_label: "Email",
+  contact_phone_label: "Phone",
+  contact_address_label: "Address",
+  contact_form_title: "Send us a Message",
+  contact_form_name: "Name",
+  contact_form_name_placeholder: "Your full name",
+  contact_form_email: "Email",
+  contact_form_email_placeholder: "your@email.com",
+  contact_form_subject: "Subject",
+  contact_form_subject_placeholder: "What is this about?",
+  contact_form_message: "Message",
+  contact_form_message_placeholder: "Tell us more...",
+  contact_form_send: "Send Message",
+  contact_form_sending: "Sending...",
+  contact_form_required: "Please fill in all fields",
+  contact_form_error: "Failed to send message",
+  contact_form_success: "Your message has been sent successfully",
+  contact_form_response_time: "We typically respond within 24 business hours.",
+  contact_address_value: "Riyadh, Saudi Arabia",
 };
 
 const ar: Dict = {
@@ -1554,6 +1577,29 @@ const ar: Dict = {
   employees_below_range: "موظفون أدنى من النطاق",
   employees_above_range: "موظفون أعلى من النطاق",
   view_profile: "عرض الملف",
+
+  // Contact page
+  contact_heading: "تواصل معنا",
+  contact_subheading: "لدينا أسئلة؟ نحن هنا للمساعدة. لا تتردد في الاتصال بنا.",
+  contact_email_label: "البريد الإلكتروني",
+  contact_phone_label: "الهاتف",
+  contact_address_label: "العنوان",
+  contact_form_title: "اترك لنا رسالة",
+  contact_form_name: "الاسم",
+  contact_form_name_placeholder: "اسمك الكامل",
+  contact_form_email: "البريد الإلكتروني",
+  contact_form_email_placeholder: "بريدك@email.com",
+  contact_form_subject: "الموضوع",
+  contact_form_subject_placeholder: "عن ماذا تدور هذه الرسالة؟",
+  contact_form_message: "الرسالة",
+  contact_form_message_placeholder: "أخبرنا بالمزيد...",
+  contact_form_send: "إرسال الرسالة",
+  contact_form_sending: "جاري الإرسال...",
+  contact_form_required: "يرجى ملء جميع الحقول",
+  contact_form_error: "حدث خطأ في الإرسال",
+  contact_form_success: "تم إرسال رسالتك بنجاح",
+  contact_form_response_time: "سنرد على رسالتك خلال 24 ساعة عمل",
+  contact_address_value: "الرياض، المملكة العربية السعودية",
 };
 
 const dictionaries: Record<Locale, Dict> = { en, ar };

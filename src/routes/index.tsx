@@ -40,6 +40,7 @@ function Landing() {
             <a href="#modules" className="hover:text-foreground">{t("modules")}</a>
             <a href="#cta" className="hover:text-foreground">{t("pricing")}</a>
             <Link to="/blog" className="hover:text-foreground">Blog</Link>
+            <Link to="/contact" className="hover:text-foreground">{t("contact")}</Link>
           </nav>
           <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
             <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setLocale(locale === "en" ? "ar" : "en")} aria-label={t("language")}>
@@ -157,7 +158,7 @@ function Landing() {
       <footer className="border-t mt-12">
         <div className="container mx-auto px-4 py-8 flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
           <div>© {new Date().getFullYear()} {t("app_name")}</div>
-          <div className="flex gap-4"><a href="#" className="hover:text-foreground">{t("privacy")}</a><a href="#" className="hover:text-foreground">{t("terms")}</a><a href="#" className="hover:text-foreground">{t("contact")}</a></div>
+          <div className="flex gap-4"><a href="#" className="hover:text-foreground">{t("privacy")}</a><a href="#" className="hover:text-foreground">{t("terms")}</a><Link to="/contact" className="hover:text-foreground">{t("contact")}</Link></div>
         </div>
       </footer>
     </div>

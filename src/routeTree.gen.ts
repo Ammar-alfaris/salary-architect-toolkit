@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ContactRouteImport } from './routes/contact'
 import { Route as BlogRouteImport } from './routes/blog'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppRouteImport } from './routes/app'
@@ -31,6 +32,7 @@ import { Route as AppBonusRouteImport } from './routes/app.bonus'
 import { Route as AppAuditRouteImport } from './routes/app.audit'
 import { Route as AppApprovalsRouteImport } from './routes/app.approvals'
 import { Route as AppAllowancesRouteImport } from './routes/app.allowances'
+import { Route as ApiContactRouteImport } from './routes/api/contact'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminUnauthorizedRouteImport } from './routes/admin.unauthorized'
 import { Route as AdminTicketsRouteImport } from './routes/admin.tickets'
@@ -59,6 +61,11 @@ import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/e
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BlogRoute = BlogRouteImport.update({
   id: '/blog',
   path: '/blog',
@@ -168,6 +175,11 @@ const AppAllowancesRoute = AppAllowancesRouteImport.update({
   id: '/allowances',
   path: '/allowances',
   getParentRoute: () => AppRoute,
+} as any)
+const ApiContactRoute = ApiContactRouteImport.update({
+  id: '/api/contact',
+  path: '/api/contact',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AdminUsersRoute = AdminUsersRouteImport.update({
   id: '/users',
@@ -312,6 +324,7 @@ export interface FileRoutesByFullPath {
   '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
   '/blog': typeof BlogRouteWithChildren
+  '/contact': typeof ContactRoute
   '/admin/announcements': typeof AdminAnnouncementsRoute
   '/admin/audit': typeof AdminAuditRoute
   '/admin/blog': typeof AdminBlogRouteWithChildren
@@ -324,6 +337,7 @@ export interface FileRoutesByFullPath {
   '/admin/tickets': typeof AdminTicketsRouteWithChildren
   '/admin/unauthorized': typeof AdminUnauthorizedRoute
   '/admin/users': typeof AdminUsersRoute
+  '/api/contact': typeof ApiContactRoute
   '/app/allowances': typeof AppAllowancesRoute
   '/app/approvals': typeof AppApprovalsRoute
   '/app/audit': typeof AppAuditRoute
@@ -361,6 +375,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/blog': typeof BlogRouteWithChildren
+  '/contact': typeof ContactRoute
   '/admin/announcements': typeof AdminAnnouncementsRoute
   '/admin/audit': typeof AdminAuditRoute
   '/admin/messages': typeof AdminMessagesRoute
@@ -370,6 +385,7 @@ export interface FileRoutesByTo {
   '/admin/subscriptions': typeof AdminSubscriptionsRoute
   '/admin/unauthorized': typeof AdminUnauthorizedRoute
   '/admin/users': typeof AdminUsersRoute
+  '/api/contact': typeof ApiContactRoute
   '/app/allowances': typeof AppAllowancesRoute
   '/app/approvals': typeof AppApprovalsRoute
   '/app/audit': typeof AppAuditRoute
@@ -410,6 +426,7 @@ export interface FileRoutesById {
   '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
   '/blog': typeof BlogRouteWithChildren
+  '/contact': typeof ContactRoute
   '/admin/announcements': typeof AdminAnnouncementsRoute
   '/admin/audit': typeof AdminAuditRoute
   '/admin/blog': typeof AdminBlogRouteWithChildren
@@ -422,6 +439,7 @@ export interface FileRoutesById {
   '/admin/tickets': typeof AdminTicketsRouteWithChildren
   '/admin/unauthorized': typeof AdminUnauthorizedRoute
   '/admin/users': typeof AdminUsersRoute
+  '/api/contact': typeof ApiContactRoute
   '/app/allowances': typeof AppAllowancesRoute
   '/app/approvals': typeof AppApprovalsRoute
   '/app/audit': typeof AppAuditRoute
@@ -463,6 +481,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/auth'
     | '/blog'
+    | '/contact'
     | '/admin/announcements'
     | '/admin/audit'
     | '/admin/blog'
@@ -475,6 +494,7 @@ export interface FileRouteTypes {
     | '/admin/tickets'
     | '/admin/unauthorized'
     | '/admin/users'
+    | '/api/contact'
     | '/app/allowances'
     | '/app/approvals'
     | '/app/audit'
@@ -512,6 +532,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/blog'
+    | '/contact'
     | '/admin/announcements'
     | '/admin/audit'
     | '/admin/messages'
@@ -521,6 +542,7 @@ export interface FileRouteTypes {
     | '/admin/subscriptions'
     | '/admin/unauthorized'
     | '/admin/users'
+    | '/api/contact'
     | '/app/allowances'
     | '/app/approvals'
     | '/app/audit'
@@ -560,6 +582,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/auth'
     | '/blog'
+    | '/contact'
     | '/admin/announcements'
     | '/admin/audit'
     | '/admin/blog'
@@ -572,6 +595,7 @@ export interface FileRouteTypes {
     | '/admin/tickets'
     | '/admin/unauthorized'
     | '/admin/users'
+    | '/api/contact'
     | '/app/allowances'
     | '/app/approvals'
     | '/app/audit'
@@ -612,6 +636,8 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   AuthRoute: typeof AuthRoute
   BlogRoute: typeof BlogRouteWithChildren
+  ContactRoute: typeof ContactRoute
+  ApiContactRoute: typeof ApiContactRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
@@ -619,6 +645,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/blog': {
       id: '/blog'
       path: '/blog'
@@ -772,6 +805,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/allowances'
       preLoaderRoute: typeof AppAllowancesRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/api/contact': {
+      id: '/api/contact'
+      path: '/api/contact'
+      fullPath: '/api/contact'
+      preLoaderRoute: typeof ApiContactRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/admin/users': {
       id: '/admin/users'
@@ -1126,6 +1166,8 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   AuthRoute: AuthRoute,
   BlogRoute: BlogRouteWithChildren,
+  ContactRoute: ContactRoute,
+  ApiContactRoute: ApiContactRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
@@ -1133,3 +1175,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
