@@ -158,8 +158,22 @@ function SendEmailPage() {
             </div>
 
             {audience === "single" && (
-              <div className="space-y-1.5"><Label>Email address</Label>
-                <Input type="email" value={single} onChange={(e) => setSingle(e.target.value)} placeholder="user@example.com" /></div>
+              <div className="space-y-1.5">
+                <Label>Recipient</Label>
+                <Input
+                  type="email"
+                  list="all-users-emails"
+                  value={single}
+                  onChange={(e) => setSingle(e.target.value)}
+                  placeholder="Pick a user or type any email…"
+                />
+                <datalist id="all-users-emails">
+                  {allUsers.map((u) => (
+                    <option key={u.id} value={u.email}>{u.full_name ? `${u.full_name} — ${u.email}` : u.email}</option>
+                  ))}
+                </datalist>
+                <p className="text-xs text-muted-foreground">{allUsers.length} known users. You can also type a custom address.</p>
+              </div>
             )}
             {audience === "role" && (
               <div className="space-y-1.5"><Label>Role</Label>
