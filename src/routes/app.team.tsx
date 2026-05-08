@@ -312,9 +312,14 @@ function TeamPage() {
                     </div>
                   </div>
                   {perms.canAdmin && (
-                    <Button size="sm" variant="ghost" onClick={() => handleCancelInvite(inv.id, inv.email)}>
-                      <Trash2 className="w-4 h-4 text-destructive" />
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      <Button size="sm" variant="ghost" onClick={() => handleResendInvite(inv.email, inv.role)} title={t("resend_invite")}>
+                        <Send className="w-4 h-4" />
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => handleCancelInvite(inv.id, inv.email)}>
+                        <Trash2 className="w-4 h-4 text-destructive" />
+                      </Button>
+                    </div>
                   )}
                 </div>
               ))}
