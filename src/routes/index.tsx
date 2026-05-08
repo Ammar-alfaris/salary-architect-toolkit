@@ -1,9 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useI18n } from "@/lib/i18n";
 import { useTheme } from "@/lib/theme";
-import { Layers, Grid3x3, Gift, TrendingUp, Wallet, Users, FileBarChart, Moon, Sun, Languages, ArrowRight, Check } from "lucide-react";
+import { Layers, Grid3x3, Gift, TrendingUp, Wallet, Users, FileBarChart, Moon, Sun, Languages, ArrowRight, Check, Menu, X } from "lucide-react";
 import { Logo } from "@/components/logo";
+import { useState } from "react";
 
 export const Route = createFileRoute("/")({
   component: Landing,
@@ -18,6 +20,7 @@ export const Route = createFileRoute("/")({
 function Landing() {
   const { t, locale, setLocale } = useI18n();
   const { theme, toggle } = useTheme();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const features = [
     { icon: Layers, title: t("feat_structure_title"), desc: t("feat_structure_desc") },
@@ -29,18 +32,26 @@ function Landing() {
     { icon: FileBarChart, title: t("feat_reports_title"), desc: t("feat_reports_desc") },
   ];
 
+  const navLinks = [
+    { href: "#features", label: t("features") },
+    { href: "#modules", label: t("modules") },
+    { href: "#cta", label: t("pricing") },
+  ];
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card/60 backdrop-blur sticky top-0 z-30">
         <div className="container mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2">
           <Logo size={32} textClassName="truncate text-sm sm:text-base" className="min-w-0" />
 
+          {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
-            <a href="#features" className="hover:text-foreground">{t("features")}</a>
-            <a href="#modules" className="hover:text-foreground">{t("modules")}</a>
-            <a href="#cta" className="hover:text-foreground">{t("pricing")}</a>
+            {navLinks.map((l) => (
+              <a key={l.href} href={l.href} className="hover:text-foreground">{l.label}</a>
+            ))}
             <Link to="/blog" className="hover:text-foreground">Blog</Link>
           </nav>
+
           <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
             <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setLocale(locale === "en" ? "ar" : "en")} aria-label={t("language")}>
               <Languages className="w-4 h-4" />
@@ -49,10 +60,62 @@ function Landing() {
               {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </Button>
             <Button variant="ghost" size="sm" className="hidden sm:inline-flex" asChild><Link to="/auth">{t("sign_in")}</Link></Button>
-            <Button size="sm" asChild><Link to="/auth">{t("get_started")}</Link></Button>
+            <Button size="sm" className="hidden sm:inline-flex" asChild><Link to="/auth">{t("get_started")}</Link></Button>
+
+            {/* Hamburger — mobile only */}
+            <button
+              className="md:hidden h-9 w-9 flex items-center justify-center rounded-md hover:bg-accent transition-colors"
+              onClick={() => setMenuOpen(true)}
+              aria-label="Open menu"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
           </div>
         </div>
       </header>
+
+      {/* Mobile nav sheet */}
+      <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+        <SheetContent side="left" className="w-72 max-w-[85vw] p-0 flex flex-col [&>button]:hidden">
+          <div className="flex items-center justify-between px-4 h-14 border-b shrink-0">
+            <Logo size={28} textClassName="text-sm" />
+            <button
+              onClick={() => setMenuOpen(false)}
+              className="h-8 w-8 flex items-center justify-center rounded-md hover:bg-accent transition-colors"
+              aria-label="Close menu"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          <nav className="flex flex-col px-3 py-4 gap-1">
+            {navLinks.map((l) => (
+              <a
+                key={l.href}
+                href={l.href}
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center px-3 py-2.5 rounded-md text-sm hover:bg-accent transition-colors"
+              >
+                {l.label}
+              </a>
+            ))}
+            <Link
+              to="/blog"
+              onClick={() => setMenuOpen(false)}
+              className="flex items-center px-3 py-2.5 rounded-md text-sm hover:bg-accent transition-colors"
+            >
+              Blog
+            </Link>
+          </nav>
+          <div className="mt-auto px-3 pb-6 flex flex-col gap-2 border-t pt-4">
+            <Button variant="outline" asChild className="w-full" onClick={() => setMenuOpen(false)}>
+              <Link to="/auth">{t("sign_in")}</Link>
+            </Button>
+            <Button asChild className="w-full" onClick={() => setMenuOpen(false)}>
+              <Link to="/auth">{t("get_started")} <ArrowRight className="w-4 h-4 ms-2" /></Link>
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {/* Hero */}
       <section className="relative overflow-hidden">
