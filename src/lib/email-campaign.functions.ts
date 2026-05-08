@@ -28,17 +28,27 @@ export const sendEmailCampaign = createServerFn({ method: "POST" })
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
+    const SITE_NAME = "RewardArchitect";
+    const SENDER_DOMAIN = "notify.totalreward.app";
+    const FROM_DOMAIN = "totalreward.app";
+
     let queued = 0;
     const errors: string[] = [];
+    const messageIds: string[] = [];
     for (const r of data.recipients) {
       const messageId = `campaign-${data.templateKey}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
       const payload = {
         to: r.email,
+        from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
+        sender_domain: SENDER_DOMAIN,
         subject: data.subject,
         html: data.html,
         text: data.text || data.html.replace(/<[^>]+>/g, " "),
         message_id: messageId,
         label: data.templateKey,
+        purpose: "transactional",
+        idempotency_key: messageId,
+        queued_at: new Date().toISOString(),
         metadata: { recipient_name: r.name ?? null, locale: data.locale },
       };
       const { error: enqErr } = await supabase.rpc("enqueue_email", {
@@ -56,7 +66,8 @@ export const sendEmailCampaign = createServerFn({ method: "POST" })
         status: "pending",
         metadata: { campaign: true, locale: data.locale },
       });
+      messageIds.push(messageId);
       queued++;
     }
-    return { queued, failed: errors.length, errors: errors.slice(0, 10) };
+    return { queued, failed: errors.length, errors: errors.slice(0, 10), messageIds };
   });

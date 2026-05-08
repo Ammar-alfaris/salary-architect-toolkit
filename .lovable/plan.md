@@ -1,61 +1,46 @@
-## Goal
+# Fix email sending, recipient picker, and team invitations
 
-Finish the remaining Approval Flow polish:
+## Root causes (verified from DB + code)
 
-1. Always expose a clear way to reach the Approval Chains setup from any action toolbar (next to "Apply now").
-2. Replace the raw JSON `Textarea` in the "Edit and approve" dialog with a structured, human-readable editor.
+1. **"Queued but never sent"** — `email_send_log` shows every campaign send fails with:
+   `Email API error: 400 Missing run_id or idempotency_key — App emails can omit run_id by providing idempotency_key with purpose=transactional`.
+   `src/lib/email-campaign.functions.ts` enqueues a payload missing `purpose`, `idempotency_key`, `from`, and `sender_domain`. The queue processor forwards exactly what was enqueued, so Lovable's email API rejects every send.
+2. **No recipient picker** — `admin.emails.send.tsx` only renders an `<Input type="email">` for "Single recipient".
+3. **Invitations not emailed** — `app.team.tsx` only inserts a row into `pending_invitations`. Nothing ever calls Supabase Auth's invite API or queues an email, so the invitee never receives anything.
+4. **Org linking on accept already exists** — the `handle_new_user` trigger (migration `20260502144422`) already attaches a new signup to the inviter's org + role when `lower(email)` matches a pending invite. So once we actually send an invite email and the user signs up via that link, they land in the right org. No DB change needed.
 
-## 1. New "Set up approval chain" button next to Apply now
+## Changes
 
-File: `src/components/apply-or-approve.tsx`
+### 1. Fix transactional send payload (`src/lib/email-campaign.functions.ts`)
+Add the fields the auth hook already sets correctly:
+- `purpose: "transactional"`
+- `idempotency_key: messageId` (reuse the generated `message-id`)
+- `from: "<SITE_NAME> <noreply@totalreward.app>"`
+- `sender_domain: "notify.totalreward.app"`
+- `queued_at: new Date().toISOString()` (for TTL)
 
-- Render a third button next to `Apply now` / `Request approval`:
-  - Label: `t("setup_approval_chain")` (already exists, e.g. "تعيين سلسلة موافقات" / "Set up approval chain").
-  - Icon: `Settings` from lucide.
-  - `variant="outline"`, `size="sm"`.
-  - Uses `<Link to="/app/settings" search={{ tab: "approvals" }}>` so it deep-links straight into the Approvals tab in Settings.
-- Show this button to users who can manage settings (`perms.canAdmin` OR `perms.has("manager")`). For non-admins keep current behavior (no button).
-- Keep the existing fallback button that shows when `requireApproval && chains.length === 0` — but unify it to point to the same deep link (`/app/settings?tab=approvals`) using `search`.
+Constants will live alongside the function (matching the auth-hook values). After this fix, the existing queue processor + `email_send_log` already record `pending → sent / failed / dlq` correctly.
 
-## 2. Deep-link the Settings → Approvals tab
+### 2. Recipient picker + delivery status UI (`src/routes/admin.emails.send.tsx`)
+- When `audience === "single"`, fetch `profiles (id, email, full_name)` once and render a searchable `Command`/`Combobox` (shadcn `Command` inside `Popover`) with free-text fallback so admins can either pick an existing user or type a new address.
+- After `sendFn` returns, store the `message_id`s and poll `email_send_log` (filter by `message_id IN (...)`) every 3s for up to ~60s. Render a small status table under the composer: `recipient · status (pending/sent/failed/dlq) · error_message`. Stop polling when all rows are terminal.
+- Add an i18n string set (EN/AR) for the new labels (`pick_recipient`, `delivery_status`, `status_pending/sent/failed/dlq`).
 
-File: `src/routes/app.settings.tsx`
+### 3. Real invitation emails (`src/routes/app.team.tsx` + new server fn)
+- Create `src/lib/invitations.functions.ts` with `sendTeamInvitation` (`createServerFn`, POST):
+  - Inputs: `organizationId`, `email`, `role`.
+  - Uses `supabaseAdmin` (service role) to:
+    1. Verify the caller is an admin of `organizationId` via the request's bearer token (reuse `requireSupabaseAuth` middleware) — refuse otherwise.
+    2. Upsert `pending_invitations` row (so cancellation/resend stays idempotent on `(org, email)`).
+    3. Call `supabase.auth.admin.inviteUserByEmail(email, { redirectTo: "https://totalreward.app/auth?invited=1", data: { invited_org: organizationId, invited_role: role } })`. This triggers the auth-email-hook with `email_action_type=invite`, which already renders `InviteEmail` and queues it through the working auth pipeline.
+- `app.team.tsx → handleInvite` calls this server fn instead of inserting directly. Still shows the row in "Pending invitations". Show toast with success/failure from server.
+- Add a "Resend" button next to each pending invite that re-calls the same server fn.
 
-- Add `validateSearch` to the route to accept `tab?: "general" | "approvals" | ...`.
-- Use `Route.useSearch()` to initialize the `Tabs` `value`/`defaultValue` from the URL, and update URL on tab change with `useNavigate({ from: Route.fullPath })` + `search: { tab }` (replace: true).
-- This lets the new button land directly on the chain editor without extra clicks.
-
-## 3. Structured "Edit and approve" UI (replace raw JSON)
-
-File: `src/routes/app.approvals.tsx`
-
-Replace the `Textarea` JSON editor (lines ~196-201) with a structured renderer that mirrors how the payload is consumed by `applyApproved`:
-
-- Build a small helper `PayloadEditor({ entityType, payload, onChange })`:
-  - For `merit_cycle`: render a table of `recommendations` rows with editable numeric inputs:
-    columns: Employee (read-only `id`/name), Current base (read-only), Increase % (input), Increase amount (auto = base × pct), New salary (auto). Editing % recomputes amount + new salary.
-  - For `bonus_cycle`: render a table of `results` rows with: Employee, Base, Target %, Calculated bonus (input). Plus two top-level fields `bulkPerf`, `bulkBiz` as small numeric inputs.
-  - For `salary_structure` and any unknown type: fall back to a read-only key/value list using the existing `ApprovalDiff` component (before vs. proposed) plus per-key text inputs for primitive scalar values.
-- Maintain edits in component state as a typed object (not a string), and pass it directly into `recordDecision({ edits, finalPayload })`. No `JSON.parse` needed → no "Invalid JSON" failure mode.
-- Keep the `decision_note` textarea unchanged.
-- Dialog stays mobile-safe (`max-w-[95vw]`, `overflow-x-hidden`, inner table wrapped in `overflow-x-auto`).
-
-## 4. i18n
-
-File: `src/lib/i18n.tsx`
-
-Confirm/add keys (most exist already from previous work):
-- `setup_approval_chain` — AR: "تعيين سلسلة موافقات", EN: "Set up approval chain"
-- `edit_payload_help` — short helper line for the structured editor (AR + EN)
-- Column headers used by `PayloadEditor` (`employee`, `current_base`, `increase_percent`, `increase_amount`, `new_salary`, `target_percent`, `calculated_bonus`) — reuse existing keys where present, add only the missing ones.
+### 4. Acceptance flow
+No SQL change required — the existing `handle_new_user` trigger attaches the new auth user to the org + role from `pending_invitations` on first signup. We only need to make sure the invited user lands on `/auth` with the correct email pre-filled:
+- Light tweak in `src/routes/auth.tsx`: read `?invited=1` and `?email=` from the URL on mount, default the form to **Sign up** mode and pre-fill email. Supabase appends the invite token automatically; once the user sets a password, the trigger fires and they're routed into the inviting org's dashboard.
 
 ## Out of scope
-
-- No DB / RLS changes.
-- No new routes.
-- Self-approval blocking, chain validation, and mobile overflow fixes from the previous round are kept as-is.
-
-## Acceptance
-
-- On any action page (Merit / Bonus / Allowances / Structures), an admin/manager sees three buttons: `Apply now`, `Request approval` (or "Set up approval chain" when no valid chain), AND a persistent `Set up approval chain` link button that opens `/app/settings?tab=approvals` directly on the Approvals tab.
-- Approving with edits no longer shows raw JSON; the reviewer sees a clean table with editable numeric fields and saves a real object.
+- No new database tables / RLS changes.
+- No change to the auth email templates themselves (they already work — the auth pipeline shows `signup/recovery` rows as `sent` in the log).
+- No replacement of the queue processor; only the enqueue payload is fixed.

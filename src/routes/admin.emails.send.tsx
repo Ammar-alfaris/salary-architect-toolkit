@@ -28,16 +28,20 @@ function SendEmailPage() {
   const [single, setSingle] = useState("");
   const [role, setRole] = useState("user");
   const [recipients, setRecipients] = useState<{ email: string; name?: string }[]>([]);
+  const [allUsers, setAllUsers] = useState<{ id: string; email: string; full_name: string | null }[]>([]);
   const [subjectAr, setSubjectAr] = useState("");
   const [subjectEn, setSubjectEn] = useState("");
   const [bodyAr, setBodyAr] = useState("");
   const [bodyEn, setBodyEn] = useState("");
   const [locale, setLocale] = useState<"ar" | "en">("ar");
   const [sending, setSending] = useState(false);
+  const [statuses, setStatuses] = useState<Array<{ message_id: string; recipient_email: string; status: string; error_message: string | null }>>([]);
 
   useEffect(() => {
     supabase.from("email_templates").select("*").eq("enabled", true).order("display_name")
       .then(({ data }) => setTemplates((data as any) || []));
+    supabase.from("profiles").select("id, email, full_name").order("full_name")
+      .then(({ data }) => setAllUsers(((data as any[]) || []).filter((p) => !!p.email)));
   }, []);
 
   useEffect(() => {
@@ -53,22 +57,22 @@ function SendEmailPage() {
   useEffect(() => {
     (async () => {
       if (audience === "single") {
-        setRecipients(single.trim() ? [{ email: single.trim() }] : []);
+        const trimmed = single.trim();
+        if (!trimmed) return setRecipients([]);
+        const match = allUsers.find((u) => u.email.toLowerCase() === trimmed.toLowerCase());
+        setRecipients([{ email: trimmed, name: match?.full_name ?? undefined }]);
         return;
       }
-      let q = supabase.from("profiles").select("email, full_name");
-      const { data } = await q;
-      let rows = (data || []) as any[];
-      if (audience === "role") {
-        // Filter by role via user_roles join — fall back to all if no rows
-        const { data: ur } = await supabase.from("user_roles").select("user_id, role").eq("role", role as any);
-        const ids = new Set((ur || []).map((u: any) => u.user_id));
-        const { data: profs } = await supabase.from("profiles").select("id, email, full_name");
-        rows = (profs || []).filter((p: any) => ids.has(p.id));
+      if (audience === "all") {
+        setRecipients(allUsers.map((u) => ({ email: u.email, name: u.full_name ?? undefined })));
+        return;
       }
-      setRecipients(rows.map((r) => ({ email: r.email, name: r.full_name })).filter((r) => !!r.email));
+      // role
+      const { data: ur } = await supabase.from("user_roles").select("user_id, role").eq("role", role as any);
+      const ids = new Set((ur || []).map((u: any) => u.user_id));
+      setRecipients(allUsers.filter((u) => ids.has(u.id)).map((u) => ({ email: u.email, name: u.full_name ?? undefined })));
     })();
-  }, [audience, single, role]);
+  }, [audience, single, role, allUsers]);
 
   const previewHtml = useMemo(() => brandedWrap({
     subject: locale === "ar" ? subjectAr : subjectEn,
@@ -76,19 +80,48 @@ function SendEmailPage() {
     locale,
   }), [subjectAr, subjectEn, bodyAr, bodyEn, locale]);
 
+  // Poll delivery statuses for the most recent send
+  const pollStatuses = (ids: string[]) => {
+    if (!ids.length) return;
+    let attempts = 0;
+    const tick = async () => {
+      attempts++;
+      const { data } = await supabase
+        .from("email_send_log")
+        .select("message_id, recipient_email, status, error_message, created_at")
+        .in("message_id", ids)
+        .order("created_at", { ascending: false });
+      // Reduce to latest row per message_id
+      const latest = new Map<string, any>();
+      for (const row of (data || []) as any[]) {
+        if (!latest.has(row.message_id)) latest.set(row.message_id, row);
+      }
+      const rows = Array.from(latest.values());
+      setStatuses(rows);
+      const allDone = ids.every((id) => {
+        const r = latest.get(id);
+        return r && ["sent", "failed", "dlq", "suppressed", "bounced", "complained"].includes(r.status);
+      });
+      if (!allDone && attempts < 20) setTimeout(tick, 3000);
+    };
+    tick();
+  };
+
   const send = async () => {
     if (!recipients.length) return toast.error("No recipients");
     if (!confirm(`Send to ${recipients.length} recipient(s)?`)) return;
     setSending(true);
+    setStatuses([]);
     try {
       const subject = locale === "ar" ? subjectAr : subjectEn;
       const body = locale === "ar" ? bodyAr : bodyEn;
       const html = brandedWrap({ subject, bodyHtml: body, locale });
-      const res = await sendFn({ data: {
+      const res: any = await sendFn({ data: {
         templateKey: tplKey, subject, html, locale,
         recipients: recipients.map((r) => ({ email: r.email, name: r.name ?? null })),
       } as any });
       toast.success(`Queued ${res.queued} email(s)${res.failed ? `, ${res.failed} failed` : ""}`);
+      if (Array.isArray(res.messageIds)) pollStatuses(res.messageIds);
     } catch (e: any) {
       toast.error(e.message || "Failed to send");
     } finally { setSending(false); }
@@ -125,8 +158,22 @@ function SendEmailPage() {
             </div>
 
             {audience === "single" && (
-              <div className="space-y-1.5"><Label>Email address</Label>
-                <Input type="email" value={single} onChange={(e) => setSingle(e.target.value)} placeholder="user@example.com" /></div>
+              <div className="space-y-1.5">
+                <Label>Recipient</Label>
+                <Input
+                  type="email"
+                  list="all-users-emails"
+                  value={single}
+                  onChange={(e) => setSingle(e.target.value)}
+                  placeholder="Pick a user or type any email…"
+                />
+                <datalist id="all-users-emails">
+                  {allUsers.map((u) => (
+                    <option key={u.id} value={u.email}>{u.full_name ? `${u.full_name} — ${u.email}` : u.email}</option>
+                  ))}
+                </datalist>
+                <p className="text-xs text-muted-foreground">{allUsers.length} known users. You can also type a custom address.</p>
+              </div>
             )}
             {audience === "role" && (
               <div className="space-y-1.5"><Label>Role</Label>
@@ -168,6 +215,28 @@ function SendEmailPage() {
                 <Send className="w-4 h-4 me-1" /> {sending ? "Sending…" : `Send to ${recipients.length}`}
               </Button>
             </div>
+
+            {statuses.length > 0 && (
+              <div className="space-y-2 pt-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Delivery status</Label>
+                <div className="border rounded-md divide-y text-xs">
+                  {statuses.map((s) => (
+                    <div key={s.message_id} className="flex items-start justify-between gap-2 px-3 py-2">
+                      <div className="min-w-0">
+                        <div className="font-medium truncate">{s.recipient_email}</div>
+                        {s.error_message && <div className="text-destructive text-[11px] mt-0.5 break-words">{s.error_message}</div>}
+                      </div>
+                      <span className={
+                        "shrink-0 rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide " +
+                        (s.status === "sent" ? "bg-success/15 text-success" :
+                         s.status === "pending" ? "bg-muted text-muted-foreground" :
+                         "bg-destructive/15 text-destructive")
+                      }>{s.status}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 

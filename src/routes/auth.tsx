@@ -30,8 +30,13 @@ function AuthPage() {
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) navigate({ to: "/app" });
     });
-    if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("confirmed") === "1") {
-      toast.success(t("email_confirmed_signin"));
+    if (typeof window !== "undefined") {
+      const sp = new URLSearchParams(window.location.search);
+      if (sp.get("confirmed") === "1") toast.success(t("email_confirmed_signin"));
+      const invited = sp.get("invited");
+      const invitedEmail = sp.get("email");
+      if (invitedEmail) setEmail(invitedEmail);
+      if (invited === "1") setTab("signup");
     }
   }, [navigate, t]);
 

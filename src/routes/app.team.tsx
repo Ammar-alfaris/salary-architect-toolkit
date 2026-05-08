@@ -17,8 +17,10 @@ import { useI18n } from "@/lib/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { usePermissions, type AppRole } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
-import { UserPlus, Trash2, Mail, ShieldCheck, ShieldAlert, Check, X } from "lucide-react";
+import { UserPlus, Trash2, Mail, ShieldCheck, ShieldAlert, Check, X, Send } from "lucide-react";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { sendTeamInvitation } from "@/lib/invitations.functions";
 
 export const Route = createFileRoute("/app/team")({ component: TeamPage });
 
@@ -37,12 +39,14 @@ function TeamPage() {
   const { organizationId, user } = useAuth();
   const { t, locale } = useI18n();
   const perms = usePermissions();
+  const inviteFn = useServerFn(sendTeamInvitation);
   const [members, setMembers] = useState<any[]>([]);
   const [invites, setInvites] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<AppRole>("analyst");
+  const [inviting, setInviting] = useState(false);
 
   const load = async () => {
     if (!organizationId) return;
@@ -68,23 +72,35 @@ function TeamPage() {
   const handleInvite = async () => {
     if (!organizationId || !user) return;
     if (!inviteEmail.trim()) return toast.error(t("invite_email"));
-    const { error } = await supabase.from("pending_invitations").insert({
-      organization_id: organizationId,
-      email: inviteEmail.trim().toLowerCase(),
-      role: inviteRole,
-      invited_by: user.id,
-      invited_by_email: user.email ?? null,
-    });
-    if (error) return toast.error(error.message);
-    toast.success(t("invite_sent"));
-    await logAudit({
-      organizationId, action: "create", entityType: "invitation",
-      entityLabel: `${inviteEmail} as ${inviteRole}`,
-    });
-    setOpen(false);
-    setInviteEmail("");
-    setInviteRole("analyst");
-    load();
+    setInviting(true);
+    try {
+      const origin = typeof window !== "undefined" ? window.location.origin : undefined;
+      const res: any = await inviteFn({ data: { organizationId, email: inviteEmail.trim().toLowerCase(), role: inviteRole, redirectOrigin: origin } });
+      toast.success(res?.alreadyRegistered ? t("invite_resent_existing") : t("invite_sent"));
+      await logAudit({
+        organizationId, action: "create", entityType: "invitation",
+        entityLabel: `${inviteEmail} as ${inviteRole}`,
+      });
+      setOpen(false);
+      setInviteEmail("");
+      setInviteRole("analyst");
+      load();
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to send invitation");
+    } finally {
+      setInviting(false);
+    }
+  };
+
+  const handleResendInvite = async (email: string, role: AppRole) => {
+    if (!organizationId) return;
+    try {
+      const origin = typeof window !== "undefined" ? window.location.origin : undefined;
+      await inviteFn({ data: { organizationId, email, role, redirectOrigin: origin } });
+      toast.success(t("invite_sent"));
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to resend");
+    }
   };
 
   const handleRoleChange = async (rowId: string, newRole: AppRole, label: string) => {
@@ -155,7 +171,7 @@ function TeamPage() {
                 </div>
                 <DialogFooter>
                   <Button variant="ghost" onClick={() => setOpen(false)}>{t("cancel")}</Button>
-                  <Button onClick={handleInvite}>{t("invite_member")}</Button>
+                  <Button onClick={handleInvite} disabled={inviting}>{inviting ? t("loading") : t("invite_member")}</Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
@@ -296,9 +312,14 @@ function TeamPage() {
                     </div>
                   </div>
                   {perms.canAdmin && (
-                    <Button size="sm" variant="ghost" onClick={() => handleCancelInvite(inv.id, inv.email)}>
-                      <Trash2 className="w-4 h-4 text-destructive" />
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      <Button size="sm" variant="ghost" onClick={() => handleResendInvite(inv.email, inv.role)} title={t("resend_invite")}>
+                        <Send className="w-4 h-4" />
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => handleCancelInvite(inv.id, inv.email)}>
+                        <Trash2 className="w-4 h-4 text-destructive" />
+                      </Button>
+                    </div>
                   )}
                 </div>
               ))}
