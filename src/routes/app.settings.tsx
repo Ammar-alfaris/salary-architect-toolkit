@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
@@ -16,13 +16,25 @@ import { ApprovalChainEditor } from "@/components/approval-chain-editor";
 import { usePermissions } from "@/lib/rbac";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/app/settings")({ component: SettingsPage });
+type SettingsTab = "org" | "defaults" | "approvals" | "locale";
+const VALID_TABS: SettingsTab[] = ["org", "defaults", "approvals", "locale"];
+
+export const Route = createFileRoute("/app/settings")({
+  validateSearch: (search: Record<string, unknown>): { tab?: SettingsTab } => {
+    const t = search.tab;
+    return { tab: typeof t === "string" && (VALID_TABS as string[]).includes(t) ? (t as SettingsTab) : undefined };
+  },
+  component: SettingsPage,
+});
 
 function SettingsPage() {
   const { organizationId, refreshOrg } = useAuth();
   const { t, locale, setLocale } = useI18n();
   const { theme, toggle } = useTheme();
   const perms = usePermissions();
+  const search = Route.useSearch();
+  const navigate = useNavigate({ from: Route.fullPath });
+  const tab: SettingsTab = search.tab ?? "org";
   const [org, setOrg] = useState<any>(null);
   const [name, setName] = useState("");
   const [currency, setCurrency] = useState("USD");
@@ -64,7 +76,7 @@ function SettingsPage() {
     <div>
       <PageHeader title={t("settings")} subtitle={t("settings_subtitle")} />
       <div className="p-4 md:p-6" dir={locale === "ar" ? "rtl" : "ltr"}>
-        <Tabs defaultValue="org" className="max-w-3xl">
+        <Tabs value={tab} onValueChange={(v) => navigate({ search: { tab: v as SettingsTab }, replace: true })} className="max-w-3xl">
           <TabsList className="justify-start">
             <TabsTrigger value="org">{t("organization")}</TabsTrigger>
             <TabsTrigger value="defaults">{t("defaults")}</TabsTrigger>
