@@ -72,23 +72,35 @@ function TeamPage() {
   const handleInvite = async () => {
     if (!organizationId || !user) return;
     if (!inviteEmail.trim()) return toast.error(t("invite_email"));
-    const { error } = await supabase.from("pending_invitations").insert({
-      organization_id: organizationId,
-      email: inviteEmail.trim().toLowerCase(),
-      role: inviteRole,
-      invited_by: user.id,
-      invited_by_email: user.email ?? null,
-    });
-    if (error) return toast.error(error.message);
-    toast.success(t("invite_sent"));
-    await logAudit({
-      organizationId, action: "create", entityType: "invitation",
-      entityLabel: `${inviteEmail} as ${inviteRole}`,
-    });
-    setOpen(false);
-    setInviteEmail("");
-    setInviteRole("analyst");
-    load();
+    setInviting(true);
+    try {
+      const origin = typeof window !== "undefined" ? window.location.origin : undefined;
+      const res: any = await inviteFn({ data: { organizationId, email: inviteEmail.trim().toLowerCase(), role: inviteRole, redirectOrigin: origin } });
+      toast.success(res?.alreadyRegistered ? t("invite_resent_existing") : t("invite_sent"));
+      await logAudit({
+        organizationId, action: "create", entityType: "invitation",
+        entityLabel: `${inviteEmail} as ${inviteRole}`,
+      });
+      setOpen(false);
+      setInviteEmail("");
+      setInviteRole("analyst");
+      load();
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to send invitation");
+    } finally {
+      setInviting(false);
+    }
+  };
+
+  const handleResendInvite = async (email: string, role: AppRole) => {
+    if (!organizationId) return;
+    try {
+      const origin = typeof window !== "undefined" ? window.location.origin : undefined;
+      await inviteFn({ data: { organizationId, email, role, redirectOrigin: origin } });
+      toast.success(t("invite_sent"));
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to resend");
+    }
   };
 
   const handleRoleChange = async (rowId: string, newRole: AppRole, label: string) => {
