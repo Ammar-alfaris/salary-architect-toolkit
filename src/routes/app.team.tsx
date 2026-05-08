@@ -171,7 +171,7 @@ function TeamPage() {
                 </div>
                 <DialogFooter>
                   <Button variant="ghost" onClick={() => setOpen(false)}>{t("cancel")}</Button>
-                  <Button onClick={handleInvite}>{t("invite_member")}</Button>
+                  <Button onClick={handleInvite} disabled={inviting}>{inviting ? t("loading") : t("invite_member")}</Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
