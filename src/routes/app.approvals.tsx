@@ -56,17 +56,14 @@ function ApprovalsPage() {
   const openAction = (req: any, action: DecisionAction) => {
     setActive({ req, action });
     setNote("");
-    setEditsText(JSON.stringify(req.final_payload ?? req.proposed_payload ?? {}, null, 2));
+    const base = req.final_payload ?? req.proposed_payload ?? {};
+    setEditsObj(JSON.parse(JSON.stringify(base)));
   };
 
   const submit = async () => {
     if (!active) return;
     try {
-      let finalPayload: any | undefined;
-      if (active.action === "edited") {
-        try { finalPayload = JSON.parse(editsText); }
-        catch { toast.error("Invalid JSON"); return; }
-      }
+      const finalPayload = active.action === "edited" ? editsObj : undefined;
       await recordDecision({
         requestId: active.req.id,
         decision: active.action,
