@@ -57,22 +57,22 @@ function SendEmailPage() {
   useEffect(() => {
     (async () => {
       if (audience === "single") {
-        setRecipients(single.trim() ? [{ email: single.trim() }] : []);
+        const trimmed = single.trim();
+        if (!trimmed) return setRecipients([]);
+        const match = allUsers.find((u) => u.email.toLowerCase() === trimmed.toLowerCase());
+        setRecipients([{ email: trimmed, name: match?.full_name ?? undefined }]);
         return;
       }
-      let q = supabase.from("profiles").select("email, full_name");
-      const { data } = await q;
-      let rows = (data || []) as any[];
-      if (audience === "role") {
-        // Filter by role via user_roles join — fall back to all if no rows
-        const { data: ur } = await supabase.from("user_roles").select("user_id, role").eq("role", role as any);
-        const ids = new Set((ur || []).map((u: any) => u.user_id));
-        const { data: profs } = await supabase.from("profiles").select("id, email, full_name");
-        rows = (profs || []).filter((p: any) => ids.has(p.id));
+      if (audience === "all") {
+        setRecipients(allUsers.map((u) => ({ email: u.email, name: u.full_name ?? undefined })));
+        return;
       }
-      setRecipients(rows.map((r) => ({ email: r.email, name: r.full_name })).filter((r) => !!r.email));
+      // role
+      const { data: ur } = await supabase.from("user_roles").select("user_id, role").eq("role", role as any);
+      const ids = new Set((ur || []).map((u: any) => u.user_id));
+      setRecipients(allUsers.filter((u) => ids.has(u.id)).map((u) => ({ email: u.email, name: u.full_name ?? undefined })));
     })();
-  }, [audience, single, role]);
+  }, [audience, single, role, allUsers]);
 
   const previewHtml = useMemo(() => brandedWrap({
     subject: locale === "ar" ? subjectAr : subjectEn,
@@ -80,19 +80,48 @@ function SendEmailPage() {
     locale,
   }), [subjectAr, subjectEn, bodyAr, bodyEn, locale]);
 
+  // Poll delivery statuses for the most recent send
+  const pollStatuses = (ids: string[]) => {
+    if (!ids.length) return;
+    let attempts = 0;
+    const tick = async () => {
+      attempts++;
+      const { data } = await supabase
+        .from("email_send_log")
+        .select("message_id, recipient_email, status, error_message, created_at")
+        .in("message_id", ids)
+        .order("created_at", { ascending: false });
+      // Reduce to latest row per message_id
+      const latest = new Map<string, any>();
+      for (const row of (data || []) as any[]) {
+        if (!latest.has(row.message_id)) latest.set(row.message_id, row);
+      }
+      const rows = Array.from(latest.values());
+      setStatuses(rows);
+      const allDone = ids.every((id) => {
+        const r = latest.get(id);
+        return r && ["sent", "failed", "dlq", "suppressed", "bounced", "complained"].includes(r.status);
+      });
+      if (!allDone && attempts < 20) setTimeout(tick, 3000);
+    };
+    tick();
+  };
+
   const send = async () => {
     if (!recipients.length) return toast.error("No recipients");
     if (!confirm(`Send to ${recipients.length} recipient(s)?`)) return;
     setSending(true);
+    setStatuses([]);
     try {
       const subject = locale === "ar" ? subjectAr : subjectEn;
       const body = locale === "ar" ? bodyAr : bodyEn;
       const html = brandedWrap({ subject, bodyHtml: body, locale });
-      const res = await sendFn({ data: {
+      const res: any = await sendFn({ data: {
         templateKey: tplKey, subject, html, locale,
         recipients: recipients.map((r) => ({ email: r.email, name: r.name ?? null })),
       } as any });
       toast.success(`Queued ${res.queued} email(s)${res.failed ? `, ${res.failed} failed` : ""}`);
+      if (Array.isArray(res.messageIds)) pollStatuses(res.messageIds);
     } catch (e: any) {
       toast.error(e.message || "Failed to send");
     } finally { setSending(false); }
