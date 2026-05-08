@@ -92,7 +92,7 @@ function ContactPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-background" dir={ar ? "rtl" : "ltr"}>
+    <div className="min-h-screen bg-background" style={{ direction: ar ? "rtl" : "ltr" }} suppressHydrationWarning>
       <header className="border-b bg-card/60 backdrop-blur sticky top-0 z-30">
         <div className="container mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2">
           <Link to="/">
@@ -182,7 +182,6 @@ function ContactPage() {
                   onChange={handleChange}
                   placeholder={t("contact_form_name_placeholder")}
                   required
-                  dir={ar ? "rtl" : "ltr"}
                 />
               </div>
               <div>
@@ -194,7 +193,6 @@ function ContactPage() {
                   onChange={handleChange}
                   placeholder={t("contact_form_email_placeholder")}
                   required
-                  dir={ar ? "rtl" : "ltr"}
                 />
               </div>
             </div>
@@ -208,7 +206,6 @@ function ContactPage() {
                 onChange={handleChange}
                 placeholder={t("contact_form_subject_placeholder")}
                 required
-                dir={ar ? "rtl" : "ltr"}
               />
             </div>
 
@@ -221,7 +218,6 @@ function ContactPage() {
                 placeholder={t("contact_form_message_placeholder")}
                 required
                 rows={6}
-                dir={ar ? "rtl" : "ltr"}
               />
             </div>
 
