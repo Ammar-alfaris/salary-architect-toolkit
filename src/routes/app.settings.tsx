@@ -73,7 +73,7 @@ function SettingsPage() {
     <div>
       <PageHeader title={t("settings")} subtitle={t("settings_subtitle")} />
       <div className="p-4 md:p-6" dir={locale === "ar" ? "rtl" : "ltr"}>
-        <Tabs defaultValue="org" className="max-w-3xl">
+        <Tabs value={tab} onValueChange={(v) => navigate({ search: { tab: v as SettingsTab }, replace: true })} className="max-w-3xl">
           <TabsList className="justify-start">
             <TabsTrigger value="org">{t("organization")}</TabsTrigger>
             <TabsTrigger value="defaults">{t("defaults")}</TabsTrigger>
