@@ -2,6 +2,38 @@ import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 
+async function getOrCreateUnsubscribeToken(supabase: ReturnType<typeof createClient>, email: string) {
+  const normalizedEmail = email.trim().toLowerCase();
+
+  const { data: existing, error: existingError } = await supabase
+    .from("email_unsubscribe_tokens")
+    .select("token")
+    .eq("email", normalizedEmail)
+    .maybeSingle();
+
+  if (existingError) throw existingError;
+  if (existing?.token) return existing.token;
+
+  const token = crypto.randomUUID();
+  const { error: insertError } = await supabase.from("email_unsubscribe_tokens").insert({
+    email: normalizedEmail,
+    token,
+  });
+
+  if (!insertError) return token;
+
+  const { data: retryExisting, error: retryError } = await supabase
+    .from("email_unsubscribe_tokens")
+    .select("token")
+    .eq("email", normalizedEmail)
+    .maybeSingle();
+
+  if (retryError) throw retryError;
+  if (retryExisting?.token) return retryExisting.token;
+
+  throw insertError;
+}
+
 const RecipientSchema = z.object({
   email: z.string().email(),
   name: z.string().nullable().optional(),
@@ -37,6 +69,7 @@ export const sendEmailCampaign = createServerFn({ method: "POST" })
     const messageIds: string[] = [];
     for (const r of data.recipients) {
       const messageId = `campaign-${data.templateKey}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+      const unsubscribeToken = await getOrCreateUnsubscribeToken(supabase, r.email);
       const payload = {
         to: r.email,
         from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
@@ -48,6 +81,7 @@ export const sendEmailCampaign = createServerFn({ method: "POST" })
         label: data.templateKey,
         purpose: "transactional",
         idempotency_key: messageId,
+        unsubscribe_token: unsubscribeToken,
         queued_at: new Date().toISOString(),
         metadata: { recipient_name: r.name ?? null, locale: data.locale },
       };
