@@ -71,6 +71,15 @@ export function ApplyOrApprove({ entityType, entityKey, entityId, entityLabel, p
     }
   };
 
+  const canManageChains = perms.canAdmin || perms.has("manager");
+  const setupChainLink = (
+    <Button asChild size="sm" variant="outline">
+      <Link to="/app/settings" search={{ tab: "approvals" }}>
+        <SettingsIcon className="w-4 h-4 me-1" /> {t("setup_approval_chain")}
+      </Link>
+    </Button>
+  );
+
   return (
     <div className="flex flex-wrap items-center gap-2">
       {requireApproval && !canApplyDirect && (
@@ -83,15 +92,12 @@ export function ApplyOrApprove({ entityType, entityKey, entityId, entityLabel, p
           <CheckCircle2 className="w-4 h-4 me-1" /> {applyLabel ?? t("apply_now")}
         </Button>
       )}
-      {requireApproval && chains.length === 0 ? (
-        <Button asChild size="sm" variant="outline">
-          <Link to="/app/settings"><SettingsIcon className="w-4 h-4 me-1" /> {t("setup_approval_chain")}</Link>
-        </Button>
-      ) : chains.length > 0 ? (
+      {chains.length > 0 && (
         <Button size="sm" variant="outline" onClick={() => setOpen(true)} disabled={!entityId}>
           <Send className="w-4 h-4 me-1" /> {t("request_approval")}
         </Button>
-      ) : null}
+      )}
+      {canManageChains && setupChainLink}
 
       {requireApproval && chains.length === 0 && (
         <span className="w-full text-xs text-muted-foreground">
