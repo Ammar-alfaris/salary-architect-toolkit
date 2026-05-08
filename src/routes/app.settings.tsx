@@ -16,7 +16,16 @@ import { ApprovalChainEditor } from "@/components/approval-chain-editor";
 import { usePermissions } from "@/lib/rbac";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/app/settings")({ component: SettingsPage });
+type SettingsTab = "org" | "defaults" | "approvals" | "locale";
+const VALID_TABS: SettingsTab[] = ["org", "defaults", "approvals", "locale"];
+
+export const Route = createFileRoute("/app/settings")({
+  validateSearch: (search: Record<string, unknown>): { tab?: SettingsTab } => {
+    const t = search.tab;
+    return { tab: typeof t === "string" && (VALID_TABS as string[]).includes(t) ? (t as SettingsTab) : undefined };
+  },
+  component: SettingsPage,
+});
 
 function SettingsPage() {
   const { organizationId, refreshOrg } = useAuth();
