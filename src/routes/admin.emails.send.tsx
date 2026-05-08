@@ -28,12 +28,14 @@ function SendEmailPage() {
   const [single, setSingle] = useState("");
   const [role, setRole] = useState("user");
   const [recipients, setRecipients] = useState<{ email: string; name?: string }[]>([]);
+  const [allUsers, setAllUsers] = useState<{ id: string; email: string; full_name: string | null }[]>([]);
   const [subjectAr, setSubjectAr] = useState("");
   const [subjectEn, setSubjectEn] = useState("");
   const [bodyAr, setBodyAr] = useState("");
   const [bodyEn, setBodyEn] = useState("");
   const [locale, setLocale] = useState<"ar" | "en">("ar");
   const [sending, setSending] = useState(false);
+  const [statuses, setStatuses] = useState<Array<{ message_id: string; recipient_email: string; status: string; error_message: string | null }>>([]);
 
   useEffect(() => {
     supabase.from("email_templates").select("*").eq("enabled", true).order("display_name")
