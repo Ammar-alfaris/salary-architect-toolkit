@@ -191,10 +191,7 @@ function ApprovalsPage() {
           </DialogHeader>
           <div className="space-y-3">
             {active?.action === "edited" && (
-              <div className="space-y-1.5">
-                <label className="text-xs text-muted-foreground">Final payload (JSON)</label>
-                <Textarea value={editsText} onChange={(e) => setEditsText(e.target.value)} rows={10} className="font-mono text-xs" />
-              </div>
+              <PayloadEditor entityType={active.req.entity_type} value={editsObj} onChange={setEditsObj} />
             )}
             <div className="space-y-1.5">
               <label className="text-xs text-muted-foreground">{t("decision_note")}</label>
