@@ -32,6 +32,9 @@ function SettingsPage() {
   const { t, locale, setLocale } = useI18n();
   const { theme, toggle } = useTheme();
   const perms = usePermissions();
+  const search = Route.useSearch();
+  const navigate = useNavigate({ from: Route.fullPath });
+  const tab: SettingsTab = search.tab ?? "org";
   const [org, setOrg] = useState<any>(null);
   const [name, setName] = useState("");
   const [currency, setCurrency] = useState("USD");
