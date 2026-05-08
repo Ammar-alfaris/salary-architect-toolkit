@@ -17,8 +17,10 @@ import { useI18n } from "@/lib/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { usePermissions, type AppRole } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
-import { UserPlus, Trash2, Mail, ShieldCheck, ShieldAlert, Check, X } from "lucide-react";
+import { UserPlus, Trash2, Mail, ShieldCheck, ShieldAlert, Check, X, Send } from "lucide-react";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { sendTeamInvitation } from "@/lib/invitations.functions";
 
 export const Route = createFileRoute("/app/team")({ component: TeamPage });
 
