@@ -66,7 +66,8 @@ export const sendEmailCampaign = createServerFn({ method: "POST" })
         status: "pending",
         metadata: { campaign: true, locale: data.locale },
       });
+      messageIds.push(messageId);
       queued++;
     }
-    return { queued, failed: errors.length, errors: errors.slice(0, 10) };
+    return { queued, failed: errors.length, errors: errors.slice(0, 10), messageIds };
   });
