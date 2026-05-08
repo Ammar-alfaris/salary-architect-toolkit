@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 
-async function getOrCreateUnsubscribeToken(supabase: ReturnType<typeof createClient>, email: string) {
+async function getOrCreateUnsubscribeToken(supabase: any, email: string) {
   const normalizedEmail = email.trim().toLowerCase();
 
   const { data: existing, error: existingError } = await supabase
@@ -12,7 +12,7 @@ async function getOrCreateUnsubscribeToken(supabase: ReturnType<typeof createCli
     .maybeSingle();
 
   if (existingError) throw existingError;
-  if (existing?.token) return existing.token;
+  if ((existing as { token?: string } | null)?.token) return (existing as { token: string }).token;
 
   const token = crypto.randomUUID();
   const { error: insertError } = await supabase.from("email_unsubscribe_tokens").insert({
@@ -29,7 +29,7 @@ async function getOrCreateUnsubscribeToken(supabase: ReturnType<typeof createCli
     .maybeSingle();
 
   if (retryError) throw retryError;
-  if (retryExisting?.token) return retryExisting.token;
+  if ((retryExisting as { token?: string } | null)?.token) return (retryExisting as { token: string }).token;
 
   throw insertError;
 }
