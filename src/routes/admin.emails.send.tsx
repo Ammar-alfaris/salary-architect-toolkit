@@ -215,6 +215,28 @@ function SendEmailPage() {
                 <Send className="w-4 h-4 me-1" /> {sending ? "Sending…" : `Send to ${recipients.length}`}
               </Button>
             </div>
+
+            {statuses.length > 0 && (
+              <div className="space-y-2 pt-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Delivery status</Label>
+                <div className="border rounded-md divide-y text-xs">
+                  {statuses.map((s) => (
+                    <div key={s.message_id} className="flex items-start justify-between gap-2 px-3 py-2">
+                      <div className="min-w-0">
+                        <div className="font-medium truncate">{s.recipient_email}</div>
+                        {s.error_message && <div className="text-destructive text-[11px] mt-0.5 break-words">{s.error_message}</div>}
+                      </div>
+                      <span className={
+                        "shrink-0 rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide " +
+                        (s.status === "sent" ? "bg-success/15 text-success" :
+                         s.status === "pending" ? "bg-muted text-muted-foreground" :
+                         "bg-destructive/15 text-destructive")
+                      }>{s.status}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
