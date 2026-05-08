@@ -34,7 +34,7 @@ function ApprovalsPage() {
   const [tab, setTab] = useState("pending");
   const [active, setActive] = useState<{ req: any; action: DecisionAction } | null>(null);
   const [note, setNote] = useState("");
-  const [editsText, setEditsText] = useState("");
+  const [editsObj, setEditsObj] = useState<Record<string, any>>({});
   const [diffReq, setDiffReq] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
 
