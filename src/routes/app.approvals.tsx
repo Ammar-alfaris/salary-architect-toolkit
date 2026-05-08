@@ -301,3 +301,145 @@ function StatusBadge({ status }: { status: string }) {
     </span>
   );
 }
+
+function num(v: any) {
+  const n = typeof v === "number" ? v : parseFloat(v);
+  return isFinite(n) ? n : 0;
+}
+
+function PayloadEditor({ entityType, value, onChange }: {
+  entityType: ApprovalEntity;
+  value: Record<string, any>;
+  onChange: (v: Record<string, any>) => void;
+}) {
+  const { t } = useI18n();
+
+  if (entityType === "merit_cycle") {
+    const recs: any[] = Array.isArray(value.recommendations) ? value.recommendations : [];
+    const updateRec = (i: number, patch: any) => {
+      const next = recs.map((r, idx) => {
+        if (idx !== i) return r;
+        const merged = { ...r, ...patch };
+        if (patch.pct !== undefined) {
+          const pct = num(patch.pct);
+          const base = num(merged.base);
+          merged.pct = pct;
+          merged.increase = +(base * pct / 100).toFixed(2);
+          merged.newSalary = +(base + merged.increase).toFixed(2);
+        }
+        return merged;
+      });
+      onChange({ ...value, recommendations: next });
+    };
+    return (
+      <div className="space-y-2">
+        <p className="text-xs text-muted-foreground">{t("edit_payload_help")}</p>
+        <div className="overflow-x-auto rounded-md border">
+          <table className="w-full text-xs">
+            <thead className="bg-muted/40">
+              <tr className="text-left">
+                <th className="p-2">{t("employee")}</th>
+                <th className="p-2">{t("current_base") || "Base"}</th>
+                <th className="p-2">{t("increase_percent") || "%"}</th>
+                <th className="p-2">{t("increase_amount")}</th>
+                <th className="p-2">{t("new_salary")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {recs.map((r, i) => (
+                <tr key={r.id ?? i} className="border-t">
+                  <td className="p-2 break-all">{r.name ?? r.id}</td>
+                  <td className="p-2">{num(r.base).toLocaleString()}</td>
+                  <td className="p-2 w-24">
+                    <Input type="number" step="0.1" value={r.pct ?? 0} onChange={(e) => updateRec(i, { pct: e.target.value })} className="h-8" />
+                  </td>
+                  <td className="p-2">{num(r.increase).toLocaleString()}</td>
+                  <td className="p-2 font-medium">{num(r.newSalary).toLocaleString()}</td>
+                </tr>
+              ))}
+              {recs.length === 0 && (
+                <tr><td colSpan={5} className="p-4 text-center text-muted-foreground">—</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  }
+
+  if (entityType === "bonus_cycle") {
+    const results: any[] = Array.isArray(value.results) ? value.results : [];
+    const updateRow = (i: number, patch: any) => {
+      const next = results.map((r, idx) => idx === i ? { ...r, ...patch } : r);
+      onChange({ ...value, results: next });
+    };
+    return (
+      <div className="space-y-3">
+        <p className="text-xs text-muted-foreground">{t("edit_payload_help")}</p>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label className="text-xs">Performance ×</Label>
+            <Input type="number" step="0.05" value={value.bulkPerf ?? 1} onChange={(e) => onChange({ ...value, bulkPerf: num(e.target.value) })} className="h-8" />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Business ×</Label>
+            <Input type="number" step="0.05" value={value.bulkBiz ?? 1} onChange={(e) => onChange({ ...value, bulkBiz: num(e.target.value) })} className="h-8" />
+          </div>
+        </div>
+        <div className="overflow-x-auto rounded-md border">
+          <table className="w-full text-xs">
+            <thead className="bg-muted/40">
+              <tr className="text-left">
+                <th className="p-2">{t("employee")}</th>
+                <th className="p-2">Base</th>
+                <th className="p-2">Target %</th>
+                <th className="p-2">{t("calculated_bonus") || "Bonus"}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {results.map((r, i) => (
+                <tr key={r.id ?? i} className="border-t">
+                  <td className="p-2 break-all">{r.name ?? r.id}</td>
+                  <td className="p-2">{num(r.base).toLocaleString()}</td>
+                  <td className="p-2">{num(r.target)}</td>
+                  <td className="p-2 w-32">
+                    <Input type="number" step="1" value={r.bonus ?? 0} onChange={(e) => updateRow(i, { bonus: num(e.target.value) })} className="h-8" />
+                  </td>
+                </tr>
+              ))}
+              {results.length === 0 && (
+                <tr><td colSpan={4} className="p-4 text-center text-muted-foreground">—</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  }
+
+  // Fallback: scalar key/value editor
+  const entries = Object.entries(value ?? {});
+  return (
+    <div className="space-y-2">
+      <p className="text-xs text-muted-foreground">{t("edit_payload_help")}</p>
+      {entries.length === 0 && <p className="text-xs text-muted-foreground">—</p>}
+      {entries.map(([k, v]) => {
+        const isScalar = v === null || ["string", "number", "boolean"].includes(typeof v);
+        return (
+          <div key={k} className="grid grid-cols-3 gap-2 items-center">
+            <Label className="text-xs col-span-1 break-all">{k}</Label>
+            {isScalar ? (
+              <Input
+                className="h-8 col-span-2"
+                value={v == null ? "" : String(v)}
+                onChange={(e) => onChange({ ...value, [k]: typeof v === "number" ? num(e.target.value) : e.target.value })}
+              />
+            ) : (
+              <code className="text-[11px] col-span-2 block bg-muted/40 rounded px-2 py-1 break-all">{JSON.stringify(v)}</code>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
