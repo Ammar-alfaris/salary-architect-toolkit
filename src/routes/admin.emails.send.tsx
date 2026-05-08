@@ -40,6 +40,8 @@ function SendEmailPage() {
   useEffect(() => {
     supabase.from("email_templates").select("*").eq("enabled", true).order("display_name")
       .then(({ data }) => setTemplates((data as any) || []));
+    supabase.from("profiles").select("id, email, full_name").order("full_name")
+      .then(({ data }) => setAllUsers(((data as any[]) || []).filter((p) => !!p.email)));
   }, []);
 
   useEffect(() => {
