@@ -39,12 +39,14 @@ function TeamPage() {
   const { organizationId, user } = useAuth();
   const { t, locale } = useI18n();
   const perms = usePermissions();
+  const inviteFn = useServerFn(sendTeamInvitation);
   const [members, setMembers] = useState<any[]>([]);
   const [invites, setInvites] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<AppRole>("analyst");
+  const [inviting, setInviting] = useState(false);
 
   const load = async () => {
     if (!organizationId) return;
