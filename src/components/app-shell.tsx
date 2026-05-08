@@ -14,6 +14,9 @@ import {
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  Sheet, SheetContent,
+} from "@/components/ui/sheet";
 import { useEffect, useMemo, useState } from "react";
 import { Logo } from "@/components/logo";
 
@@ -88,7 +91,6 @@ function NavList({ path, onNavigate }: { path: string; onNavigate?: () => void }
     <div className="space-y-1">
       {GROUPS.map((g) => {
         const GIcon = g.icon;
-        // Single-item groups render as flat link
         if (g.items.length === 1) {
           const it = g.items[0];
           const Icon = it.icon;
@@ -137,6 +139,19 @@ function NavList({ path, onNavigate }: { path: string; onNavigate?: () => void }
   );
 }
 
+function SidebarContent({ path, onNavigate }: { path: string; onNavigate?: () => void }) {
+  return (
+    <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground">
+      <div className="h-14 flex items-center px-4 border-b border-sidebar-border shrink-0">
+        <Logo size={28} textClassName="text-sm" />
+      </div>
+      <nav className="flex-1 px-2 py-3 overflow-y-auto">
+        <NavList path={path} onNavigate={onNavigate} />
+      </nav>
+    </div>
+  );
+}
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { t, locale, setLocale } = useI18n();
   const { theme, toggle } = useTheme();
@@ -150,7 +165,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen flex w-full bg-background overflow-x-hidden">
-      <aside className="hidden md:flex w-60 shrink-0 flex-col bg-sidebar text-sidebar-foreground border-e border-sidebar-border">
+      {/* Desktop sidebar — visible on large screens only */}
+      <aside className="hidden lg:flex w-60 shrink-0 flex-col bg-sidebar text-sidebar-foreground border-e border-sidebar-border">
         <div className="h-14 flex items-center px-4 border-b border-sidebar-border">
           <Logo size={28} textClassName="text-sm" />
         </div>
@@ -159,33 +175,37 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </nav>
       </aside>
 
-      {mobileOpen && (
-        <div className="md:hidden fixed inset-0 z-40 flex">
-          <div className="absolute inset-0 bg-foreground/40" onClick={() => setMobileOpen(false)} />
-          <aside className="relative w-72 max-w-[85vw] bg-sidebar text-sidebar-foreground border-e border-sidebar-border flex flex-col">
-            <div className="h-14 flex items-center px-4 border-b border-sidebar-border shrink-0">
-              <Logo size={28} textClassName="text-sm" />
-            </div>
-            <nav className="flex-1 px-2 py-3 overflow-y-auto">
-              <NavList path={path} onNavigate={() => setMobileOpen(false)} />
-            </nav>
-          </aside>
-        </div>
-      )}
+      {/* Mobile / Tablet drawer — shown via hamburger on screens < lg */}
+      <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+        <SheetContent
+          side="left"
+          className="p-0 w-72 max-w-[85vw] bg-sidebar text-sidebar-foreground border-e border-sidebar-border [&>button]:hidden"
+        >
+          <SidebarContent path={path} onNavigate={() => setMobileOpen(false)} />
+        </SheetContent>
+      </Sheet>
 
       <div className="flex-1 flex flex-col min-w-0 min-h-0">
-        <header className="h-14 border-b bg-card flex items-center gap-1 px-2 md:px-5 shrink-0">
-          <button className="md:hidden p-2 -ms-1" onClick={() => setMobileOpen(true)} aria-label={t("open_menu")}>
+        <header className="h-14 border-b bg-card flex items-center gap-1 px-2 lg:px-5 shrink-0">
+          {/* Hamburger button — visible on mobile & tablet (< lg) */}
+          <button
+            className="lg:hidden p-2 -ms-1 rounded-md hover:bg-accent transition-colors"
+            onClick={() => setMobileOpen(true)}
+            aria-label={t("open_menu")}
+          >
             <Menu className="w-5 h-5" />
           </button>
-          <div className="md:hidden flex items-center min-w-0">
+
+          <div className="lg:hidden flex items-center min-w-0">
             <Logo size={24} textClassName="text-sm truncate" />
           </div>
+
           <div className="hidden sm:flex items-center gap-2 flex-1 max-w-md">
             <Search className="w-4 h-4 text-muted-foreground" />
             <Input placeholder={t("search_placeholder")} className="h-9 border-0 bg-muted/50 focus-visible:ring-1" />
           </div>
           <div className="flex-1 sm:hidden" />
+
           <Button variant="ghost" size="icon" className="shrink-0" onClick={() => setLocale(locale === "en" ? "ar" : "en")} aria-label={t("language")}>
             <Languages className="w-4 h-4" />
           </Button>
