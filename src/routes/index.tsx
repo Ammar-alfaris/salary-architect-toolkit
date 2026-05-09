@@ -30,6 +30,7 @@ function Landing() {
   const { t, locale, setLocale } = useI18n();
   const { theme, toggle } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
+  const sheetSide = locale === "ar" ? "left" : "right";
 
   const features = [
     { icon: Layers, title: t("feat_structure_title"), desc: t("feat_structure_desc") },
@@ -92,7 +93,7 @@ function Landing() {
       {/* ───────── Mobile / Tablet Sheet ───────── */}
       <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
         <SheetContent
-          side="left"
+          side={sheetSide}
           className="w-72 max-w-[85vw] p-0 flex flex-col [&>button]:hidden"
         >
           {/* Sheet header */}
