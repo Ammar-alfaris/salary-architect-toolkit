@@ -249,6 +249,11 @@ export const Route = createFileRoute("/lovable/email/queue/process")({
             }
 
             try {
+              if (!payload.to || !payload.from || !payload.sender_domain || !payload.subject || !payload.html) {
+                await moveToDlq(supabase, queue, msg, 'Missing required email payload fields')
+                continue
+              }
+
               await sendLovableEmail(
                 {
                   run_id: payload.run_id,
