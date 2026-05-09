@@ -2,8 +2,29 @@ import { sendLovableEmail } from '@lovable.dev/email-js'
 import { createClient } from '@supabase/supabase-js'
 import { createFileRoute } from '@tanstack/react-router'
 
-type QueuePayload = Record<string, any>
-type QueueMessage = { msg_id: number; read_ct?: number; enqueued_at?: string; message: QueuePayload }
+type QueuePayload = {
+  message_id?: string
+  label?: string
+  to?: string
+  run_id?: string
+  from?: string
+  sender_domain?: string
+  subject?: string
+  html?: string
+  text?: string
+  purpose?: string
+  idempotency_key?: string
+  unsubscribe_token?: string
+  queued_at?: string
+  [key: string]: unknown
+}
+
+type QueueMessage = {
+  msg_id: number
+  read_ct?: number
+  enqueued_at?: string
+  message: QueuePayload
+}
 
 const MAX_RETRIES = 5
 const DEFAULT_BATCH_SIZE = 10
@@ -69,7 +90,7 @@ export const Route = createFileRoute("/lovable/email/queue/process")({
     handlers: {
       POST: async ({ request }) => {
         const apiKey = process.env.LOVABLE_API_KEY
-        const supabaseUrl = process.env.SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
         const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
         if (!apiKey || !supabaseUrl || !supabaseServiceKey) {
@@ -92,7 +113,9 @@ export const Route = createFileRoute("/lovable/email/queue/process")({
           return Response.json({ error: 'Forbidden' }, { status: 403 })
         }
 
-        const supabase = createClient<any>(supabaseUrl, supabaseServiceKey)
+        const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+          auth: { autoRefreshToken: false, persistSession: false },
+        }) as any
 
         // 1. Check rate-limit cooldown and read queue config
         const { data: state } = await supabase
@@ -132,8 +155,8 @@ export const Route = createFileRoute("/lovable/email/queue/process")({
           // Retry budget is based on real send failures, not pgmq read_ct.
           const messageIds = Array.from(
             new Set(
-              messages
-                .map((msg: QueueMessage) =>
+              queuedMessages
+                .map((msg) =>
                   msg?.message?.message_id && typeof msg.message.message_id === 'string'
                     ? msg.message.message_id
                     : null
@@ -226,6 +249,11 @@ export const Route = createFileRoute("/lovable/email/queue/process")({
             }
 
             try {
+              if (!payload.to || !payload.from || !payload.sender_domain || !payload.subject || !payload.html) {
+                await moveToDlq(supabase, queue, msg, 'Missing required email payload fields')
+                continue
+              }
+
               await sendLovableEmail(
                 {
                   run_id: payload.run_id,
@@ -234,7 +262,7 @@ export const Route = createFileRoute("/lovable/email/queue/process")({
                   sender_domain: payload.sender_domain,
                   subject: payload.subject,
                   html: payload.html,
-                  text: payload.text,
+                  text: payload.text ?? '',
                   purpose: payload.purpose,
                   label: payload.label,
                   idempotency_key: payload.idempotency_key,
