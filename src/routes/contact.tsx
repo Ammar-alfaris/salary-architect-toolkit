@@ -109,7 +109,7 @@ function ContactPage() {
 
             {[
               { icon: Mail, label: t("contact_info_email"), value: "support@totalreward.app" },
-              { icon: Phone, label: t("contact_info_phone"), value: "+966 11 000 0000" },
+              { icon: Phone, label: t("contact_info_phone"), value: "055555555" },
               { icon: MapPin, label: t("contact_info_location"), value: t("contact_info_location_value") },
             ].map(({ icon: Icon, label, value }) => (
               <div key={label} className="flex items-start gap-4 p-4 rounded-xl border bg-card">
