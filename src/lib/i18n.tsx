@@ -48,6 +48,14 @@ const en: Dict = {
   contact: "Contact",
   back_home: "Back to home",
 
+  // Invite & auth flow
+  accepting_invitation: "Setting up your account…",
+  please_wait: "Please wait a moment",
+  set_password_title: "Create your password",
+  set_password_subtitle: "You've been invited. Set a password to complete your account setup.",
+  complete_setup: "Complete setup",
+  passwords_no_match: "Passwords don't match",
+
   // Pricing page
   pricing_title: "Simple, transparent pricing",
   pricing_subtitle: "Choose the plan that works for your team. Upgrade or downgrade at any time.",
@@ -891,7 +899,14 @@ const ar: Dict = {
   privacy: "الخصوصية",
   terms: "الشروط",
   contact: "تواصل معنا",
-  back_home: "العودة للرئيسية",
+
+  // Invite & auth flow
+  accepting_invitation: "جارٍ إعداد حسابك…",
+  please_wait: "يرجى الانتظار لحظة",
+  set_password_title: "إنشاء كلمة المرور",
+  set_password_subtitle: "تمت دعوتك. أنشئ كلمة مرور لإتمام إعداد حسابك.",
+  complete_setup: "إتمام الإعداد",
+  passwords_no_match: "كلمتا المرور غير متطابقتين",
 
   // Pricing page
   pricing_title: "أسعار واضحة وبسيطة",

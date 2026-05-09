@@ -278,7 +278,31 @@ export async function isCurrentUserApprover(requestId: string): Promise<boolean>
   if (!me) return false;
   const step = await getCurrentApprover(requestId);
   if (!step) return false;
+
+  // Match by user ID
   if ((step as any).approver_user_id === me.id) return true;
+
+  // Match by email
   if ((step as any).approver_email && (step as any).approver_email.toLowerCase() === (me.email ?? "").toLowerCase()) return true;
+
+  // Match by role — any user holding that role in the org can approve
+  if ((step as any).approver_role) {
+    const { data: req } = await supabase
+      .from("approval_requests")
+      .select("organization_id")
+      .eq("id", requestId)
+      .maybeSingle();
+    if (req?.organization_id) {
+      const { data: roleRow } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", me.id)
+        .eq("organization_id", req.organization_id)
+        .eq("role", (step as any).approver_role)
+        .maybeSingle();
+      if (roleRow) return true;
+    }
+  }
+
   return false;
 }
