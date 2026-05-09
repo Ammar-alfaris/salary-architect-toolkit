@@ -23,10 +23,10 @@ export const Route = createFileRoute("/")({
 const NAV_LINKS = [
   { href: "#features", labelKey: "features" },
   { href: "#modules", labelKey: "modules" },
-  { href: "#cta", labelKey: "pricing" },
 ] as const;
 
 const NAV_ROUTE_LINKS = [
+  { to: "/pricing" as const, labelKey: "pricing" },
   { to: "/blog" as const, labelKey: "blog" },
   { to: "/contact" as const, labelKey: "contact" },
 ] as const;
