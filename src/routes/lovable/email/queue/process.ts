@@ -2,9 +2,6 @@ import { sendLovableEmail } from '@lovable.dev/email-js'
 import { createClient } from '@supabase/supabase-js'
 import { createFileRoute } from '@tanstack/react-router'
 
-type QueuePayload = Record<string, any>
-type QueueMessage = { msg_id: number; read_ct?: number; enqueued_at?: string; message: QueuePayload }
-
 const MAX_RETRIES = 5
 const DEFAULT_BATCH_SIZE = 10
 const DEFAULT_SEND_DELAY_MS = 200
@@ -40,9 +37,9 @@ function getRetryAfterSeconds(error: unknown): number {
 
 // Move a message to the dead letter queue and log the reason.
 async function moveToDlq(
-  supabase: any,
+  supabase: ReturnType<typeof createClient>,
   queue: string,
-  msg: QueueMessage,
+  msg: { msg_id: number; message: Record<string, unknown> },
   reason: string
 ): Promise<void> {
   const payload = msg.message
@@ -69,7 +66,7 @@ export const Route = createFileRoute("/lovable/email/queue/process")({
     handlers: {
       POST: async ({ request }) => {
         const apiKey = process.env.LOVABLE_API_KEY
-        const supabaseUrl = process.env.SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
         const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
         if (!apiKey || !supabaseUrl || !supabaseServiceKey) {
@@ -92,7 +89,7 @@ export const Route = createFileRoute("/lovable/email/queue/process")({
           return Response.json({ error: 'Forbidden' }, { status: 403 })
         }
 
-        const supabase = createClient<any>(supabaseUrl, supabaseServiceKey)
+        const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
         // 1. Check rate-limit cooldown and read queue config
         const { data: state } = await supabase
@@ -126,14 +123,13 @@ export const Route = createFileRoute("/lovable/email/queue/process")({
             continue
           }
 
-          const queuedMessages = (messages ?? []) as QueueMessage[]
-          if (!queuedMessages.length) continue
+          if (!messages?.length) continue
 
           // Retry budget is based on real send failures, not pgmq read_ct.
           const messageIds = Array.from(
             new Set(
               messages
-                .map((msg: QueueMessage) =>
+                .map((msg: any) =>
                   msg?.message?.message_id && typeof msg.message.message_id === 'string'
                     ? msg.message.message_id
                     : null
@@ -166,8 +162,8 @@ export const Route = createFileRoute("/lovable/email/queue/process")({
             }
           }
 
-          for (let i = 0; i < queuedMessages.length; i++) {
-            const msg = queuedMessages[i]
+          for (let i = 0; i < messages.length; i++) {
+            const msg = messages[i]
             const payload = msg.message
             const failedAttempts =
               payload?.message_id && typeof payload.message_id === 'string'
@@ -318,7 +314,7 @@ export const Route = createFileRoute("/lovable/email/queue/process")({
             }
 
             // Small delay between sends to smooth bursts
-            if (i < queuedMessages.length - 1) {
+            if (i < messages.length - 1) {
               await new Promise((r) => setTimeout(r, sendDelayMs))
             }
           }
