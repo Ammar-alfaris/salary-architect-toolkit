@@ -26,6 +26,11 @@ const NAV_LINKS = [
   { href: "#cta", labelKey: "pricing" },
 ] as const;
 
+const NAV_ROUTE_LINKS = [
+  { to: "/blog" as const, labelKey: "blog" },
+  { to: "/contact" as const, labelKey: "contact" },
+] as const;
+
 function Landing() {
   const { t, locale, setLocale } = useI18n();
   const { theme, toggle } = useTheme();
@@ -57,7 +62,11 @@ function Landing() {
                 {t(l.labelKey)}
               </a>
             ))}
-            <Link to="/blog" className="hover:text-foreground transition-colors">Blog</Link>
+            {NAV_ROUTE_LINKS.map((l) => (
+              <Link key={l.to} to={l.to} className="hover:text-foreground transition-colors">
+                {t(l.labelKey)}
+              </Link>
+            ))}
           </nav>
 
           {/* Right-side controls */}
@@ -121,13 +130,16 @@ function Landing() {
                 {t(l.labelKey)}
               </a>
             ))}
-            <Link
-              to="/blog"
-              onClick={() => setMenuOpen(false)}
-              className="flex items-center px-3 py-2.5 rounded-md text-sm font-medium hover:bg-accent transition-colors"
-            >
-              Blog
-            </Link>
+            {NAV_ROUTE_LINKS.map((l) => (
+              <Link
+                key={l.to}
+                to={l.to}
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center px-3 py-2.5 rounded-md text-sm font-medium hover:bg-accent transition-colors"
+              >
+                {t(l.labelKey)}
+              </Link>
+            ))}
           </nav>
 
           {/* CTA buttons at bottom */}
@@ -255,7 +267,7 @@ function Landing() {
           <div className="flex gap-4">
             <a href="#" className="hover:text-foreground">{t("privacy")}</a>
             <a href="#" className="hover:text-foreground">{t("terms")}</a>
-            <a href="#" className="hover:text-foreground">{t("contact")}</a>
+            <Link to="/contact" className="hover:text-foreground">{t("contact")}</Link>
           </div>
         </div>
       </footer>
