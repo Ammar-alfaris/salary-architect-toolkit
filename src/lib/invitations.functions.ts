@@ -19,6 +19,67 @@ function makeAdminClient() {
   });
 }
 
+async function getOrCreateUnsubscribeToken(supabase: ReturnType<typeof makeAdminClient>, email: string) {
+  const normalizedEmail = email.trim().toLowerCase();
+
+  const { data: existing, error: existingError } = await supabase
+    .from("email_unsubscribe_tokens")
+    .select("token")
+    .eq("email", normalizedEmail)
+    .maybeSingle();
+
+  if (existingError) throw new Error(existingError.message);
+  if (existing?.token) return existing.token;
+
+  const token = crypto.randomUUID();
+  const { error: insertError } = await supabase.from("email_unsubscribe_tokens").insert({
+    email: normalizedEmail,
+    token,
+  });
+
+  if (!insertError) return token;
+
+  const { data: retryExisting, error: retryError } = await supabase
+    .from("email_unsubscribe_tokens")
+    .select("token")
+    .eq("email", normalizedEmail)
+    .maybeSingle();
+
+  if (retryError) throw new Error(retryError.message);
+  if (retryExisting?.token) return retryExisting.token;
+
+  throw new Error(insertError.message);
+}
+
+function buildInvitationEmail(args: {
+  inviteUrl: string;
+  inviterName: string;
+  inviterEmail: string;
+  role: "admin" | "manager" | "analyst" | "viewer";
+}) {
+  const roleLabel = args.role.charAt(0).toUpperCase() + args.role.slice(1);
+  const subject = `You've been invited to join Total Reward as ${roleLabel}`;
+  const html = `<!doctype html>
+<html lang="en" dir="ltr">
+  <body style="margin:0;padding:24px;background:#f5f7fa;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Tahoma,Arial,sans-serif;color:#0f172a;">
+    <div style="max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;overflow:hidden;">
+      <div style="background:#0f172a;padding:24px 28px;color:#ffffff;font-size:22px;font-weight:700;">Total Reward</div>
+      <div style="padding:28px;line-height:1.75;font-size:15px;">
+        <h1 style="margin:0 0 12px;font-size:24px;color:#0f172a;">Team invitation</h1>
+        <p style="margin:0 0 12px;"><strong>${args.inviterName}</strong> (${args.inviterEmail}) invited you to join Total Reward as <strong>${roleLabel}</strong>.</p>
+        <p style="margin:0 0 20px;">Open the link below, then sign in with your existing account or create a new account using this email address.</p>
+        <a href="${args.inviteUrl}" style="display:inline-block;background:#0f172a;color:#ffffff;text-decoration:none;padding:14px 22px;border-radius:10px;font-weight:600;">Open invitation</a>
+        <p style="margin:20px 0 8px;color:#475569;">If the button does not work, use this link:</p>
+        <p style="margin:0;word-break:break-all;"><a href="${args.inviteUrl}" style="color:#0369a1;">${args.inviteUrl}</a></p>
+      </div>
+    </div>
+  </body>
+</html>`;
+  const text = `${args.inviterName} (${args.inviterEmail}) invited you to join Total Reward as ${roleLabel}. Open this link to sign in or create your account: ${args.inviteUrl}`;
+
+  return { subject, html, text };
+}
+
 export const sendTeamInvitation = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => InviteSchema.parse(data))
@@ -46,6 +107,24 @@ export const sendTeamInvitation = createServerFn({ method: "POST" })
       .eq("id", userId)
       .maybeSingle();
 
+    const { data: existingProfile, error: existingProfileErr } = await admin
+      .from("profiles")
+      .select("id, email, full_name")
+      .ilike("email", email)
+      .maybeSingle();
+    if (existingProfileErr) throw new Error(existingProfileErr.message);
+
+    if (existingProfile?.id) {
+      const { data: existingMembership, error: existingMembershipErr } = await admin
+        .from("user_roles")
+        .select("id")
+        .eq("organization_id", data.organizationId)
+        .eq("user_id", existingProfile.id)
+        .maybeSingle();
+      if (existingMembershipErr) throw new Error(existingMembershipErr.message);
+      if (existingMembership) throw new Error("This user is already a member of this organization");
+    }
+
     // Upsert pending invitation (idempotent on org + email)
     const { error: upErr } = await admin
       .from("pending_invitations")
@@ -62,37 +141,58 @@ export const sendTeamInvitation = createServerFn({ method: "POST" })
       );
     if (upErr) throw new Error(upErr.message);
 
-    // Build redirect URL — always point to /auth with invited flag
+    // Build redirect URL — the user can sign in or sign up from the same page.
     const origin = data.redirectOrigin || "https://totalreward.app";
-    const redirectTo = `${origin}/auth?invited=1&email=${encodeURIComponent(email)}`;
-
-    // Try inviteUserByEmail (works for new users)
-    const { error: inviteErr } = await admin.auth.admin.inviteUserByEmail(email, {
-      redirectTo,
-      data: {
-        invited_org: data.organizationId,
-        invited_role: data.role,
-        invited_by_email: inviterProfile?.email ?? null,
-      },
+    const inviteUrl = `${origin}/auth?invited=1&email=${encodeURIComponent(email)}`;
+    const unsubscribeToken = await getOrCreateUnsubscribeToken(admin, email);
+    const inviterEmail = inviterProfile?.email ?? "noreply@totalreward.app";
+    const inviterName = inviterProfile?.full_name || inviterEmail;
+    const messageId = `team-invite-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    const emailContent = buildInvitationEmail({
+      inviteUrl,
+      inviterName,
+      inviterEmail,
+      role: data.role,
     });
 
-    if (inviteErr) {
-      const msg = inviteErr.message || "";
+    const { error: enqueueError } = await admin.rpc("enqueue_email", {
+      queue_name: "transactional_emails",
+      payload: {
+        to: email,
+        from: "Total Reward <noreply@totalreward.app>",
+        sender_domain: "notify.totalreward.app",
+        subject: emailContent.subject,
+        html: emailContent.html,
+        text: emailContent.text,
+        message_id: messageId,
+        label: "team_invitation",
+        purpose: "transactional",
+        idempotency_key: messageId,
+        unsubscribe_token: unsubscribeToken,
+        queued_at: new Date().toISOString(),
+        metadata: {
+          invite_url: inviteUrl,
+          invited_role: data.role,
+          organization_id: data.organizationId,
+          inviter_email: inviterEmail,
+        },
+      },
+    });
+    if (enqueueError) throw new Error(enqueueError.message);
 
-      // User already exists → send a magic link so they can still accept
-      if (/already.*registered|already exists|user.*exists/i.test(msg)) {
-        const { error: linkErr } = await admin.auth.admin.generateLink({
-          type: "magiclink",
-          email,
-          options: { redirectTo },
-        });
-        if (linkErr) throw new Error(linkErr.message);
-        return { ok: true, alreadyRegistered: true };
-      }
-      throw new Error(msg);
-    }
+    const { error: logError } = await admin.from("email_send_log").insert({
+      message_id: messageId,
+      template_name: "team_invitation",
+      recipient_email: email,
+      status: "pending",
+      metadata: {
+        organization_id: data.organizationId,
+        role: data.role,
+      },
+    });
+    if (logError) throw new Error(logError.message);
 
-    return { ok: true };
+    return { ok: true, alreadyRegistered: Boolean(existingProfile?.id) };
   });
 
 // ─────────────────────────────────────────────────────────────────────────────

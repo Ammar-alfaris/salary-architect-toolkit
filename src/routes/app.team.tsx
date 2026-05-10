@@ -42,8 +42,10 @@ function TeamPage() {
   const inviteFn = useServerFn(sendTeamInvitation);
   const [members, setMembers] = useState<any[]>([]);
   const [invites, setInvites] = useState<any[]>([]);
+  const [employeesWithEmail, setEmployeesWithEmail] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
+  const [inviteSource, setInviteSource] = useState("manual");
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<AppRole>("analyst");
   const [inviting, setInviting] = useState(false);
@@ -51,9 +53,10 @@ function TeamPage() {
   const load = async () => {
     if (!organizationId) return;
     setLoading(true);
-    const [{ data: roleRows }, { data: inviteRows }] = await Promise.all([
+    const [{ data: roleRows }, { data: inviteRows }, { data: employeeRows }] = await Promise.all([
       supabase.from("user_roles").select("id,user_id,role,created_at").eq("organization_id", organizationId),
       supabase.from("pending_invitations").select("*").eq("organization_id", organizationId).is("accepted_at", null).order("created_at", { ascending: false }),
+      supabase.from("employees").select("id,full_name,first_name,last_name,email,employee_code").eq("organization_id", organizationId).eq("archived", false).not("email", "is", null).order("full_name", { ascending: true }),
     ]);
     const userIds = (roleRows ?? []).map((r) => r.user_id);
     let profiles: any[] = [];
@@ -64,6 +67,7 @@ function TeamPage() {
     const byId = new Map(profiles.map((p) => [p.id, p]));
     setMembers((roleRows ?? []).map((r) => ({ ...r, profile: byId.get(r.user_id) })));
     setInvites(inviteRows ?? []);
+    setEmployeesWithEmail((employeeRows ?? []).filter((row) => row.email));
     setLoading(false);
   };
 
@@ -82,6 +86,7 @@ function TeamPage() {
         entityLabel: `${inviteEmail} as ${inviteRole}`,
       });
       setOpen(false);
+      setInviteSource("manual");
       setInviteEmail("");
       setInviteRole("analyst");
       load();
@@ -137,6 +142,20 @@ function TeamPage() {
     [members],
   );
 
+  const employeeOptions = useMemo(
+    () => employeesWithEmail.map((employee) => ({
+      id: employee.id,
+      name: employee.full_name || [employee.first_name, employee.last_name].filter(Boolean).join(" ") || employee.employee_code,
+      email: employee.email,
+      code: employee.employee_code,
+    })),
+    [employeesWithEmail],
+  );
+
+  const selectedEmployee = inviteSource === "manual"
+    ? null
+    : employeeOptions.find((employee) => employee.id === inviteSource) ?? null;
+
   return (
     <div>
       <PageHeader
@@ -154,8 +173,41 @@ function TeamPage() {
                 <DialogHeader><DialogTitle>{t("invite_member_title")}</DialogTitle></DialogHeader>
                 <div className="space-y-3">
                   <div className="space-y-1.5">
+                    <Label>{t("invite_member_source")}</Label>
+                    <Select
+                      value={inviteSource}
+                      onValueChange={(value) => {
+                        setInviteSource(value);
+                        const match = employeeOptions.find((employee) => employee.id === value);
+                        setInviteEmail(match?.email ?? "");
+                      }}
+                    >
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="manual">{t("invite_manual_entry")}</SelectItem>
+                        {employeeOptions.map((employee) => (
+                          <SelectItem key={employee.id} value={employee.id}>
+                            {employee.name} — {employee.email}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {employeeOptions.length === 0 && (
+                      <p className="text-xs text-muted-foreground">{t("invite_no_employees_with_email")}</p>
+                    )}
+                  </div>
+                  <div className="space-y-1.5">
                     <Label>{t("invite_email")}</Label>
-                    <Input type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} placeholder="name@company.com" />
+                    <Input
+                      type="email"
+                      value={inviteEmail}
+                      onChange={(e) => setInviteEmail(e.target.value)}
+                      placeholder="name@company.com"
+                      readOnly={Boolean(selectedEmployee)}
+                    />
+                    {selectedEmployee && (
+                      <p className="text-xs text-muted-foreground">{selectedEmployee.name} · {selectedEmployee.code}</p>
+                    )}
                   </div>
                   <div className="space-y-1.5">
                     <Label>{t("invite_role")}</Label>

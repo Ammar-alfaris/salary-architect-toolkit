@@ -30,6 +30,15 @@ function AuthPage() {
   const navigate = useNavigate();
   const acceptInviteFn = useServerFn(acceptInvitation);
 
+  const getInviteState = () => {
+    if (typeof window === "undefined") return { invited: false, emailParam: "" };
+    const sp = new URLSearchParams(window.location.search);
+    return {
+      invited: sp.get("invited") === "1",
+      emailParam: sp.get("email") || "",
+    };
+  };
+
   const [mode, setMode] = useState<Mode>("auth");
   const [tab, setTab] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
@@ -45,8 +54,7 @@ function AuthPage() {
     if (typeof window === "undefined") return;
 
     const sp = new URLSearchParams(window.location.search);
-    const invited = sp.get("invited") === "1";
-    const emailParam = sp.get("email") || "";
+    const { invited, emailParam } = getInviteState();
 
     if (emailParam) {
       setEmail(emailParam);
@@ -60,67 +68,20 @@ function AuthPage() {
       });
       return;
     }
+    setMode("auth");
+    setTab("signin");
 
-    // ── Invite flow ──
-    setMode("processing");
-
-    const handleSession = async (session: any) => {
-      if (handled.current) return;
-      if (!session?.user) return;
-      handled.current = true;
-
-      const user = session.user;
-      const invitedOrg = user.user_metadata?.invited_org;
-
-      if (invitedOrg) {
-        // New invited user — has a temporary session but no password yet
-        if (user.user_metadata?.full_name) setFullName(user.user_metadata.full_name);
-        setEmail(user.email || emailParam);
-        setInviteEmail(user.email || emailParam);
-        setMode("set_password");
-      } else {
-        // Existing user accepted via magic link — grant org access if pending
-        try {
-          await acceptInviteFn({ data: { email: user.email || emailParam } });
-        } catch (_) {
-          // Might already be accepted — that's fine
-        }
-        navigate({ to: "/app" });
-      }
-    };
-
-    // Subscribe first so we don't miss events
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === "SIGNED_IN" || event === "INITIAL_SESSION") {
-        if (session?.user) {
-          subscription.unsubscribe();
-          await handleSession(session);
-        }
-      }
-    });
-
-    // Also check existing session immediately
     supabase.auth.getSession().then(async ({ data }) => {
-      if (data.session?.user) {
-        subscription.unsubscribe();
-        await handleSession(data.session);
+      if (!data.session?.user || handled.current) return;
+      handled.current = true;
+      setMode("processing");
+      try {
+        await acceptInviteFn({ data: { email: data.session.user.email || emailParam } });
+      } catch (_) {
+        // Ignore if already accepted
       }
+      navigate({ to: "/app" });
     });
-
-    // Fallback: if nothing happens after 8s, show normal auth
-    const timeout = setTimeout(() => {
-      if (!handled.current) {
-        subscription.unsubscribe();
-        setMode("auth");
-        setTab("signup");
-        if (emailParam) setEmail(emailParam);
-      }
-    }, 8000);
-
-    return () => {
-      subscription.unsubscribe();
-      clearTimeout(timeout);
-    };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Set password for newly invited user ──
@@ -162,6 +123,15 @@ function AuthPage() {
       return toast.error(error.message);
     }
     setUnverifiedEmail("");
+    const { invited } = getInviteState();
+    if (invited) {
+      setMode("processing");
+      try {
+        await acceptInviteFn({ data: { email } });
+      } catch (_) {
+        // Ignore if already accepted
+      }
+    }
     toast.success(t("welcome_back"));
     navigate({ to: "/app" });
   };
