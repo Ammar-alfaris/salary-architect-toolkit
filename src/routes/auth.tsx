@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n";
 import { useServerFn } from "@tanstack/react-start";
 import { acceptInvitation } from "@/lib/invitations.functions";
+import { assertServerFnResult, getServerFnAuthHeaders } from "@/lib/server-fn-auth";
 
 export const Route = createFileRoute("/auth")({
   component: AuthPage,
@@ -30,6 +31,15 @@ function AuthPage() {
   const navigate = useNavigate();
   const acceptInviteFn = useServerFn(acceptInvitation);
 
+  const getInviteState = () => {
+    if (typeof window === "undefined") return { invited: false, emailParam: "" };
+    const sp = new URLSearchParams(window.location.search);
+    return {
+      invited: sp.get("invited") === "1",
+      emailParam: sp.get("email") || "",
+    };
+  };
+
   const [mode, setMode] = useState<Mode>("auth");
   const [tab, setTab] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
@@ -46,8 +56,7 @@ function AuthPage() {
     if (typeof window === "undefined") return;
 
     const sp = new URLSearchParams(window.location.search);
-    const invited = sp.get("invited") === "1";
-    const emailParam = sp.get("email") || "";
+    const { invited, emailParam } = getInviteState();
 
     if (emailParam) {
       setEmail(emailParam);
@@ -65,70 +74,21 @@ function AuthPage() {
       });
       return;
     }
+    setMode("auth");
+    setTab("signin");
 
-    // ── Invite flow ──
-    setMode("processing");
-
-    const handleSession = async (session: any) => {
-      if (handled.current) return;
-      if (!session?.user) return;
-      handled.current = true;
-
-      const user = session.user;
-      const invitedOrg = user.user_metadata?.invited_org;
-
-      if (invitedOrg) {
-        // New invited user — has a temporary session but no password yet
-        if (user.user_metadata?.full_name) setFullName(user.user_metadata.full_name);
-        setEmail(user.email || emailParam);
-        setInviteEmail(user.email || emailParam);
-        setMode("set_password");
-      } else {
-        // Existing user accepted via magic link — grant org access if pending
-        try {
-          await acceptInviteFn({ data: { email: user.email || emailParam } });
-        } catch (_) {
-          // Might already be accepted — that's fine
-        }
-        navigate({ to: "/app" });
-      }
-    };
-
-    // Subscribe first so we don't miss events
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === "SIGNED_IN" || event === "INITIAL_SESSION") {
-        if (session?.user) {
-          subscription.unsubscribe();
-          await handleSession(session);
-        }
-      }
-    });
-
-    // Also check existing session immediately
     supabase.auth.getSession().then(async ({ data }) => {
-      if (data.session?.user) {
-        subscription.unsubscribe();
-        await handleSession(data.session);
+      if (!data.session?.user || handled.current) return;
+      handled.current = true;
+      setMode("processing");
+      try {
+        const headers = await getServerFnAuthHeaders();
+        await assertServerFnResult(await acceptInviteFn({ data: { email: data.session.user.email || emailParam }, headers }));
+      } catch (_) {
+        // Ignore if already accepted
       }
+      navigate({ to: "/app" });
     });
-
-    // Fallback: if nothing happens after 4s, show normal auth with signup tab for invited users
-    const timeout = setTimeout(() => {
-      if (!handled.current) {
-        subscription.unsubscribe();
-        setMode("auth");
-        setTab("signup"); // Default to signup for invited users
-        if (emailParam) {
-          setEmail(emailParam);
-          setInviteEmail(emailParam);
-        }
-      }
-    }, 4000);
-
-    return () => {
-      subscription.unsubscribe();
-      clearTimeout(timeout);
-    };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Set password for newly invited user ──
@@ -170,17 +130,16 @@ function AuthPage() {
       return toast.error(error.message);
     }
     setUnverifiedEmail("");
-    
-    // If this is an invited user signing in with existing account, accept the invitation
-    if (isInvitedFlow && data.session) {
+    const { invited } = getInviteState();
+    if (invited) {
+      setMode("processing");
       try {
-        await acceptInviteFn({ data: { email } });
+        const headers = await getServerFnAuthHeaders();
+        await assertServerFnResult(await acceptInviteFn({ data: { email }, headers }));
       } catch (_) {
-        // Invitation might already be accepted - proceed anyway
+        // Ignore if already accepted
       }
     }
-    
-    setLoading(false);
     toast.success(t("welcome_back"));
     navigate({ to: "/app" });
   };
@@ -202,22 +161,19 @@ function AuthPage() {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
-    // For invited users, include the invited email to help with invitation acceptance
-    const signupOptions: any = {
-      emailRedirectTo: isInvitedFlow 
-        ? `${window.location.origin}/auth?invited=1&email=${encodeURIComponent(email)}&confirmed=1`
-        : `${window.location.origin}/auth?confirmed=1`,
-      data: { 
-        full_name: fullName, 
-        ...(isInvitedFlow ? {} : { org_name: `${fullName || email}'s Organization` }),
-      },
-    };
-    
+    const { invited } = getInviteState();
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: signupOptions,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth?confirmed=1${invited ? "&invited=1" : ""}`,
+        data: {
+          full_name: fullName,
+          // Don't auto-create org if user is signing up via an invitation —
+          // they will be attached to the inviting org by the trigger.
+          ...(invited ? {} : { org_name: `${fullName || email}'s Organization` }),
+        },
+      },
     });
     setLoading(false);
     if (error) return toast.error(error.message);
@@ -226,16 +182,15 @@ function AuthPage() {
       setTab("signin");
       return;
     }
-    
-    // If this is an invited user and we have a session, accept the invitation
-    if (isInvitedFlow && data.session) {
+    if (invited) {
+      setMode("processing");
       try {
-        await acceptInviteFn({ data: { email } });
+        const headers = await getServerFnAuthHeaders();
+        await assertServerFnResult(await acceptInviteFn({ data: { email }, headers }));
       } catch (_) {
-        // Invitation might already be accepted or doesn't exist - proceed anyway
+        // Trigger will already attach the role; ignore failures
       }
     }
-    
     toast.success(t("account_created"));
     navigate({ to: "/app" });
   };
