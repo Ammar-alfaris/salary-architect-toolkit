@@ -153,12 +153,18 @@ function AuthPage() {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    const { invited } = getInviteState();
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth?confirmed=1`,
-        data: { full_name: fullName, org_name: `${fullName || email}'s Organization` },
+        emailRedirectTo: `${window.location.origin}/auth?confirmed=1${invited ? "&invited=1" : ""}`,
+        data: {
+          full_name: fullName,
+          // Don't auto-create org if user is signing up via an invitation —
+          // they will be attached to the inviting org by the trigger.
+          ...(invited ? {} : { org_name: `${fullName || email}'s Organization` }),
+        },
       },
     });
     setLoading(false);
@@ -167,6 +173,14 @@ function AuthPage() {
       toast.success(t("check_email_to_verify"), { duration: 8000 });
       setTab("signin");
       return;
+    }
+    if (invited) {
+      setMode("processing");
+      try {
+        await acceptInviteFn({ data: { email } });
+      } catch (_) {
+        // Trigger will already attach the role; ignore failures
+      }
     }
     toast.success(t("account_created"));
     navigate({ to: "/app" });

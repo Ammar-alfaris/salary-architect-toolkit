@@ -117,12 +117,16 @@ export const sendTeamInvitation = createServerFn({ method: "POST" })
     if (existingProfile?.id) {
       const { data: existingMembership, error: existingMembershipErr } = await admin
         .from("user_roles")
-        .select("id")
+        .select("id, role")
         .eq("organization_id", data.organizationId)
         .eq("user_id", existingProfile.id)
         .maybeSingle();
       if (existingMembershipErr) throw new Error(existingMembershipErr.message);
-      if (existingMembership) throw new Error("This user is already a member of this organization");
+      if (existingMembership) {
+        throw new Error(
+          `ALREADY_MEMBER:${existingMembership.role}`,
+        );
+      }
     }
 
     // Upsert pending invitation (idempotent on org + email)
@@ -192,7 +196,12 @@ export const sendTeamInvitation = createServerFn({ method: "POST" })
     });
     if (logError) throw new Error(logError.message);
 
-    return { ok: true, alreadyRegistered: Boolean(existingProfile?.id) };
+    return {
+      ok: true,
+      alreadyRegistered: Boolean(existingProfile?.id),
+      invitationId: messageId,
+      recipientEmail: email,
+    };
   });
 
 // ─────────────────────────────────────────────────────────────────────────────
