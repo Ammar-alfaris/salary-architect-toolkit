@@ -1,46 +1,88 @@
-# Fix email sending, recipient picker, and team invitations
+# تشخيص المشكلة وخطة الإصلاح
 
-## Root causes (verified from DB + code)
+## النتيجة الحالية
+الجذر الحقيقي للمشكلة ليس من DNS ولا من نطاق البريد.
 
-1. **"Queued but never sent"** — `email_send_log` shows every campaign send fails with:
-   `Email API error: 400 Missing run_id or idempotency_key — App emails can omit run_id by providing idempotency_key with purpose=transactional`.
-   `src/lib/email-campaign.functions.ts` enqueues a payload missing `purpose`, `idempotency_key`, `from`, and `sender_domain`. The queue processor forwards exactly what was enqueued, so Lovable's email API rejects every send.
-2. **No recipient picker** — `admin.emails.send.tsx` only renders an `<Input type="email">` for "Single recipient".
-3. **Invitations not emailed** — `app.team.tsx` only inserts a row into `pending_invitations`. Nothing ever calls Supabase Auth's invite API or queues an email, so the invitee never receives anything.
-4. **Org linking on accept already exists** — the `handle_new_user` trigger (migration `20260502144422`) already attaches a new signup to the inviter's org + role when `lower(email)` matches a pending invite. So once we actually send an invite email and the user signs up via that link, they land in the right org. No DB change needed.
+ما تأكدت منه:
+- نطاق البريد `notify.totalreward.app` موثق وجاهز للإرسال.
+- الخلفية والمهام المجدولة الخاصة بمعالجة البريد تعمل.
+- لا توجد أي سجلات لدعوات فريق في `email_send_log`.
+- لا توجد أي سجلات مقابلة في `pending_invitations` للبريد الذي اختبرته، بل الجدول نفسه فارغ حالياً.
+- صف البريد `transactional_emails` فارغ أيضاً.
 
-## Changes
+**هذا يعني أن الدعوة لا تصل أصلاً إلى مرحلة الحفظ أو الإدراج في طابور الإرسال، لذلك عبارة "Invitation email sent" مضللة حالياً.**
 
-### 1. Fix transactional send payload (`src/lib/email-campaign.functions.ts`)
-Add the fields the auth hook already sets correctly:
-- `purpose: "transactional"`
-- `idempotency_key: messageId` (reuse the generated `message-id`)
-- `from: "<SITE_NAME> <noreply@totalreward.app>"`
-- `sender_domain: "notify.totalreward.app"`
-- `queued_at: new Date().toISOString()` (for TTL)
+## جذر المشكلة
+المشكلة تقع في **مسار إنشاء الدعوة نفسه** قبل الإرسال، وعلى الأرجح في واحد أو أكثر من هذه النقاط:
 
-Constants will live alongside the function (matching the auth-hook values). After this fix, the existing queue processor + `email_send_log` already record `pending → sent / failed / dlq` correctly.
+1. **استدعاء وظيفة الدعوة من الواجهة لا يُتحقق منه بشكل كافٍ**
+   - الواجهة تعرض نجاحاً بعد استدعاء `sendTeamInvitation`، لكن لا يوجد دليل فعلي في قاعدة البيانات أن الدعوة سُجلت.
+   - لا يوجد logging كافٍ يوضح أين يتوقف التنفيذ.
 
-### 2. Recipient picker + delivery status UI (`src/routes/admin.emails.send.tsx`)
-- When `audience === "single"`, fetch `profiles (id, email, full_name)` once and render a searchable `Command`/`Combobox` (shadcn `Command` inside `Popover`) with free-text fallback so admins can either pick an existing user or type a new address.
-- After `sendFn` returns, store the `message_id`s and poll `email_send_log` (filter by `message_id IN (...)`) every 3s for up to ~60s. Render a small status table under the composer: `recipient · status (pending/sent/failed/dlq) · error_message`. Stop polling when all rows are terminal.
-- Add an i18n string set (EN/AR) for the new labels (`pick_recipient`, `delivery_status`, `status_pending/sent/failed/dlq`).
+2. **فشل صامت داخل `sendTeamInvitation` قبل اكتمال العملية**
+   - الوظيفة يجب أن:
+     - تتحقق من صلاحية الأدمن
+     - تحفظ `pending_invitations`
+     - تُدخل رسالة البريد إلى الطابور
+     - تُسجلها في `email_send_log`
+   - لكن من الواقع الحالي لا يحدث أيٌّ من هذه الآثار الجانبية، لذا يلزم تتبع كل خطوة بشكل صريح.
 
-### 3. Real invitation emails (`src/routes/app.team.tsx` + new server fn)
-- Create `src/lib/invitations.functions.ts` with `sendTeamInvitation` (`createServerFn`, POST):
-  - Inputs: `organizationId`, `email`, `role`.
-  - Uses `supabaseAdmin` (service role) to:
-    1. Verify the caller is an admin of `organizationId` via the request's bearer token (reuse `requireSupabaseAuth` middleware) — refuse otherwise.
-    2. Upsert `pending_invitations` row (so cancellation/resend stays idempotent on `(org, email)`).
-    3. Call `supabase.auth.admin.inviteUserByEmail(email, { redirectTo: "https://totalreward.app/auth?invited=1", data: { invited_org: organizationId, invited_role: role } })`. This triggers the auth-email-hook with `email_action_type=invite`, which already renders `InviteEmail` and queues it through the working auth pipeline.
-- `app.team.tsx → handleInvite` calls this server fn instead of inserting directly. Still shows the row in "Pending invitations". Show toast with success/failure from server.
-- Add a "Resend" button next to each pending invite that re-calls the same server fn.
+3. **تدفق القبول الحالي غير متناسق مع رابط الدعوة**
+   - رابط الدعوة الحالي يرسل المستخدم إلى `/auth?invited=1&email=...`.
+   - لكن صفحة `/auth` لا تُوجّه المستخدم الجديد فعلياً عبر تدفق دعوة حقيقي مضمون، بل تعتمد على تسجيل يدوي ثم قبول الدعوة.
+   - هذا قد ينجح لاحقاً بعد إصلاح الإنشاء، لكنه ليس تدفقاً محكماً بعد.
 
-### 4. Acceptance flow
-No SQL change required — the existing `handle_new_user` trigger attaches the new auth user to the org + role from `pending_invitations` on first signup. We only need to make sure the invited user lands on `/auth` with the correct email pre-filled:
-- Light tweak in `src/routes/auth.tsx`: read `?invited=1` and `?email=` from the URL on mount, default the form to **Sign up** mode and pre-fill email. Supabase appends the invite token automatically; once the user sets a password, the trigger fires and they're routed into the inviting org's dashboard.
+4. **الحالة المعروضة في Pending invitations تعتمد على وجود صف فعلي**
+   - بما أنه لا يتم إنشاء الصف، فالقائمة تبقى فارغة حتى لو ظهرت رسالة نجاح.
 
-## Out of scope
-- No new database tables / RLS changes.
-- No change to the auth email templates themselves (they already work — the auth pipeline shows `signup/recovery` rows as `sent` in the log).
-- No replacement of the queue processor; only the enqueue payload is fixed.
+## خطة الإصلاح
+
+### 1) جعل إنشاء الدعوة قابلاً للتتبع بدقة
+- إضافة تتبع واضح داخل `sendTeamInvitation` لكل مرحلة:
+  - التحقق من العضوية والصلاحية
+  - فحص العضو الموجود مسبقاً
+  - حفظ/تحديث `pending_invitations`
+  - إدخال البريد في الطابور
+  - كتابة سجل `email_send_log`
+- إعادة رسالة خطأ واضحة للواجهة عند فشل أي خطوة بدل نجاح صامت.
+
+### 2) إصلاح منطق النجاح في الواجهة
+- عدم إظهار "Invitation email sent" إلا بعد التأكد من:
+  - إنشاء سجل الدعوة في `pending_invitations`
+  - ونجاح وضع رسالة البريد في الطابور
+- تحديث الواجهة مباشرة بعد الإرسال من مصدر الحقيقة في قاعدة البيانات.
+
+### 3) تثبيت ظهور Pending invitations
+- الاعتماد على نتيجة الإدراج الفعلي لا على افتراض النجاح.
+- بعد الإرسال الناجح، إعادة تحميل القائمة والتحقق من ظهور الدعوة فوراً.
+- إظهار سبب الفشل للمستخدم إذا لم تُنشأ الدعوة.
+
+### 4) تحسين تدفق الدعوة للمستخدم الجديد والحالي
+- إذا كان الموظف موجوداً بالنظام لكن ليس عضواً في نفس المنظمة:
+  - تُستخدم بياناته وبريده تلقائياً.
+- إذا كان بريداً جديداً:
+  - تُنشأ دعوة جديدة كاملة.
+- عند فتح رابط الدعوة:
+  - إن كان الحساب موجوداً → تسجيل دخول ثم قبول الدعوة وربطه بنفس المنظمة.
+  - إن لم يكن الحساب موجوداً → إنشاء الحساب بالبريد المدعو ثم إلحاقه بنفس المنظمة والدور.
+
+### 5) التحقق النهائي بعد الإصلاح
+سأتحقق من 3 نقاط بعد التنفيذ:
+- ظهور السجل في `pending_invitations`
+- ظهور سجل `team_invitation` في `email_send_log`
+- انتقال الحالة من `pending` إلى `sent` أو ظهور خطأ حقيقي قابل للتشخيص
+
+## تفاصيل تقنية
+- الملفات المتوقعة للتعديل:
+  - `src/lib/invitations.functions.ts`
+  - `src/routes/app.team.tsx`
+  - `src/routes/auth.tsx`
+- لا يبدو أن المشكلة الحالية تحتاج تغيير DNS أو مزود البريد.
+- لا أحتاج مبدئياً إلى تغيير بنية الجداول؛ المشكلة تبدو منطق تنفيذ وتدفق حالة.
+
+## النتيجة المتوقعة بعد التنفيذ
+- عند الضغط على Invite:
+  - تُحفظ الدعوة فعلياً
+  - تظهر في Pending invitations
+  - يُرسل البريد فعلياً
+  - وعند القبول يدخل المستخدم إلى نفس المنظمة بالدور الصحيح
