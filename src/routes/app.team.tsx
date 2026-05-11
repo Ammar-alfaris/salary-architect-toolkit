@@ -17,6 +17,7 @@ import { useI18n } from "@/lib/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { usePermissions, type AppRole } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
+import { assertServerFnResult, getServerFnAuthHeaders } from "@/lib/server-fn-auth";
 import { UserPlus, Trash2, Mail, ShieldCheck, ShieldAlert, Check, X, Send } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
@@ -80,7 +81,11 @@ function TeamPage() {
     setInviting(true);
     try {
       const origin = typeof window !== "undefined" ? window.location.origin : undefined;
-      const res: any = await inviteFn({ data: { organizationId, email: targetEmail, role: inviteRole, redirectOrigin: origin } });
+      const headers = await getServerFnAuthHeaders();
+      const res = await assertServerFnResult(await inviteFn({
+        data: { organizationId, email: targetEmail, role: inviteRole, redirectOrigin: origin },
+        headers,
+      }));
       toast.success(res?.alreadyRegistered ? t("invite_resent_existing") : t("invite_sent"), {
         description: targetEmail,
       });
@@ -113,7 +118,11 @@ function TeamPage() {
     if (!organizationId) return;
     try {
       const origin = typeof window !== "undefined" ? window.location.origin : undefined;
-      await inviteFn({ data: { organizationId, email, role, redirectOrigin: origin } });
+      const headers = await getServerFnAuthHeaders();
+      await assertServerFnResult(await inviteFn({
+        data: { organizationId, email, role, redirectOrigin: origin },
+        headers,
+      }));
       toast.success(t("invite_sent"), { description: email });
       await load();
     } catch (e: any) {
