@@ -55,6 +55,10 @@ const en: Dict = {
   set_password_subtitle: "You've been invited. Set a password to complete your account setup.",
   complete_setup: "Complete setup",
   passwords_no_match: "Passwords don't match",
+  invitation_signup_title: "You have been invited",
+  invitation_signup_desc: "Create an account to accept the invitation and join the team.",
+  invitation_email_locked: "This email is linked to your invitation",
+  accept_invitation: "Accept Invitation",
 
   // Pricing page
   pricing_title: "Simple, transparent pricing",
@@ -907,6 +911,10 @@ const ar: Dict = {
   set_password_subtitle: "تمت دعوتك. أنشئ كلمة مرور لإتمام إعداد حسابك.",
   complete_setup: "إتمام الإعداد",
   passwords_no_match: "كلمتا المرور غير متطابقتين",
+  invitation_signup_title: "لديك دعوة",
+  invitation_signup_desc: "أنشئ حسابًا لقبول الدعوة والانضمام للفريق.",
+  invitation_email_locked: "هذا البريد مرتبط بدعوتك",
+  accept_invitation: "قبول الدعوة",
 
   // Pricing page
   pricing_title: "أسعار واضحة وبسيطة",
@@ -1225,7 +1233,7 @@ const ar: Dict = {
   band: "الشريحة",
   current: "الراتب الحالي",
   increase_pct: "نسبة الزيادة %",
-  increase_amount: "قيمة الزيادة",
+  increase_amount: "قيمة الز��ادة",
   new_salary: "الراتب الجديد",
   no_employees_yet: "لا يوجد موظفون بعد.",
 
@@ -1280,11 +1288,11 @@ const ar: Dict = {
   light: "فاتح",
   dark: "داكن",
   language_helper: "الإنجليزية / العربية (من اليمين إلى اليسار)",
-  defaults_helper: "تُطبَّق هذه الإعدادات الافتراضية عند إنشاء هياكل جديدة ودورات المكافآت وسياسات البدلات.",
+  defaults_helper: "تُطبَّق هذه الإعد��دات الافتراضية عند إنشاء هياكل جديدة ودورات المكافآت وسياسات البدلات.",
   def_progression: "التدرج الافتراضي: 12% لكل درجة",
   def_spread: "الاتساع الافتراضي: 40% (من مستوى الدخول إلى الإدارة)",
   def_rounding: "التقريب الافتراضي: لأقرب 100",
-  def_merit: "ميزانية الزيادات الافتراضية: 4%",
+  def_merit: "ميزا��ية الزيادات الافتراضية: 4%",
   def_housing: "بدل السكن الافتراضي: 25% من الأساسي",
   defaults_can_override: "يمكن تجاوز هذه القيم داخل كل أداة إنشاء، وستتوفر لاحقًا تعديلات على مستوى الهيكل.",
   settings_saved: "تم حفظ الإعدادات",
@@ -1365,7 +1373,7 @@ const ar: Dict = {
 
   // Employee insights
   ins_emp_above_max_title: "الراتب أعلى من الحد الأقصى للنطاق",
-  ins_emp_above_max_body: "الراتب الحالي يتجاوز الحد الأقصى للدرجة بنسبة {pct}%. الزيادات الثابتة الإضافية قد تخلق ضغطًا على النطاق.",
+  ins_emp_above_max_body: "الراتب الحالي يتجاو�� الحد الأقصى للدرجة بنسبة {pct}%. الزيادات الثابتة الإضافية قد تخلق ضغطًا على النطاق.",
   ins_emp_below_min_title: "الراتب أدنى من الحد الأدنى للنطاق",
   ins_emp_below_min_body: "الراتب الحالي أقل من الحد الأدنى للدرجة بنسبة {pct}%. يُنصح بتسوية في الدورة القادمة.",
   ins_emp_high_in_range_title: "موقع عالٍ داخل النطاق",
