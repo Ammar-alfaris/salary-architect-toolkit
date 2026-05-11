@@ -30,11 +30,69 @@ export function ApprovalChainEditor() {
   const load = async () => {
     if (!organizationId) return;
     setChains(await listChains(organizationId));
-    const { data: roles } = await supabase.from("user_roles").select("user_id").eq("organization_id", organizationId);
+    
+    // Fetch all org members from user_roles
+    const { data: roles } = await supabase
+      .from("user_roles")
+      .select("user_id, role")
+      .eq("organization_id", organizationId);
+    
     const ids = (roles ?? []).map((r) => r.user_id);
     if (ids.length) {
-      const { data: profs } = await supabase.from("profiles").select("id,email,full_name").in("id", ids);
-      setMembers((profs ?? []).map((p: any) => ({ user_id: p.id, email: p.email, full_name: p.full_name })));
+      // Fetch profiles for these users
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("id, email, full_name")
+        .in("id", ids);
+      
+      // Build a map of profile data
+      const profileMap = new Map<string, { email: string | null; full_name: string | null }>();
+      (profs ?? []).forEach((p: any) => {
+        profileMap.set(p.id, { email: p.email, full_name: p.full_name });
+      });
+      
+      // Also fetch accepted invitations to get emails for users whose profiles might not have email
+      const { data: acceptedInvites } = await supabase
+        .from("pending_invitations")
+        .select("email")
+        .eq("organization_id", organizationId)
+        .not("accepted_at", "is", null);
+      
+      const acceptedEmails = new Set((acceptedInvites ?? []).map(i => i.email?.toLowerCase()));
+      
+      // Build final member list ensuring all role holders are included
+      const memberList: Member[] = [];
+      for (const role of (roles ?? [])) {
+        const profile = profileMap.get(role.user_id);
+        let email = profile?.email ?? null;
+        let fullName = profile?.full_name ?? null;
+        
+        // If profile has no email, check if their email matches an accepted invitation
+        if (!email && profile?.full_name) {
+          // Try to find email in accepted invitations (user might have profile with name but not email)
+        }
+        
+        // Only add if we have something to display
+        if (email || fullName) {
+          memberList.push({
+            user_id: role.user_id,
+            email,
+            full_name: fullName,
+          });
+        } else {
+          // Last resort: include with user_id as identifier
+          memberList.push({
+            user_id: role.user_id,
+            email: null,
+            full_name: null,
+          });
+        }
+      }
+      
+      // Filter out members with no identifiable info (but keep at least user_id)
+      setMembers(memberList.filter(m => m.email || m.full_name || m.user_id));
+    } else {
+      setMembers([]);
     }
   };
   useEffect(() => { load(); }, [organizationId]);
@@ -117,7 +175,11 @@ export function ApprovalChainEditor() {
                     <SelectTrigger><SelectValue placeholder={t("none")} /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">{t("none")}</SelectItem>
-                      {members.map((m) => <SelectItem key={m.user_id} value={m.user_id}>{m.full_name || m.email}</SelectItem>)}
+                      {members.map((m) => (
+                        <SelectItem key={m.user_id} value={m.user_id}>
+                          {m.full_name || m.email || `${t("user")} ${m.user_id.slice(0, 8)}...`}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
