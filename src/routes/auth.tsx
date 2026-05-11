@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n";
 import { useServerFn } from "@tanstack/react-start";
 import { acceptInvitation } from "@/lib/invitations.functions";
+import { assertServerFnResult, getServerFnAuthHeaders } from "@/lib/server-fn-auth";
 
 export const Route = createFileRoute("/auth")({
   component: AuthPage,
@@ -76,7 +77,8 @@ function AuthPage() {
       handled.current = true;
       setMode("processing");
       try {
-        await acceptInviteFn({ data: { email: data.session.user.email || emailParam } });
+        const headers = await getServerFnAuthHeaders();
+        await assertServerFnResult(await acceptInviteFn({ data: { email: data.session.user.email || emailParam }, headers }));
       } catch (_) {
         // Ignore if already accepted
       }
@@ -127,7 +129,8 @@ function AuthPage() {
     if (invited) {
       setMode("processing");
       try {
-        await acceptInviteFn({ data: { email } });
+        const headers = await getServerFnAuthHeaders();
+        await assertServerFnResult(await acceptInviteFn({ data: { email }, headers }));
       } catch (_) {
         // Ignore if already accepted
       }
@@ -177,7 +180,8 @@ function AuthPage() {
     if (invited) {
       setMode("processing");
       try {
-        await acceptInviteFn({ data: { email } });
+        const headers = await getServerFnAuthHeaders();
+        await assertServerFnResult(await acceptInviteFn({ data: { email }, headers }));
       } catch (_) {
         // Trigger will already attach the role; ignore failures
       }
