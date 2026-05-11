@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { useAuth } from "@/lib/auth";
@@ -13,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ApprovalEntity } from "@/lib/governance";
 import { recordDecision, markApplied, getCurrentApprover, isCurrentUserApprover } from "@/lib/approvals";
 import { ApprovalDiff } from "@/components/approval-diff";
+import { ApprovalSummary } from "@/components/approval-summary";
 import { usePermissions } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
 import { CheckCircle2, XCircle, Clock, FileBarChart, Layers, Gift, TrendingUp, Info, ShieldCheck, Undo2, Pencil, Eye } from "lucide-react";
@@ -181,7 +183,7 @@ function ApprovalsPage() {
       </div>
 
       <Dialog open={!!active} onOpenChange={(o) => !o && setActive(null)}>
-        <DialogContent className="max-w-[95vw] sm:max-w-2xl overflow-x-hidden">
+        <DialogContent className="max-w-[95vw] sm:max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {active?.action === "approved" && t("confirm_approval")}
@@ -189,35 +191,66 @@ function ApprovalsPage() {
               {active?.action === "edited" && t("edit_and_approve")}
               {active?.action === "sent_back" && t("send_back")}
             </DialogTitle>
-            <DialogDescription>{active?.req?.entity_label}</DialogDescription>
           </DialogHeader>
-          <div className="space-y-3">
+          <div className="space-y-4">
+            {/* Show summary for approve/reject/send_back actions */}
+            {active && active.action !== "edited" && (
+              <ApprovalSummary
+                entityType={active.req.entity_type}
+                entityLabel={active.req.entity_label}
+                payload={active.req.final_payload ?? active.req.proposed_payload ?? {}}
+                requestedBy={active.req.requested_by_email}
+                reason={active.req.reason}
+              />
+            )}
+            
+            {/* Show editable table for edit action */}
             {active?.action === "edited" && (
               <PayloadEditor entityType={active.req.entity_type} value={editsObj} onChange={setEditsObj} />
             )}
-            <div className="space-y-1.5">
-              <label className="text-xs text-muted-foreground">{t("decision_note")}</label>
-              <Textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3} placeholder={t("decision_note_placeholder")} />
+            
+            {/* Decision note */}
+            <div className="space-y-1.5 pt-2 border-t">
+              <Label className="text-sm font-medium">{t("decision_note")}</Label>
+              <Textarea 
+                value={note} 
+                onChange={(e) => setNote(e.target.value)} 
+                rows={3} 
+                placeholder={t("decision_note_placeholder")} 
+                className="resize-none"
+              />
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="gap-2 sm:gap-0">
             <Button variant="outline" onClick={() => setActive(null)}>{t("cancel")}</Button>
-            <Button onClick={submit}>{t("confirm")}</Button>
+            <Button 
+              onClick={submit}
+              variant={active?.action === "rejected" ? "destructive" : "default"}
+            >
+              {active?.action === "approved" && (t("approve") || "Approve")}
+              {active?.action === "rejected" && (t("reject") || "Reject")}
+              {active?.action === "edited" && (t("save_and_approve") || "Save & Approve")}
+              {active?.action === "sent_back" && (t("send_back") || "Send Back")}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       <Dialog open={!!diffReq} onOpenChange={(o) => !o && setDiffReq(null)}>
-        <DialogContent className="max-w-[95vw] sm:max-w-3xl overflow-x-hidden">
+        <DialogContent className="max-w-[95vw] sm:max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{t("view_diff")}</DialogTitle>
-            <DialogDescription>{diffReq?.entity_label}</DialogDescription>
+            <DialogTitle>{t("view_changes") || "View Changes"}</DialogTitle>
           </DialogHeader>
           {diffReq && (
-            <ApprovalDiff
-              before={(diffReq.proposed_payload ?? {}) as Record<string, unknown>}
-              after={(diffReq.final_payload ?? diffReq.proposed_payload ?? {}) as Record<string, unknown>}
-            />
+            <div className="space-y-4">
+              <ApprovalSummary
+                entityType={diffReq.entity_type}
+                entityLabel={diffReq.entity_label}
+                payload={diffReq.final_payload ?? diffReq.proposed_payload ?? {}}
+                requestedBy={diffReq.requested_by_email}
+                reason={diffReq.reason}
+              />
+            </div>
           )}
         </DialogContent>
       </Dialog>
