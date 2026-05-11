@@ -196,7 +196,12 @@ export const sendTeamInvitation = createServerFn({ method: "POST" })
     });
     if (logError) throw new Error(logError.message);
 
-    return { ok: true, alreadyRegistered: Boolean(existingProfile?.id) };
+    return {
+      ok: true,
+      alreadyRegistered: Boolean(existingProfile?.id),
+      invitationId: messageId,
+      recipientEmail: email,
+    };
   });
 
 // ─────────────────────────────────────────────────────────────────────────────
