@@ -75,23 +75,35 @@ function TeamPage() {
 
   const handleInvite = async () => {
     if (!organizationId || !user) return;
-    if (!inviteEmail.trim()) return toast.error(t("invite_email"));
+    const targetEmail = inviteEmail.trim().toLowerCase();
+    if (!targetEmail) return toast.error(t("invite_email"));
     setInviting(true);
     try {
       const origin = typeof window !== "undefined" ? window.location.origin : undefined;
-      const res: any = await inviteFn({ data: { organizationId, email: inviteEmail.trim().toLowerCase(), role: inviteRole, redirectOrigin: origin } });
-      toast.success(res?.alreadyRegistered ? t("invite_resent_existing") : t("invite_sent"));
+      const res: any = await inviteFn({ data: { organizationId, email: targetEmail, role: inviteRole, redirectOrigin: origin } });
+      toast.success(res?.alreadyRegistered ? t("invite_resent_existing") : t("invite_sent"), {
+        description: targetEmail,
+      });
       await logAudit({
         organizationId, action: "create", entityType: "invitation",
-        entityLabel: `${inviteEmail} as ${inviteRole}`,
+        entityLabel: `${targetEmail} as ${inviteRole}`,
       });
       setOpen(false);
       setInviteSource("manual");
       setInviteEmail("");
       setInviteRole("analyst");
-      load();
+      await load();
     } catch (e: any) {
-      toast.error(e?.message || "Failed to send invitation");
+      const raw = e?.message || "Failed to send invitation";
+      if (raw.startsWith("ALREADY_MEMBER:")) {
+        const role = raw.split(":")[1];
+        toast.error(t("invite_already_member"), {
+          description: `${targetEmail} — ${t(`role_${role}`)}`,
+        });
+      } else {
+        toast.error(raw);
+      }
+      await load();
     } finally {
       setInviting(false);
     }
@@ -102,9 +114,15 @@ function TeamPage() {
     try {
       const origin = typeof window !== "undefined" ? window.location.origin : undefined;
       await inviteFn({ data: { organizationId, email, role, redirectOrigin: origin } });
-      toast.success(t("invite_sent"));
+      toast.success(t("invite_sent"), { description: email });
+      await load();
     } catch (e: any) {
-      toast.error(e?.message || "Failed to resend");
+      const raw = e?.message || "Failed to resend";
+      if (raw.startsWith("ALREADY_MEMBER:")) {
+        toast.error(t("invite_already_member"), { description: email });
+      } else {
+        toast.error(raw);
+      }
     }
   };
 
