@@ -14,7 +14,7 @@ export async function getServerFnAuthHeaders() {
 
 export async function assertServerFnResult<T>(result: T | Response): Promise<T> {
   if (!(typeof Response !== "undefined" && result instanceof Response)) {
-    return result;
+    return result as T;
   }
 
   let message = result.statusText || "Request failed";
