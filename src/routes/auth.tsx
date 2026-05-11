@@ -65,6 +65,8 @@ function AuthPage() {
 
     if (invited) {
       setIsInvitedFlow(true);
+      // Default to signup tab for invited users who need to create an account
+      setTab("signup");
     }
 
     if (!invited) {
@@ -75,15 +77,26 @@ function AuthPage() {
       return;
     }
     setMode("auth");
-    setTab("signin");
+    // Keep signup tab for invited flow - don't override
 
     supabase.auth.getSession().then(async ({ data }) => {
       if (!data.session?.user || handled.current) return;
       handled.current = true;
       setMode("processing");
+      
+      const userEmail = data.session.user.email || emailParam;
+      
+      // Ensure profile is synced with email
+      if (data.session.user) {
+        await supabase.from("profiles").upsert({
+          id: data.session.user.id,
+          email: userEmail.toLowerCase(),
+        }, { onConflict: "id" });
+      }
+      
       try {
         const headers = await getServerFnAuthHeaders();
-        await assertServerFnResult(await acceptInviteFn({ data: { email: data.session.user.email || emailParam }, headers }));
+        await assertServerFnResult(await acceptInviteFn({ data: { email: userEmail }, headers }));
       } catch (_) {
         // Ignore if already accepted
       }
@@ -104,10 +117,14 @@ function AuthPage() {
       });
       if (error) { toast.error(error.message); return; }
 
-      // Sync profile
+      // Sync profile - ensure email and full_name are set
       const { data: { user } } = await supabase.auth.getUser();
-      if (user && fullName) {
-        await supabase.from("profiles").upsert({ id: user.id, full_name: fullName, email: user.email }, { onConflict: "id" });
+      if (user) {
+        await supabase.from("profiles").upsert({ 
+          id: user.id, 
+          full_name: fullName || null, 
+          email: (user.email || inviteEmail || "").toLowerCase() 
+        }, { onConflict: "id" });
       }
 
       toast.success(t("account_created"));
@@ -130,8 +147,17 @@ function AuthPage() {
       return toast.error(error.message);
     }
     setUnverifiedEmail("");
+    
+    // Ensure profile has email set (in case trigger didn't populate it)
+    if (data.user) {
+      await supabase.from("profiles").upsert({
+        id: data.user.id,
+        email: email.toLowerCase(),
+      }, { onConflict: "id" });
+    }
+    
     const { invited } = getInviteState();
-    if (invited) {
+    if (invited && data.session) {
       setMode("processing");
       try {
         const headers = await getServerFnAuthHeaders();
@@ -166,7 +192,7 @@ function AuthPage() {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth?confirmed=1${invited ? "&invited=1" : ""}`,
+        emailRedirectTo: `${window.location.origin}/auth?confirmed=1${invited ? `&invited=1&email=${encodeURIComponent(email)}` : ""}`,
         data: {
           full_name: fullName,
           // Don't auto-create org if user is signing up via an invitation —
@@ -182,6 +208,16 @@ function AuthPage() {
       setTab("signin");
       return;
     }
+    
+    // Ensure profile is created/updated with email and full_name
+    if (data.user) {
+      await supabase.from("profiles").upsert({
+        id: data.user.id,
+        email: email.toLowerCase(),
+        full_name: fullName || null,
+      }, { onConflict: "id" });
+    }
+    
     if (invited) {
       setMode("processing");
       try {

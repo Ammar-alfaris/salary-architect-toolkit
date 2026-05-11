@@ -54,11 +54,12 @@ export function ApprovalChainEditor() {
       // Also fetch accepted invitations to get emails for users whose profiles might not have email
       const { data: acceptedInvites } = await supabase
         .from("pending_invitations")
-        .select("email")
+        .select("email, organization_id")
         .eq("organization_id", organizationId)
         .not("accepted_at", "is", null);
       
-      const acceptedEmails = new Set((acceptedInvites ?? []).map(i => i.email?.toLowerCase()));
+      // Build a lookup by email from accepted invitations
+      const acceptedEmailsList = (acceptedInvites ?? []).map(i => i.email?.toLowerCase()).filter(Boolean);
       
       // Build final member list ensuring all role holders are included
       const memberList: Member[] = [];
@@ -67,30 +68,15 @@ export function ApprovalChainEditor() {
         let email = profile?.email ?? null;
         let fullName = profile?.full_name ?? null;
         
-        // If profile has no email, check if their email matches an accepted invitation
-        if (!email && profile?.full_name) {
-          // Try to find email in accepted invitations (user might have profile with name but not email)
-        }
-        
-        // Only add if we have something to display
-        if (email || fullName) {
-          memberList.push({
-            user_id: role.user_id,
-            email,
-            full_name: fullName,
-          });
-        } else {
-          // Last resort: include with user_id as identifier
-          memberList.push({
-            user_id: role.user_id,
-            email: null,
-            full_name: null,
-          });
-        }
+        // Always include the member - they have a user_id so can be assigned
+        memberList.push({
+          user_id: role.user_id,
+          email,
+          full_name: fullName,
+        });
       }
       
-      // Filter out members with no identifiable info (but keep at least user_id)
-      setMembers(memberList.filter(m => m.email || m.full_name || m.user_id));
+      setMembers(memberList);
     } else {
       setMembers([]);
     }
