@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, KeyRound, Loader2 } from "lucide-react";
+import { ArrowLeft, KeyRound, Loader2, Mail } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
@@ -49,6 +49,7 @@ function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [unverifiedEmail, setUnverifiedEmail] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
+  const [isInvitedFlow, setIsInvitedFlow] = useState(false);
   const handled = useRef(false);
 
   useEffect(() => {
@@ -60,6 +61,10 @@ function AuthPage() {
     if (emailParam) {
       setEmail(emailParam);
       setInviteEmail(emailParam);
+    }
+
+    if (invited) {
+      setIsInvitedFlow(true);
     }
 
     if (!invited) {
@@ -115,9 +120,9 @@ function AuthPage() {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
+      setLoading(false);
       if (error.message.toLowerCase().includes("email not confirmed")) {
         setUnverifiedEmail(email);
         return toast.error("البريد الإلكتروني غير مؤكّد بعد. أعد إرسال رسالة التحقق من الأسفل.");
@@ -302,6 +307,20 @@ function AuthPage() {
             <h1 className="text-2xl font-semibold tracking-tight">{t("welcome_to")} {t("app_name")}</h1>
             <p className="text-sm text-muted-foreground mt-1">{t("tagline")}</p>
           </div>
+          {/* Invitation banner */}
+          {isInvitedFlow && inviteEmail && (
+            <div className="mb-4 p-3 rounded-lg bg-primary/5 border border-primary/20 flex items-start gap-3">
+              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <Mail className="w-4 h-4 text-primary" />
+              </div>
+              <div className="text-sm">
+                <p className="font-medium text-foreground">{t("invitation_signup_title") || "You have been invited"}</p>
+                <p className="text-muted-foreground text-xs mt-0.5">
+                  {t("invitation_signup_desc") || "Create an account to accept the invitation and join the team."}
+                </p>
+              </div>
+            </div>
+          )}
           <div className="border rounded-xl bg-card p-6 shadow-[var(--shadow-elegant)]">
             <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
               <TabsList className="grid grid-cols-2 w-full">
@@ -330,17 +349,29 @@ function AuthPage() {
                 <form onSubmit={handleSignUp} className="space-y-3">
                   <div className="space-y-1.5">
                     <Label>{t("full_name")}</Label>
-                    <Input required value={fullName} onChange={(e) => setFullName(e.target.value)} />
+                    <Input required value={fullName} onChange={(e) => setFullName(e.target.value)} autoFocus />
                   </div>
                   <div className="space-y-1.5">
                     <Label>{t("email")}</Label>
-                    <Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+                    <Input 
+                      type="email" 
+                      required 
+                      value={email} 
+                      onChange={(e) => !isInvitedFlow && setEmail(e.target.value)} 
+                      readOnly={isInvitedFlow && !!inviteEmail}
+                      className={isInvitedFlow && inviteEmail ? "bg-muted cursor-not-allowed" : ""}
+                    />
+                    {isInvitedFlow && inviteEmail && (
+                      <p className="text-xs text-muted-foreground">{t("invitation_email_locked") || "This email is linked to your invitation"}</p>
+                    )}
                   </div>
                   <div className="space-y-1.5">
                     <Label>{t("password")}</Label>
                     <Input type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} />
                   </div>
-                  <Button type="submit" className="w-full" disabled={loading}>{loading ? "…" : t("sign_up")}</Button>
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? "…" : (isInvitedFlow ? (t("accept_invitation") || "Accept Invitation") : t("sign_up"))}
+                  </Button>
                 </form>
               </TabsContent>
             </Tabs>
