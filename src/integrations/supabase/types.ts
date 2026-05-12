@@ -1893,6 +1893,10 @@ export type Database = {
           read_ct: number
         }[]
       }
+      share_org_with_user: {
+        Args: { _target_user_id: string; _viewer_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "analyst" | "viewer" | "manager"
