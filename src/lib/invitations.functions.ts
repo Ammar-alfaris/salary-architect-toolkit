@@ -145,8 +145,28 @@ export const sendTeamInvitation = createServerFn({ method: "POST" })
       );
     if (upErr) throw new Error(upErr.message);
 
-    // Build redirect URL — the user can sign in or sign up from the same page.
-    const origin = data.redirectOrigin || "https://totalreward.app";
+    // Build redirect URL — restrict origin to a known allowlist to prevent
+    // open-redirect / phishing via attacker-supplied redirectOrigin.
+    const ALLOWED_ORIGINS = new Set<string>([
+      "https://totalreward.app",
+      "https://www.totalreward.app",
+      "https://salary-architect-toolkit.lovable.app",
+    ]);
+    let origin = "https://totalreward.app";
+    if (data.redirectOrigin) {
+      try {
+        const candidate = new URL(data.redirectOrigin).origin;
+        if (
+          ALLOWED_ORIGINS.has(candidate) ||
+          /^https:\/\/[a-z0-9-]+\.lovable\.app$/i.test(candidate) ||
+          /^http:\/\/localhost(:\d+)?$/i.test(candidate)
+        ) {
+          origin = candidate;
+        }
+      } catch {
+        // ignore – fall back to default
+      }
+    }
     const inviteUrl = `${origin}/auth?invited=1&email=${encodeURIComponent(email)}`;
     const unsubscribeToken = await getOrCreateUnsubscribeToken(admin, email);
     const inviterEmail = inviterProfile?.email ?? "noreply@totalreward.app";
