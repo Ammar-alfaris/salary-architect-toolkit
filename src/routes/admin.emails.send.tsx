@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { brandedWrap, fetchTemplate, type EmailTemplate } from "@/lib/email-templates";
 import { useServerFn } from "@tanstack/react-start";
 import { sendEmailCampaign } from "@/lib/email-campaign.functions";
+import { getServerFnAuthHeaders } from "@/lib/server-fn-auth";
 
 export const Route = createFileRoute("/admin/emails/send")({ component: SendEmailPage });
 
@@ -116,10 +117,11 @@ function SendEmailPage() {
       const subject = locale === "ar" ? subjectAr : subjectEn;
       const body = locale === "ar" ? bodyAr : bodyEn;
       const html = brandedWrap({ subject, bodyHtml: body, locale });
+      const headers = await getServerFnAuthHeaders();
       const res: any = await sendFn({ data: {
         templateKey: tplKey, subject, html, locale,
         recipients: recipients.map((r) => ({ email: r.email, name: r.name ?? null })),
-      } as any });
+      } as any, headers });
       toast.success(`Queued ${res.queued} email(s)${res.failed ? `, ${res.failed} failed` : ""}`);
       if (Array.isArray(res.messageIds)) pollStatuses(res.messageIds);
     } catch (e: any) {
