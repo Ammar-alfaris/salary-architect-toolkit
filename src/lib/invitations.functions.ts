@@ -223,25 +223,6 @@ export const acceptInvitation = createServerFn({ method: "POST" })
 
     const targetEmail = (data.email || user.email || "").toLowerCase();
     if (!targetEmail) throw new Error("Cannot resolve email");
-    
-    // Ensure user profile exists with correct email (important for team member display)
-    const { data: existingProfile } = await admin
-      .from("profiles")
-      .select("id, email, full_name")
-      .eq("id", userId)
-      .maybeSingle();
-    
-    if (!existingProfile) {
-      // Create profile if it doesn't exist
-      await admin.from("profiles").insert({
-        id: userId,
-        email: targetEmail,
-        full_name: user.user_metadata?.full_name || null,
-      });
-    } else if (!existingProfile.email) {
-      // Update profile email if it's missing
-      await admin.from("profiles").update({ email: targetEmail }).eq("id", userId);
-    }
 
     // Find all unaccepted invitations for this email
     const { data: invites, error: invErr } = await admin
