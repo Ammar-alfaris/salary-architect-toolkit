@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 async function getOrCreateUnsubscribeToken(supabase: any, email: string) {
   const normalizedEmail = email.trim().toLowerCase();
@@ -49,8 +50,20 @@ const InputSchema = z.object({
 });
 
 export const sendEmailCampaign = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => InputSchema.parse(data))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    // Authorization: only active platform admins (super_admin / platform_admin) can send campaigns
+    const { data: pa, error: paErr } = await context.supabase
+      .from("platform_admins")
+      .select("role")
+      .eq("user_id", context.userId)
+      .eq("status", "active")
+      .maybeSingle();
+    if (paErr || !pa) {
+      throw new Response("Forbidden", { status: 403 });
+    }
+
     const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL!;
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
     if (!supabaseUrl || !serviceKey) {
