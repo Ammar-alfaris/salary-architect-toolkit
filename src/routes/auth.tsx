@@ -13,6 +13,7 @@ import { useI18n } from "@/lib/i18n";
 import { useServerFn } from "@tanstack/react-start";
 import { acceptInvitation } from "@/lib/invitations.functions";
 import { assertServerFnResult, getServerFnAuthHeaders } from "@/lib/server-fn-auth";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/auth")({
   component: AuthPage,
@@ -30,6 +31,7 @@ function AuthPage() {
   const { t } = useI18n();
   const navigate = useNavigate();
   const acceptInviteFn = useServerFn(acceptInvitation);
+  const { refreshOrg } = useAuth();
 
   const getInviteState = () => {
     if (typeof window === "undefined") return { invited: false, emailParam: "" };
@@ -51,6 +53,17 @@ function AuthPage() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [isInvitedFlow, setIsInvitedFlow] = useState(false);
   const handled = useRef(false);
+
+  const finalizeInvitationAcceptance = async (targetEmail: string) => {
+    try {
+      const headers = await getServerFnAuthHeaders();
+      await assertServerFnResult(await acceptInviteFn({ data: { email: targetEmail }, headers }));
+    } catch (_) {
+      // Ignore if already accepted or the trigger already handled it.
+    }
+
+    await refreshOrg();
+  };
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -75,18 +88,13 @@ function AuthPage() {
       return;
     }
     setMode("auth");
-    setTab("signin");
+    setTab("signup");
 
     supabase.auth.getSession().then(async ({ data }) => {
       if (!data.session?.user || handled.current) return;
       handled.current = true;
       setMode("processing");
-      try {
-        const headers = await getServerFnAuthHeaders();
-        await assertServerFnResult(await acceptInviteFn({ data: { email: data.session.user.email || emailParam }, headers }));
-      } catch (_) {
-        // Ignore if already accepted
-      }
+      await finalizeInvitationAcceptance(data.session.user.email || emailParam);
       navigate({ to: "/app" });
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -133,12 +141,7 @@ function AuthPage() {
     const { invited } = getInviteState();
     if (invited) {
       setMode("processing");
-      try {
-        const headers = await getServerFnAuthHeaders();
-        await assertServerFnResult(await acceptInviteFn({ data: { email }, headers }));
-      } catch (_) {
-        // Ignore if already accepted
-      }
+      await finalizeInvitationAcceptance(email);
     }
     toast.success(t("welcome_back"));
     navigate({ to: "/app" });
@@ -179,17 +182,11 @@ function AuthPage() {
     if (error) return toast.error(error.message);
     if (!data.session) {
       toast.success(t("check_email_to_verify"), { duration: 8000 });
-      setTab("signin");
       return;
     }
     if (invited) {
       setMode("processing");
-      try {
-        const headers = await getServerFnAuthHeaders();
-        await assertServerFnResult(await acceptInviteFn({ data: { email }, headers }));
-      } catch (_) {
-        // Trigger will already attach the role; ignore failures
-      }
+      await finalizeInvitationAcceptance(email);
     }
     toast.success(t("account_created"));
     navigate({ to: "/app" });
@@ -197,7 +194,11 @@ function AuthPage() {
 
   const handleGoogle = async () => {
     setLoading(true);
-    const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin + "/app" });
+    const inviteTargetEmail = (inviteEmail || email).trim();
+    const redirectUri = isInvitedFlow
+      ? `${window.location.origin}/auth?invited=1${inviteTargetEmail ? `&email=${encodeURIComponent(inviteTargetEmail)}` : ""}`
+      : `${window.location.origin}/app`;
+    const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: redirectUri });
     if (result.error) {
       setLoading(false);
       return toast.error(result.error.message ?? t("google_signin_failed"));
