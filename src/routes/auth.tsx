@@ -92,6 +92,14 @@ function AuthPage() {
 
     supabase.auth.getSession().then(async ({ data }) => {
       if (!data.session?.user || handled.current) return;
+      const sessionEmail = (data.session.user.email || "").toLowerCase();
+      const invitedEmail = (emailParam || "").toLowerCase();
+
+      if (invitedEmail && sessionEmail && sessionEmail !== invitedEmail) {
+        await supabase.auth.signOut();
+        return;
+      }
+
       handled.current = true;
       setMode("processing");
       await finalizeInvitationAcceptance(data.session.user.email || emailParam);
@@ -151,10 +159,13 @@ function AuthPage() {
     const target = (unverifiedEmail || email).trim();
     if (!target) return toast.error("أدخل بريدك الإلكتروني أولاً.");
     setLoading(true);
+    const { invited } = getInviteState();
     const { error } = await supabase.auth.resend({
       type: "signup",
       email: target,
-      options: { emailRedirectTo: `${window.location.origin}/auth?confirmed=1` },
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth?confirmed=1${invited ? `&invited=1&email=${encodeURIComponent(target)}` : ""}`,
+      },
     });
     setLoading(false);
     if (error) return toast.error(error.message);
@@ -165,11 +176,12 @@ function AuthPage() {
     e.preventDefault();
     setLoading(true);
     const { invited } = getInviteState();
+    const invitedEmailParam = invited ? `&email=${encodeURIComponent(email)}` : "";
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth?confirmed=1${invited ? "&invited=1" : ""}`,
+        emailRedirectTo: `${window.location.origin}/auth?confirmed=1${invited ? "&invited=1" : ""}${invitedEmailParam}`,
         data: {
           full_name: fullName,
           // Don't auto-create org if user is signing up via an invitation —
