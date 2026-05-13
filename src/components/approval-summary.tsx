@@ -279,12 +279,39 @@ function BonusCycleSummary({ payload, entityLabel, requestedBy, reason }: Omit<P
         </div>
       )}
 
-      {/* Employee breakdown */}
+      {/* Employee breakdown — table on tablet+, cards on mobile */}
       <div className="space-y-2">
         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
           {t("bonus_details") || "Bonus Details"}
         </p>
-        <div className="border rounded-lg overflow-hidden">
+
+        {/* Mobile: stacked cards */}
+        <div className="grid gap-2 sm:hidden">
+          {results.length === 0 && (
+            <div className="border rounded-lg p-4 text-center text-sm text-muted-foreground">{t("no_data") || "No bonus data"}</div>
+          )}
+          {results.slice(0, 50).map((r, i) => (
+            <div key={r.id ?? i} className="border rounded-lg p-3 bg-card space-y-1.5">
+              <div className="flex items-start justify-between gap-2">
+                <div className="font-medium text-sm break-words">{r.name ?? r.id}</div>
+                <div className="text-success font-semibold tabular-nums text-sm shrink-0">{formatCurrency(num(r.bonus), locale)}</div>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div>
+                  <div className="text-muted-foreground">{t("base_salary") || "Base"}</div>
+                  <div className="font-medium tabular-nums">{formatCurrency(num(r.base), locale)}</div>
+                </div>
+                <div>
+                  <div className="text-muted-foreground">{t("target_percent") || "Target %"}</div>
+                  <div className="font-medium tabular-nums">{num(r.target).toFixed(1)}%</div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Tablet/Desktop: table */}
+        <div className="hidden sm:block border rounded-lg overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-muted/40">
