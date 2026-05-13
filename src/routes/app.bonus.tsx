@@ -39,6 +39,20 @@ function BonusPage() {
   const [bulkResults, setBulkResults] = useState<any[]>([]);
   const [cycleId, setCycleId] = useState<string | null>(null);
 
+  // approved/finalized cycles
+  const [approvedCycles, setApprovedCycles] = useState<any[]>([]);
+  const loadApproved = async () => {
+    if (!organizationId) return;
+    const { data } = await supabase
+      .from("bonus_cycles")
+      .select("*")
+      .eq("organization_id", organizationId)
+      .not("approved_at", "is", null)
+      .order("approved_at", { ascending: false });
+    setApprovedCycles(data ?? []);
+  };
+  useEffect(() => { loadApproved(); }, [organizationId]);
+
   const ensureCycle = async () => {
     if (!organizationId) return null;
     if (cycleId) return cycleId;
