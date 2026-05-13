@@ -1,88 +1,41 @@
-# تشخيص المشكلة وخطة الإصلاح
+## Goal
+Fix the remaining approval workflow issues in four places: mobile review screens, final approved bonus persistence, approval-chain usability, and in-app notifications.
 
-## النتيجة الحالية
-الجذر الحقيقي للمشكلة ليس من DNS ولا من نطاق البريد.
+## Plan
 
-ما تأكدت منه:
-- نطاق البريد `notify.totalreward.app` موثق وجاهز للإرسال.
-- الخلفية والمهام المجدولة الخاصة بمعالجة البريد تعمل.
-- لا توجد أي سجلات لدعوات فريق في `email_send_log`.
-- لا توجد أي سجلات مقابلة في `pending_invitations` للبريد الذي اختبرته، بل الجدول نفسه فارغ حالياً.
-- صف البريد `transactional_emails` فارغ أيضاً.
+### 1) Make approval review and edit flows mobile-friendly
+- Refactor the approval summary modal used by “View Changes” so merit and bonus details render as stacked mobile cards on small screens instead of wide tables.
+- Refactor the edit/review modal so managers can review and edit rows in a phone-friendly layout, while preserving the existing desktop table layout.
+- Keep summary metrics visible at the top, then show each employee row as a readable card with key numbers and inputs.
+- Tighten modal sizing, scrolling, and action button layout for small screens.
 
-**هذا يعني أن الدعوة لا تصل أصلاً إلى مرحلة الحفظ أو الإدراج في طابور الإرسال، لذلك عبارة "Invitation email sent" مضللة حالياً.**
+### 2) Save approved bonus cycles as final locked records
+- Review the current bonus approval/apply flow and stop treating approval as a temporary state only.
+- Update the bonus workflow so a fully approved bonus cycle is persisted as the final approved version for that cycle/year.
+- Ensure the final approved payload is the source of truth when users reopen the cycle later.
+- Mark approved bonus cycles/results as finalized and read-only after final approval, while still allowing viewing/export.
+- Surface approved-by and approved-at information in the bonus area so users can tell the cycle is finalized.
 
-## جذر المشكلة
-المشكلة تقع في **مسار إنشاء الدعوة نفسه** قبل الإرسال، وعلى الأرجح في واحد أو أكثر من هذه النقاط:
+### 3) Improve approval chain setup for invited/internal managers
+- Update the approval-chain editor member list logic so invited-and-linked managers appear reliably in the internal user selector.
+- When an internal user is selected, automatically populate the corresponding email instead of forcing manual entry.
+- Keep manual email available only as a fallback for approvers not yet available in the organization list.
+- Preserve compatibility with existing saved chains.
 
-1. **استدعاء وظيفة الدعوة من الواجهة لا يُتحقق منه بشكل كافٍ**
-   - الواجهة تعرض نجاحاً بعد استدعاء `sendTeamInvitation`، لكن لا يوجد دليل فعلي في قاعدة البيانات أن الدعوة سُجلت.
-   - لا يوجد logging كافٍ يوضح أين يتوقف التنفيذ.
+### 4) Add an in-app approval notification area on the dashboard
+- Add a dashboard notification section above the main KPI area for approval-related updates.
+- Show actionable messages for managers and regular users, such as pending requests, approvals completed, and next-step guidance.
+- Start with approval workflow notifications sourced from existing approval request data so the feature works immediately without requiring an external email dependency.
+- Make the notification cards compact and mobile-friendly.
 
-2. **فشل صامت داخل `sendTeamInvitation` قبل اكتمال العملية**
-   - الوظيفة يجب أن:
-     - تتحقق من صلاحية الأدمن
-     - تحفظ `pending_invitations`
-     - تُدخل رسالة البريد إلى الطابور
-     - تُسجلها في `email_send_log`
-   - لكن من الواقع الحالي لا يحدث أيٌّ من هذه الآثار الجانبية، لذا يلزم تتبع كل خطوة بشكل صريح.
+## Technical details
+- Frontend files likely involved: `src/routes/app.approvals.tsx`, `src/components/approval-summary.tsx`, `src/components/approval-chain-editor.tsx`, `src/routes/app.bonus.tsx`, `src/routes/app.index.tsx`.
+- Backend/data changes are likely needed for finalized bonus persistence and read-only behavior, so I expect to add a migration for finalization metadata and/or constraints around post-approval edits.
+- I’ll reuse the existing approval request/final payload model where possible instead of introducing a parallel workflow.
+- Notifications will be based on current approval data first; if a dedicated notifications table becomes necessary after inspection during implementation, I’ll keep it minimal and scoped only to approval events.
 
-3. **تدفق القبول الحالي غير متناسق مع رابط الدعوة**
-   - رابط الدعوة الحالي يرسل المستخدم إلى `/auth?invited=1&email=...`.
-   - لكن صفحة `/auth` لا تُوجّه المستخدم الجديد فعلياً عبر تدفق دعوة حقيقي مضمون، بل تعتمد على تسجيل يدوي ثم قبول الدعوة.
-   - هذا قد ينجح لاحقاً بعد إصلاح الإنشاء، لكنه ليس تدفقاً محكماً بعد.
-
-4. **الحالة المعروضة في Pending invitations تعتمد على وجود صف فعلي**
-   - بما أنه لا يتم إنشاء الصف، فالقائمة تبقى فارغة حتى لو ظهرت رسالة نجاح.
-
-## خطة الإصلاح
-
-### 1) جعل إنشاء الدعوة قابلاً للتتبع بدقة
-- إضافة تتبع واضح داخل `sendTeamInvitation` لكل مرحلة:
-  - التحقق من العضوية والصلاحية
-  - فحص العضو الموجود مسبقاً
-  - حفظ/تحديث `pending_invitations`
-  - إدخال البريد في الطابور
-  - كتابة سجل `email_send_log`
-- إعادة رسالة خطأ واضحة للواجهة عند فشل أي خطوة بدل نجاح صامت.
-
-### 2) إصلاح منطق النجاح في الواجهة
-- عدم إظهار "Invitation email sent" إلا بعد التأكد من:
-  - إنشاء سجل الدعوة في `pending_invitations`
-  - ونجاح وضع رسالة البريد في الطابور
-- تحديث الواجهة مباشرة بعد الإرسال من مصدر الحقيقة في قاعدة البيانات.
-
-### 3) تثبيت ظهور Pending invitations
-- الاعتماد على نتيجة الإدراج الفعلي لا على افتراض النجاح.
-- بعد الإرسال الناجح، إعادة تحميل القائمة والتحقق من ظهور الدعوة فوراً.
-- إظهار سبب الفشل للمستخدم إذا لم تُنشأ الدعوة.
-
-### 4) تحسين تدفق الدعوة للمستخدم الجديد والحالي
-- إذا كان الموظف موجوداً بالنظام لكن ليس عضواً في نفس المنظمة:
-  - تُستخدم بياناته وبريده تلقائياً.
-- إذا كان بريداً جديداً:
-  - تُنشأ دعوة جديدة كاملة.
-- عند فتح رابط الدعوة:
-  - إن كان الحساب موجوداً → تسجيل دخول ثم قبول الدعوة وربطه بنفس المنظمة.
-  - إن لم يكن الحساب موجوداً → إنشاء الحساب بالبريد المدعو ثم إلحاقه بنفس المنظمة والدور.
-
-### 5) التحقق النهائي بعد الإصلاح
-سأتحقق من 3 نقاط بعد التنفيذ:
-- ظهور السجل في `pending_invitations`
-- ظهور سجل `team_invitation` في `email_send_log`
-- انتقال الحالة من `pending` إلى `sent` أو ظهور خطأ حقيقي قابل للتشخيص
-
-## تفاصيل تقنية
-- الملفات المتوقعة للتعديل:
-  - `src/lib/invitations.functions.ts`
-  - `src/routes/app.team.tsx`
-  - `src/routes/auth.tsx`
-- لا يبدو أن المشكلة الحالية تحتاج تغيير DNS أو مزود البريد.
-- لا أحتاج مبدئياً إلى تغيير بنية الجداول؛ المشكلة تبدو منطق تنفيذ وتدفق حالة.
-
-## النتيجة المتوقعة بعد التنفيذ
-- عند الضغط على Invite:
-  - تُحفظ الدعوة فعلياً
-  - تظهر في Pending invitations
-  - يُرسل البريد فعلياً
-  - وعند القبول يدخل المستخدم إلى نفس المنظمة بالدور الصحيح
+## Expected result
+- Managers can comfortably review and edit approval requests on mobile.
+- Approved bonus cycles become durable final records visible later in the bonus area and no longer editable.
+- Approval-chain setup prefers existing invited managers and auto-fills their email.
+- Users see clear approval-related notifications on the dashboard instead of only a generic welcome message.

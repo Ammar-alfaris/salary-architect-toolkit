@@ -523,9 +523,14 @@ export type Database = {
       }
       bonus_cycles: {
         Row: {
+          approved_at: string | null
+          approved_by: string | null
+          approved_by_email: string | null
           business_multiplier: number
           created_at: string
           default_target_bonus_percent: number
+          final_payload: Json | null
+          finalized_at: string | null
           id: string
           name: string
           organization_id: string
@@ -533,9 +538,14 @@ export type Database = {
           year: number
         }
         Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          approved_by_email?: string | null
           business_multiplier?: number
           created_at?: string
           default_target_bonus_percent?: number
+          final_payload?: Json | null
+          finalized_at?: string | null
           id?: string
           name: string
           organization_id: string
@@ -543,9 +553,14 @@ export type Database = {
           year: number
         }
         Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          approved_by_email?: string | null
           business_multiplier?: number
           created_at?: string
           default_target_bonus_percent?: number
+          final_payload?: Json | null
+          finalized_at?: string | null
           id?: string
           name?: string
           organization_id?: string
@@ -1142,8 +1157,13 @@ export type Database = {
       }
       merit_cycles: {
         Row: {
+          approved_at: string | null
+          approved_by: string | null
+          approved_by_email: string | null
           created_at: string
           effective_date: string
+          final_payload: Json | null
+          finalized_at: string | null
           id: string
           name: string
           organization_id: string
@@ -1151,8 +1171,13 @@ export type Database = {
           total_budget_percent: number
         }
         Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          approved_by_email?: string | null
           created_at?: string
           effective_date?: string
+          final_payload?: Json | null
+          finalized_at?: string | null
           id?: string
           name: string
           organization_id: string
@@ -1160,8 +1185,13 @@ export type Database = {
           total_budget_percent?: number
         }
         Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          approved_by_email?: string | null
           created_at?: string
           effective_date?: string
+          final_payload?: Json | null
+          finalized_at?: string | null
           id?: string
           name?: string
           organization_id?: string

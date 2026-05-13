@@ -103,6 +103,15 @@ function ApprovalsPage() {
           })) as never);
           await Promise.all(recs.map((r: any) => supabase.from("employees").update({ base_salary: r.newSalary }).eq("id", r.id)));
         }
+        // Finalize the merit cycle so it becomes a locked, approved record
+        await supabase.from("merit_cycles").update({
+          status: "closed",
+          approved_at: new Date().toISOString(),
+          approved_by: user?.id ?? null,
+          approved_by_email: user?.email ?? null,
+          final_payload: payload as never,
+          finalized_at: new Date().toISOString(),
+        }).eq("id", req.entity_id);
       } else if (req.entity_type === "bonus_cycle") {
         const results = (payload as any).results ?? [];
         if (results.length) {
@@ -114,9 +123,18 @@ function ApprovalsPage() {
             individual_modifier: 1, calculated_bonus: r.bonus, proration_factor: 1,
           })) as never);
         }
+        // Finalize the bonus cycle so it becomes a locked, approved record
+        await supabase.from("bonus_cycles").update({
+          status: "closed",
+          approved_at: new Date().toISOString(),
+          approved_by: user?.id ?? null,
+          approved_by_email: user?.email ?? null,
+          final_payload: payload as never,
+          finalized_at: new Date().toISOString(),
+        }).eq("id", req.entity_id);
       }
       await markApplied(req.id);
-      await logAudit({ organizationId: organizationId!, action: "update", entityType: req.entity_type, entityId: req.entity_id, entityLabel: req.entity_label, metadata: { applied: true } });
+      await logAudit({ organizationId: organizationId!, action: "update", entityType: req.entity_type, entityId: req.entity_id, entityLabel: req.entity_label, metadata: { applied: true, finalized: true } });
       toast.success(t("apply_merit_done"));
       load();
     } catch (e: any) { toast.error(e.message); }
@@ -367,7 +385,37 @@ function PayloadEditor({ entityType, value, onChange }: {
     return (
       <div className="space-y-2">
         <p className="text-xs text-muted-foreground">{t("edit_payload_help")}</p>
-        <div className="overflow-x-auto rounded-md border">
+
+        {/* Mobile cards */}
+        <div className="grid gap-2 sm:hidden">
+          {recs.length === 0 && (
+            <div className="border rounded-md p-4 text-center text-muted-foreground text-sm">—</div>
+          )}
+          {recs.map((r, i) => (
+            <div key={r.id ?? i} className="border rounded-md p-3 bg-card space-y-2">
+              <div className="font-medium text-sm break-words">{r.name ?? r.id}</div>
+              <div className="text-xs text-muted-foreground">
+                {t("current_base") || "Base"}: <span className="text-foreground tabular-nums">{num(r.base).toLocaleString()}</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <Label className="text-[11px]">{t("increase_percent") || "%"}</Label>
+                  <Input type="number" step="0.1" value={r.pct ?? 0} onChange={(e) => updateRec(i, { pct: e.target.value })} className="h-9" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[11px]">{t("new_salary")}</Label>
+                  <div className="h-9 flex items-center px-2 rounded-md bg-muted/40 text-sm font-semibold tabular-nums">
+                    {num(r.newSalary).toLocaleString()}
+                  </div>
+                </div>
+              </div>
+              <div className="text-xs text-success tabular-nums">+{num(r.increase).toLocaleString()}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop table */}
+        <div className="hidden sm:block overflow-x-auto rounded-md border">
           <table className="w-full text-xs">
             <thead className="bg-muted/40">
               <tr className="text-left">
@@ -419,7 +467,29 @@ function PayloadEditor({ entityType, value, onChange }: {
             <Input type="number" step="0.05" value={value.bulkBiz ?? 1} onChange={(e) => onChange({ ...value, bulkBiz: num(e.target.value) })} className="h-8" />
           </div>
         </div>
-        <div className="overflow-x-auto rounded-md border">
+
+        {/* Mobile cards */}
+        <div className="grid gap-2 sm:hidden">
+          {results.length === 0 && (
+            <div className="border rounded-md p-4 text-center text-muted-foreground text-sm">—</div>
+          )}
+          {results.map((r, i) => (
+            <div key={r.id ?? i} className="border rounded-md p-3 bg-card space-y-2">
+              <div className="font-medium text-sm break-words">{r.name ?? r.id}</div>
+              <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+                <div>Base: <span className="text-foreground tabular-nums">{num(r.base).toLocaleString()}</span></div>
+                <div>Target %: <span className="text-foreground tabular-nums">{num(r.target)}</span></div>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[11px]">{t("calculated_bonus") || "Bonus"}</Label>
+                <Input type="number" step="1" value={r.bonus ?? 0} onChange={(e) => updateRow(i, { bonus: num(e.target.value) })} className="h-9" />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop table */}
+        <div className="hidden sm:block overflow-x-auto rounded-md border">
           <table className="w-full text-xs">
             <thead className="bg-muted/40">
               <tr className="text-left">
