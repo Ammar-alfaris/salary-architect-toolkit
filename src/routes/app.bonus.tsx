@@ -124,7 +124,11 @@ function BonusPage() {
       <PageHeader title={t("bonus")} subtitle={t("bonus_subtitle")} />
       <div className="p-4 md:p-6">
         <Tabs defaultValue="individual">
-          <TabsList><TabsTrigger value="individual">{t("individual")}</TabsTrigger><TabsTrigger value="bulk">{t("bulk")}</TabsTrigger></TabsList>
+          <TabsList>
+            <TabsTrigger value="individual">{t("individual")}</TabsTrigger>
+            <TabsTrigger value="bulk">{t("bulk")}</TabsTrigger>
+            <TabsTrigger value="approved">{t("status_approved")} ({approvedCycles.length})</TabsTrigger>
+          </TabsList>
 
           <TabsContent value="individual" className="mt-4">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
