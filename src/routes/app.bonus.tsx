@@ -204,6 +204,64 @@ function BonusPage() {
               </>
             )}
           </TabsContent>
+
+          <TabsContent value="approved" className="mt-4 space-y-3">
+            {approvedCycles.length === 0 ? (
+              <div className="border rounded-lg bg-card p-10 text-center text-sm text-muted-foreground">
+                {t("approvals_empty")}
+              </div>
+            ) : (
+              approvedCycles.map((c) => {
+                const fp = (c.final_payload ?? {}) as any;
+                const results: any[] = Array.isArray(fp.results) ? fp.results : [];
+                const total = results.reduce((s, r) => s + (Number(r.bonus) || 0), 0);
+                return (
+                  <div key={c.id} className="border rounded-lg bg-card p-4 ring-1 ring-success/30 bg-success/5 space-y-3">
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <h4 className="font-semibold">{c.name}</h4>
+                        <p className="text-xs text-muted-foreground">
+                          {t("status_approved")} · {c.approved_by_email ?? "—"} · {c.approved_at ? new Date(c.approved_at).toLocaleString(locale === "ar" ? "ar" : "en") : ""}
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <Button size="sm" variant="outline" onClick={() => results.length && exportCSV(`${c.name}.csv`, results)} disabled={!results.length}>
+                          <Download className="w-4 h-4 me-1" />{t("export_csv")}
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+                      <div className="border rounded-md p-2 bg-card"><div className="text-muted-foreground">{t("employees")}</div><div className="font-semibold">{results.length}</div></div>
+                      <div className="border rounded-md p-2 bg-card"><div className="text-muted-foreground">{t("total_budget")}</div><div className="font-semibold tabular-nums">{fmtCurrency(total, defaultCurrency, locale)}</div></div>
+                      <div className="border rounded-md p-2 bg-card"><div className="text-muted-foreground">Year</div><div className="font-semibold">{c.year}</div></div>
+                    </div>
+                    {results.length > 0 && (
+                      <div className="border rounded-md overflow-hidden">
+                        <div className="overflow-x-auto max-h-72 overflow-y-auto">
+                          <table className="w-full text-xs">
+                            <thead className="bg-muted/40 sticky top-0">
+                              <tr><th className="text-start p-2">{t("name")}</th><th className="text-end p-2">{t("base")}</th><th className="text-end p-2">{t("target_pct_short")}</th><th className="text-end p-2">{t("bonus_label")}</th></tr>
+                            </thead>
+                            <tbody>
+                              {results.map((r: any, i: number) => (
+                                <tr key={r.id ?? i} className="border-t">
+                                  <td className="p-2 break-all">{r.name ?? r.id}</td>
+                                  <td className="p-2 text-end tabular-nums">{fmtCurrency(Number(r.base) || 0, defaultCurrency, locale)}</td>
+                                  <td className="p-2 text-end tabular-nums">{Number(r.target ?? 0)}%</td>
+                                  <td className="p-2 text-end tabular-nums font-semibold text-success">{fmtCurrency(Number(r.bonus) || 0, defaultCurrency, locale)}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
+                    <p className="text-[11px] text-muted-foreground">{t("approval_locked_label")} — {t("approval_lock_on_approval_help")}</p>
+                  </div>
+                );
+              })
+            )}
+          </TabsContent>
         </Tabs>
       </div>
     </div>
