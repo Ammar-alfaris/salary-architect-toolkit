@@ -449,7 +449,29 @@ function PayloadEditor({ entityType, value, onChange }: {
             <Input type="number" step="0.05" value={value.bulkBiz ?? 1} onChange={(e) => onChange({ ...value, bulkBiz: num(e.target.value) })} className="h-8" />
           </div>
         </div>
-        <div className="overflow-x-auto rounded-md border">
+
+        {/* Mobile cards */}
+        <div className="grid gap-2 sm:hidden">
+          {results.length === 0 && (
+            <div className="border rounded-md p-4 text-center text-muted-foreground text-sm">—</div>
+          )}
+          {results.map((r, i) => (
+            <div key={r.id ?? i} className="border rounded-md p-3 bg-card space-y-2">
+              <div className="font-medium text-sm break-words">{r.name ?? r.id}</div>
+              <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+                <div>Base: <span className="text-foreground tabular-nums">{num(r.base).toLocaleString()}</span></div>
+                <div>Target %: <span className="text-foreground tabular-nums">{num(r.target)}</span></div>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[11px]">{t("calculated_bonus") || "Bonus"}</Label>
+                <Input type="number" step="1" value={r.bonus ?? 0} onChange={(e) => updateRow(i, { bonus: num(e.target.value) })} className="h-9" />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop table */}
+        <div className="hidden sm:block overflow-x-auto rounded-md border">
           <table className="w-full text-xs">
             <thead className="bg-muted/40">
               <tr className="text-left">
