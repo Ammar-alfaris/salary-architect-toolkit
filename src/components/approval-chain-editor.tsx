@@ -171,21 +171,43 @@ export function ApprovalChainEditor() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 <div className="space-y-1">
                   <Label className="text-xs">{t("internal_user")}</Label>
-                  <Select value={s.approver_user_id ?? "none"} onValueChange={(v) => updateStep(i, { approver_user_id: v === "none" ? null : v, approver_email: null })}>
+                  <Select
+                    value={s.approver_user_id ?? "none"}
+                    onValueChange={(v) => {
+                      if (v === "none") {
+                        updateStep(i, { approver_user_id: null });
+                      } else {
+                        const picked = members.find((m) => m.user_id === v);
+                        // Auto-fill the approver email from the chosen internal user so admins
+                        // don't have to retype it manually.
+                        updateStep(i, {
+                          approver_user_id: v,
+                          approver_email: picked?.email ?? s.approver_email ?? null,
+                          approver_label: s.approver_label || picked?.full_name || null,
+                        });
+                      }
+                    }}
+                  >
                     <SelectTrigger><SelectValue placeholder={t("none")} /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">{t("none")}</SelectItem>
                       {members.map((m) => (
                         <SelectItem key={m.user_id} value={m.user_id}>
                           {m.full_name || m.email || `${t("user")} ${m.user_id.slice(0, 8)}...`}
+                          {m.full_name && m.email ? ` — ${m.email}` : ""}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
+                  <p className="text-[11px] text-muted-foreground">{t("approver_email_autofill_hint") || "Email will be filled from the selected user."}</p>
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs">{t("manual_email")}</Label>
-                  <Input value={s.approver_email ?? ""} onChange={(e) => updateStep(i, { approver_email: e.target.value || null, approver_user_id: null })} />
+                  <Label className="text-xs">{t("manual_email")} <span className="text-muted-foreground">({t("optional") || "fallback"})</span></Label>
+                  <Input
+                    value={s.approver_email ?? ""}
+                    onChange={(e) => updateStep(i, { approver_email: e.target.value || null })}
+                    placeholder={s.approver_user_id ? "" : "name@company.com"}
+                  />
                 </div>
                 <div className="space-y-1">
                   <Label className="text-xs">{t("approver_label")}</Label>
