@@ -367,7 +367,37 @@ function PayloadEditor({ entityType, value, onChange }: {
     return (
       <div className="space-y-2">
         <p className="text-xs text-muted-foreground">{t("edit_payload_help")}</p>
-        <div className="overflow-x-auto rounded-md border">
+
+        {/* Mobile cards */}
+        <div className="grid gap-2 sm:hidden">
+          {recs.length === 0 && (
+            <div className="border rounded-md p-4 text-center text-muted-foreground text-sm">—</div>
+          )}
+          {recs.map((r, i) => (
+            <div key={r.id ?? i} className="border rounded-md p-3 bg-card space-y-2">
+              <div className="font-medium text-sm break-words">{r.name ?? r.id}</div>
+              <div className="text-xs text-muted-foreground">
+                {t("current_base") || "Base"}: <span className="text-foreground tabular-nums">{num(r.base).toLocaleString()}</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <Label className="text-[11px]">{t("increase_percent") || "%"}</Label>
+                  <Input type="number" step="0.1" value={r.pct ?? 0} onChange={(e) => updateRec(i, { pct: e.target.value })} className="h-9" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[11px]">{t("new_salary")}</Label>
+                  <div className="h-9 flex items-center px-2 rounded-md bg-muted/40 text-sm font-semibold tabular-nums">
+                    {num(r.newSalary).toLocaleString()}
+                  </div>
+                </div>
+              </div>
+              <div className="text-xs text-success tabular-nums">+{num(r.increase).toLocaleString()}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop table */}
+        <div className="hidden sm:block overflow-x-auto rounded-md border">
           <table className="w-full text-xs">
             <thead className="bg-muted/40">
               <tr className="text-left">
