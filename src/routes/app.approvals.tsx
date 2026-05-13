@@ -103,6 +103,15 @@ function ApprovalsPage() {
           })) as never);
           await Promise.all(recs.map((r: any) => supabase.from("employees").update({ base_salary: r.newSalary }).eq("id", r.id)));
         }
+        // Finalize the merit cycle so it becomes a locked, approved record
+        await supabase.from("merit_cycles").update({
+          status: "closed",
+          approved_at: new Date().toISOString(),
+          approved_by: user?.id ?? null,
+          approved_by_email: user?.email ?? null,
+          final_payload: payload as never,
+          finalized_at: new Date().toISOString(),
+        }).eq("id", req.entity_id);
       } else if (req.entity_type === "bonus_cycle") {
         const results = (payload as any).results ?? [];
         if (results.length) {
@@ -114,9 +123,18 @@ function ApprovalsPage() {
             individual_modifier: 1, calculated_bonus: r.bonus, proration_factor: 1,
           })) as never);
         }
+        // Finalize the bonus cycle so it becomes a locked, approved record
+        await supabase.from("bonus_cycles").update({
+          status: "closed",
+          approved_at: new Date().toISOString(),
+          approved_by: user?.id ?? null,
+          approved_by_email: user?.email ?? null,
+          final_payload: payload as never,
+          finalized_at: new Date().toISOString(),
+        }).eq("id", req.entity_id);
       }
       await markApplied(req.id);
-      await logAudit({ organizationId: organizationId!, action: "update", entityType: req.entity_type, entityId: req.entity_id, entityLabel: req.entity_label, metadata: { applied: true } });
+      await logAudit({ organizationId: organizationId!, action: "update", entityType: req.entity_type, entityId: req.entity_id, entityLabel: req.entity_label, metadata: { applied: true, finalized: true } });
       toast.success(t("apply_merit_done"));
       load();
     } catch (e: any) { toast.error(e.message); }
