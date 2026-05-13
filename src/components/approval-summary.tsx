@@ -128,12 +128,53 @@ function MeritCycleSummary({ payload, entityLabel, requestedBy, reason }: Omit<P
         </div>
       )}
 
-      {/* Employee breakdown table */}
+      {/* Employee breakdown — table on tablet+, cards on mobile */}
       <div className="space-y-2">
         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
           {t("employee_details") || "Employee Details"}
         </p>
-        <div className="border rounded-lg overflow-hidden">
+
+        {/* Mobile: stacked cards */}
+        <div className="grid gap-2 sm:hidden">
+          {recs.length === 0 && (
+            <div className="border rounded-lg p-4 text-center text-sm text-muted-foreground">{t("no_data") || "No employee data"}</div>
+          )}
+          {recs.slice(0, 50).map((r, i) => (
+            <div key={r.id ?? i} className="border rounded-lg p-3 bg-card space-y-1.5">
+              <div className="flex items-start justify-between gap-2">
+                <div className="font-medium text-sm break-words">{r.name ?? r.id}</div>
+                <span className="text-xs px-1.5 py-0.5 rounded bg-primary/10 text-primary tabular-nums shrink-0">
+                  {num(r.pct).toFixed(1)}%
+                </span>
+              </div>
+              {(r.dept || r.department) && (
+                <div className="text-xs text-muted-foreground">{r.dept || r.department}</div>
+              )}
+              <div className="grid grid-cols-3 gap-2 pt-1 text-xs">
+                <div>
+                  <div className="text-muted-foreground">{t("current_salary") || "Current"}</div>
+                  <div className="font-medium tabular-nums">{formatCurrency(num(r.base), locale)}</div>
+                </div>
+                <div>
+                  <div className="text-muted-foreground">{t("increase_amount") || "Increase"}</div>
+                  <div className="font-medium tabular-nums text-success">+{formatCurrency(num(r.increase), locale)}</div>
+                </div>
+                <div>
+                  <div className="text-muted-foreground">{t("new_salary") || "New"}</div>
+                  <div className="font-semibold tabular-nums">{formatCurrency(num(r.newSalary), locale)}</div>
+                </div>
+              </div>
+            </div>
+          ))}
+          {recs.length > 50 && (
+            <div className="text-center text-xs text-muted-foreground py-1">
+              {t("and_more", { count: recs.length - 50 }) || `And ${recs.length - 50} more...`}
+            </div>
+          )}
+        </div>
+
+        {/* Tablet/Desktop: table */}
+        <div className="hidden sm:block border rounded-lg overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-muted/40">
