@@ -233,15 +233,17 @@ export const acceptInvitation = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) =>
     z.object({ email: z.string().email().optional() }).parse(data),
   )
-  .handler(async ({ data, context }) => {
+  .handler(async ({ context }) => {
     const { userId } = context;
     const admin = makeAdminClient();
 
-    // Resolve the user's email (from auth, not just the payload)
+    // SECURITY: Always resolve the email from the verified auth user.
+    // Never trust caller-supplied input here — otherwise an authenticated user
+    // could accept invitations addressed to someone else's email.
     const { data: { user }, error: userErr } = await admin.auth.admin.getUserById(userId);
     if (userErr || !user) throw new Error("User not found");
 
-    const targetEmail = (data.email || user.email || "").toLowerCase();
+    const targetEmail = (user.email || "").toLowerCase();
     if (!targetEmail) throw new Error("Cannot resolve email");
 
     // Find all unaccepted invitations for this email
