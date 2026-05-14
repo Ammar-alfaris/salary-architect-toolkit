@@ -334,7 +334,7 @@ function EmployeesPage() {
       performance_rating: editForm.performance_rating,
     };
     if (opts.includeSalary) update.base_salary = editForm.base_salary;
-    const { error } = await supabase.from("employees").update(update).eq("id", editTarget.id);
+    const { error } = await supabase.from("employees").update(update as never).eq("id", editTarget.id);
     if (error) return toast.error(error.message);
     toast.success(t("save_changes"));
     await logAudit({
