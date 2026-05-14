@@ -636,6 +636,11 @@ const en: Dict = {
   entity_merit_cycle: "Merit Cycle",
   entity_bonus_cycle: "Bonus Cycle",
   entity_salary_structure: "Salary Structure",
+  entity_salary_change: "Salary Change",
+  salary_change: "Salary change",
+  request_salary_approval: "Request salary approval",
+  salary_change_requires_approval: "Salary change requires approval. Please request approval instead.",
+  change: "Change",
 
   // Submit for approval
   submit_for_approval: "Submit for approval",
