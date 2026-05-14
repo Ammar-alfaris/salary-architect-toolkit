@@ -17,7 +17,7 @@ import { ApprovalDiff } from "@/components/approval-diff";
 import { ApprovalSummary } from "@/components/approval-summary";
 import { usePermissions } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
-import { CheckCircle2, XCircle, Clock, FileBarChart, Layers, Gift, TrendingUp, Info, ShieldCheck, Undo2, Pencil, Eye } from "lucide-react";
+import { CheckCircle2, XCircle, Clock, FileBarChart, Layers, Gift, TrendingUp, Info, ShieldCheck, Undo2, Pencil, Eye, DollarSign } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/approvals")({ component: ApprovalsPage });
@@ -26,6 +26,7 @@ const ENTITY_ICON: Record<ApprovalEntity, typeof Layers> = {
   merit_cycle: TrendingUp,
   bonus_cycle: Gift,
   salary_structure: Layers,
+  salary_change: DollarSign,
 };
 
 type DecisionAction = "approved" | "rejected" | "edited" | "sent_back";
@@ -132,6 +133,16 @@ function ApprovalsPage() {
           final_payload: payload as never,
           finalized_at: new Date().toISOString(),
         }).eq("id", req.entity_id);
+      } else if (req.entity_type === "salary_change") {
+        const newSalary = Number((payload as any).new_salary);
+        if (!isFinite(newSalary) || newSalary <= 0) {
+          throw new Error("Invalid proposed salary");
+        }
+        const { error } = await supabase
+          .from("employees")
+          .update({ base_salary: newSalary })
+          .eq("id", req.entity_id);
+        if (error) throw error;
       }
       await markApplied(req.id);
       await logAudit({ organizationId: organizationId!, action: "update", entityType: req.entity_type, entityId: req.entity_id, entityLabel: req.entity_label, metadata: { applied: true, finalized: true } });

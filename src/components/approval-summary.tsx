@@ -38,8 +38,47 @@ export function ApprovalSummary({ entityType, entityLabel, payload, requestedBy,
     return <SalaryStructureSummary payload={payload} entityLabel={entityLabel} requestedBy={requestedBy} reason={reason} />;
   }
 
+  if (entityType === "salary_change") {
+    return <SalaryChangeSummary payload={payload} entityLabel={entityLabel} requestedBy={requestedBy} reason={reason} />;
+  }
+
   // Fallback for unknown entity types
   return <GenericSummary payload={payload} entityLabel={entityLabel} requestedBy={requestedBy} reason={reason} />;
+}
+
+function SalaryChangeSummary({ payload, entityLabel, requestedBy, reason }: Omit<Props, "entityType">) {
+  const { t, locale } = useI18n();
+  const current = num(payload.current_salary);
+  const proposed = num(payload.new_salary);
+  const delta = proposed - current;
+  const pct = current > 0 ? (delta / current) * 100 : 0;
+  const currency = (payload.currency as string) || "";
+  return (
+    <div className="space-y-4">
+      <div className="flex items-start gap-3 pb-3 border-b">
+        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+          <DollarSign className="w-5 h-5 text-primary" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold text-base break-words">{entityLabel || (payload.employee_name as string) || t("salary_change") || "Salary change"}</h3>
+          {requestedBy && (
+            <p className="text-xs text-muted-foreground mt-0.5">{t("requested_by")}: {requestedBy}</p>
+          )}
+        </div>
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <SummaryCard icon={<DollarSign className="w-4 h-4" />} label={t("current_salary") || "Current"} value={`${formatCurrency(current, locale)}${currency ? " " + currency : ""}`} />
+        <SummaryCard icon={<DollarSign className="w-4 h-4" />} label={t("new_salary") || "New"} value={`${formatCurrency(proposed, locale)}${currency ? " " + currency : ""}`} />
+        <SummaryCard icon={<Percent className="w-4 h-4" />} label={t("change") || "Change"} value={`${delta >= 0 ? "+" : ""}${formatCurrency(delta, locale)} (${pct.toFixed(1)}%)`} />
+      </div>
+      {reason && (
+        <div className="bg-muted/30 rounded-lg p-3">
+          <p className="text-xs font-medium text-muted-foreground mb-1">{t("approval_reason") || "Reason"}</p>
+          <p className="text-sm">{reason}</p>
+        </div>
+      )}
+    </div>
+  );
 }
 
 function MeritCycleSummary({ payload, entityLabel, requestedBy, reason }: Omit<Props, "entityType">) {

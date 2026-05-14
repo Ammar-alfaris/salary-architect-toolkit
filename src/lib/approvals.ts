@@ -22,6 +22,7 @@ export const DEFAULT_POLICY: OrgApprovalPolicy = {
     bonus_cycle: false,
     allowance_change: false,
     salary_structure: false,
+    salary_change: false,
   },
   default_chain_id: null,
   notify_via_email: true,

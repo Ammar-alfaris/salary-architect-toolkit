@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
@@ -16,10 +16,12 @@ import { exportXLSX, parseEmployeeTemplate, downloadEmployeeTemplate } from "@/l
 import { fmtCurrency } from "@/lib/format";
 import { logAudit } from "@/lib/audit";
 import { usePermissions, maskSalary } from "@/lib/rbac";
-import { Plus, Download, Search, Eye, Sparkles, FileSpreadsheet, Trash2, ChevronLeft, ChevronRight, ShieldAlert, Upload, FileDown, Pencil, Link2 } from "lucide-react";
+import { Plus, Download, Search, Eye, Sparkles, FileSpreadsheet, Trash2, ChevronLeft, ChevronRight, ShieldAlert, Upload, FileDown, Pencil, Link2, Send } from "lucide-react";
 import { toast } from "sonner";
 import { autoAssignGrades, suggestStructureFromSalaries } from "@/lib/auto-assign";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { createRequest, fetchPolicy, listValidChainsForEntity, type ApprovalChain } from "@/lib/approvals";
+import { Textarea } from "@/components/ui/textarea";
 
 
 export const Route = createFileRoute("/app/employees")({ component: EmployeesPage });
@@ -54,6 +56,12 @@ function EmployeesPage() {
   const [form, setForm] = useState({ employee_code: "", first_name: "", last_name: "", department: "", job_title: "", job_family: "", location: "", base_salary: 0, target_bonus_percent: 10, grade_id: "", performance_rating: "Meets" });
   const [editTarget, setEditTarget] = useState<any | null>(null);
   const [editForm, setEditForm] = useState<any>(null);
+  const [salaryReqOpen, setSalaryReqOpen] = useState(false);
+  const [salaryReqReason, setSalaryReqReason] = useState("");
+  const [salaryReqChainId, setSalaryReqChainId] = useState<string>("");
+  const [salaryChains, setSalaryChains] = useState<ApprovalChain[]>([]);
+  const [salaryReqSubmitting, setSalaryReqSubmitting] = useState(false);
+  const [salaryRequiresApproval, setSalaryRequiresApproval] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const { data: employees = [], isLoading } = useQuery({
@@ -290,7 +298,22 @@ function EmployeesPage() {
     });
   };
 
-  const handleSaveEdit = async () => {
+  // Load salary-change approval policy + applicable chains when edit dialog opens
+  useEffect(() => {
+    if (!organizationId || !editTarget) return;
+    fetchPolicy(organizationId).then((p) => setSalaryRequiresApproval(!!p.require_approval_for.salary_change));
+    listValidChainsForEntity(organizationId, "salary_change").then((cs) => {
+      const applicable = cs.map(({ steps: _s, ...c }) => c);
+      setSalaryChains(applicable);
+      const def = applicable.find((c) => c.is_default) ?? applicable[0];
+      setSalaryReqChainId(def?.id ?? "");
+    });
+  }, [organizationId, editTarget]);
+
+  const salaryChanged = !!editTarget && !!editForm && Number(editForm.base_salary) !== Number(editTarget.base_salary);
+  const blockDirectSalary = salaryChanged && salaryRequiresApproval && !perms.canAdmin;
+
+  const persistEdit = async (opts: { includeSalary: boolean }) => {
     if (!organizationId || !editTarget || !editForm) return;
     if (!perms.canEdit) return toast.error(t("insufficient_permissions"));
     const before = {
@@ -299,31 +322,70 @@ function EmployeesPage() {
       grade_id: editTarget.grade_id,
       job_title: editTarget.job_title,
     };
-    const { error } = await supabase
-      .from("employees")
-      .update({
-        first_name: editForm.first_name,
-        last_name: editForm.last_name,
-        department: editForm.department || null,
-        job_title: editForm.job_title || null,
-        job_family: editForm.job_family || null,
-        location: editForm.location || null,
-        base_salary: editForm.base_salary,
-        target_bonus_percent: editForm.target_bonus_percent,
-        grade_id: editForm.grade_id || null,
-        performance_rating: editForm.performance_rating,
-      })
-      .eq("id", editTarget.id);
+    const update: Record<string, any> = {
+      first_name: editForm.first_name,
+      last_name: editForm.last_name,
+      department: editForm.department || null,
+      job_title: editForm.job_title || null,
+      job_family: editForm.job_family || null,
+      location: editForm.location || null,
+      target_bonus_percent: editForm.target_bonus_percent,
+      grade_id: editForm.grade_id || null,
+      performance_rating: editForm.performance_rating,
+    };
+    if (opts.includeSalary) update.base_salary = editForm.base_salary;
+    const { error } = await supabase.from("employees").update(update as never).eq("id", editTarget.id);
     if (error) return toast.error(error.message);
     toast.success(t("save_changes"));
     await logAudit({
       organizationId, action: "update", entityType: "employee", entityId: editTarget.id,
       entityLabel: `${editForm.first_name} ${editForm.last_name}`,
-      before, after: { base_salary: editForm.base_salary, target_bonus_percent: editForm.target_bonus_percent, grade_id: editForm.grade_id || null, job_title: editForm.job_title },
+      before, after: { ...update, base_salary: opts.includeSalary ? editForm.base_salary : Number(editTarget.base_salary) },
     });
     setEditTarget(null);
     setEditForm(null);
     refresh();
+  };
+
+  const handleSaveEdit = async () => {
+    if (blockDirectSalary) {
+      toast.error(t("salary_change_requires_approval") || "Salary change requires approval. Please request approval instead.");
+      return;
+    }
+    await persistEdit({ includeSalary: true });
+  };
+
+  const submitSalaryApproval = async () => {
+    if (!organizationId || !editTarget || !editForm) return;
+    if (!salaryChanged) return toast.error(t("no_changes") || "No salary change to submit");
+    setSalaryReqSubmitting(true);
+    try {
+      const employeeName = `${editForm.first_name} ${editForm.last_name}`.trim() || editTarget.employee_code;
+      await createRequest({
+        organizationId,
+        entityType: "salary_change",
+        entityId: editTarget.id,
+        entityLabel: employeeName,
+        reason: salaryReqReason,
+        proposedPayload: {
+          employee_id: editTarget.id,
+          employee_name: employeeName,
+          current_salary: Number(editTarget.base_salary),
+          new_salary: Number(editForm.base_salary),
+          currency: defaultCurrency,
+        },
+        chainId: salaryReqChainId || undefined,
+      });
+      toast.success(t("approval_submitted"));
+      // Persist the non-salary edits so the user's other field changes aren't lost
+      await persistEdit({ includeSalary: false });
+      setSalaryReqOpen(false);
+      setSalaryReqReason("");
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setSalaryReqSubmitting(false);
+    }
   };
 
   return (
@@ -592,9 +654,71 @@ function EmployeesPage() {
               </div>
             </div>
           )}
-          <DialogFooter>
+          {salaryChanged && (
+            <div className="rounded-md border bg-muted/30 p-3 text-xs space-y-1">
+              <div className="font-medium">{t("salary_change") || "Salary change"}</div>
+              <div className="text-muted-foreground">
+                {fmtCurrency(Number(editTarget.base_salary), defaultCurrency, locale)} → {fmtCurrency(Number(editForm.base_salary), defaultCurrency, locale)}
+              </div>
+              {salaryRequiresApproval && !perms.canAdmin && (
+                <div className="text-warning">{t("salary_change_requires_approval") || "Salary change requires approval. Please request approval instead."}</div>
+              )}
+            </div>
+          )}
+          <DialogFooter className="gap-2 flex-col sm:flex-row">
             <Button variant="ghost" onClick={() => { setEditTarget(null); setEditForm(null); }}>{t("cancel")}</Button>
-            <Button onClick={handleSaveEdit}>{t("save_changes")}</Button>
+            {salaryChanged && (
+              <Button variant="outline" onClick={() => setSalaryReqOpen(true)} disabled={salaryChains.length === 0}>
+                <Send className="w-4 h-4 me-1" /> {t("request_salary_approval") || "Request salary approval"}
+              </Button>
+            )}
+            <Button onClick={handleSaveEdit} disabled={blockDirectSalary}>{t("save_changes")}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Salary change approval request dialog */}
+      <Dialog open={salaryReqOpen} onOpenChange={setSalaryReqOpen}>
+        <DialogContent className="max-w-[95vw] sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{t("request_salary_approval") || "Request salary approval"}</DialogTitle>
+          </DialogHeader>
+          {editTarget && editForm && (
+            <div className="space-y-3">
+              <div className="rounded-md border p-3 text-sm space-y-1">
+                <div className="font-medium">{`${editForm.first_name} ${editForm.last_name}`.trim() || editTarget.employee_code}</div>
+                <div className="text-muted-foreground text-xs">
+                  {t("current_salary") || "Current"}: {fmtCurrency(Number(editTarget.base_salary), defaultCurrency, locale)}
+                </div>
+                <div className="text-xs">
+                  {t("new_salary") || "New"}: <span className="font-semibold">{fmtCurrency(Number(editForm.base_salary), defaultCurrency, locale)}</span>
+                </div>
+              </div>
+              {salaryChains.length > 1 && (
+                <div className="space-y-1.5">
+                  <Label className="text-xs">{t("approval_chain") || "Approval chain"}</Label>
+                  <Select value={salaryReqChainId} onValueChange={setSalaryReqChainId}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {salaryChains.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}{c.is_default ? " ★" : ""}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              <div className="space-y-1.5">
+                <Label className="text-xs">{t("approval_reason")}</Label>
+                <Textarea rows={3} value={salaryReqReason} onChange={(e) => setSalaryReqReason(e.target.value)} />
+              </div>
+              {salaryChains.length === 0 && (
+                <p className="text-xs text-warning">{t("no_chains_configured") || "No approval chain set up for salary changes yet."}</p>
+              )}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSalaryReqOpen(false)}>{t("cancel")}</Button>
+            <Button onClick={submitSalaryApproval} disabled={salaryReqSubmitting || salaryChains.length === 0}>
+              <Send className="w-4 h-4 me-1" /> {t("send_request") || "Send request"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

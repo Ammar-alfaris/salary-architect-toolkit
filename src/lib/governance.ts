@@ -1,7 +1,7 @@
 // Governance helpers: approval requests, version snapshots, lock evaluation.
 import { supabase } from "@/integrations/supabase/client";
 
-export type ApprovalEntity = "merit_cycle" | "bonus_cycle" | "salary_structure";
+export type ApprovalEntity = "merit_cycle" | "bonus_cycle" | "salary_structure" | "salary_change";
 export type ApprovalStatus = "pending" | "approved" | "rejected" | "cancelled";
 
 export interface ApprovalSettings {
