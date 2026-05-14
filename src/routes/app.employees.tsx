@@ -56,6 +56,12 @@ function EmployeesPage() {
   const [form, setForm] = useState({ employee_code: "", first_name: "", last_name: "", department: "", job_title: "", job_family: "", location: "", base_salary: 0, target_bonus_percent: 10, grade_id: "", performance_rating: "Meets" });
   const [editTarget, setEditTarget] = useState<any | null>(null);
   const [editForm, setEditForm] = useState<any>(null);
+  const [salaryReqOpen, setSalaryReqOpen] = useState(false);
+  const [salaryReqReason, setSalaryReqReason] = useState("");
+  const [salaryReqChainId, setSalaryReqChainId] = useState<string>("");
+  const [salaryChains, setSalaryChains] = useState<ApprovalChain[]>([]);
+  const [salaryReqSubmitting, setSalaryReqSubmitting] = useState(false);
+  const [salaryRequiresApproval, setSalaryRequiresApproval] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const { data: employees = [], isLoading } = useQuery({
