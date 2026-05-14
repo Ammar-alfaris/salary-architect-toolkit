@@ -12,7 +12,7 @@ import { useI18n } from "@/lib/i18n";
 import { listChains, listSteps, upsertChain, deleteChain, type ApprovalChain, type ApprovalChainStep } from "@/lib/approvals";
 import { toast } from "sonner";
 
-const ENTITY_TYPES = ["merit_cycle", "bonus_cycle", "salary_structure"];
+const ENTITY_TYPES = ["merit_cycle", "bonus_cycle", "salary_structure", "salary_change"];
 
 interface Member { user_id: string; email: string | null; full_name: string | null }
 
