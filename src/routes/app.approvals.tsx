@@ -17,7 +17,7 @@ import { ApprovalDiff } from "@/components/approval-diff";
 import { ApprovalSummary } from "@/components/approval-summary";
 import { usePermissions } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
-import { CheckCircle2, XCircle, Clock, FileBarChart, Layers, Gift, TrendingUp, Info, ShieldCheck, Undo2, Pencil, Eye } from "lucide-react";
+import { CheckCircle2, XCircle, Clock, FileBarChart, Layers, Gift, TrendingUp, Info, ShieldCheck, Undo2, Pencil, Eye, DollarSign } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/approvals")({ component: ApprovalsPage });
@@ -26,6 +26,7 @@ const ENTITY_ICON: Record<ApprovalEntity, typeof Layers> = {
   merit_cycle: TrendingUp,
   bonus_cycle: Gift,
   salary_structure: Layers,
+  salary_change: DollarSign,
 };
 
 type DecisionAction = "approved" | "rejected" | "edited" | "sent_back";
