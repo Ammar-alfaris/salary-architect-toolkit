@@ -298,7 +298,22 @@ function EmployeesPage() {
     });
   };
 
-  const handleSaveEdit = async () => {
+  // Load salary-change approval policy + applicable chains when edit dialog opens
+  useEffect(() => {
+    if (!organizationId || !editTarget) return;
+    fetchPolicy(organizationId).then((p) => setSalaryRequiresApproval(!!p.require_approval_for.salary_change));
+    listValidChainsForEntity(organizationId, "salary_change").then((cs) => {
+      const applicable = cs.map(({ steps: _s, ...c }) => c);
+      setSalaryChains(applicable);
+      const def = applicable.find((c) => c.is_default) ?? applicable[0];
+      setSalaryReqChainId(def?.id ?? "");
+    });
+  }, [organizationId, editTarget]);
+
+  const salaryChanged = !!editTarget && !!editForm && Number(editForm.base_salary) !== Number(editTarget.base_salary);
+  const blockDirectSalary = salaryChanged && salaryRequiresApproval && !perms.canAdmin;
+
+  const persistEdit = async (opts: { includeSalary: boolean }) => {
     if (!organizationId || !editTarget || !editForm) return;
     if (!perms.canEdit) return toast.error(t("insufficient_permissions"));
     const before = {
@@ -307,31 +322,70 @@ function EmployeesPage() {
       grade_id: editTarget.grade_id,
       job_title: editTarget.job_title,
     };
-    const { error } = await supabase
-      .from("employees")
-      .update({
-        first_name: editForm.first_name,
-        last_name: editForm.last_name,
-        department: editForm.department || null,
-        job_title: editForm.job_title || null,
-        job_family: editForm.job_family || null,
-        location: editForm.location || null,
-        base_salary: editForm.base_salary,
-        target_bonus_percent: editForm.target_bonus_percent,
-        grade_id: editForm.grade_id || null,
-        performance_rating: editForm.performance_rating,
-      })
-      .eq("id", editTarget.id);
+    const update: Record<string, any> = {
+      first_name: editForm.first_name,
+      last_name: editForm.last_name,
+      department: editForm.department || null,
+      job_title: editForm.job_title || null,
+      job_family: editForm.job_family || null,
+      location: editForm.location || null,
+      target_bonus_percent: editForm.target_bonus_percent,
+      grade_id: editForm.grade_id || null,
+      performance_rating: editForm.performance_rating,
+    };
+    if (opts.includeSalary) update.base_salary = editForm.base_salary;
+    const { error } = await supabase.from("employees").update(update).eq("id", editTarget.id);
     if (error) return toast.error(error.message);
     toast.success(t("save_changes"));
     await logAudit({
       organizationId, action: "update", entityType: "employee", entityId: editTarget.id,
       entityLabel: `${editForm.first_name} ${editForm.last_name}`,
-      before, after: { base_salary: editForm.base_salary, target_bonus_percent: editForm.target_bonus_percent, grade_id: editForm.grade_id || null, job_title: editForm.job_title },
+      before, after: { ...update, base_salary: opts.includeSalary ? editForm.base_salary : Number(editTarget.base_salary) },
     });
     setEditTarget(null);
     setEditForm(null);
     refresh();
+  };
+
+  const handleSaveEdit = async () => {
+    if (blockDirectSalary) {
+      toast.error(t("salary_change_requires_approval") || "Salary change requires approval. Please request approval instead.");
+      return;
+    }
+    await persistEdit({ includeSalary: true });
+  };
+
+  const submitSalaryApproval = async () => {
+    if (!organizationId || !editTarget || !editForm) return;
+    if (!salaryChanged) return toast.error(t("no_changes") || "No salary change to submit");
+    setSalaryReqSubmitting(true);
+    try {
+      const employeeName = `${editForm.first_name} ${editForm.last_name}`.trim() || editTarget.employee_code;
+      await createRequest({
+        organizationId,
+        entityType: "salary_change",
+        entityId: editTarget.id,
+        entityLabel: employeeName,
+        reason: salaryReqReason,
+        proposedPayload: {
+          employee_id: editTarget.id,
+          employee_name: employeeName,
+          current_salary: Number(editTarget.base_salary),
+          new_salary: Number(editForm.base_salary),
+          currency: defaultCurrency,
+        },
+        chainId: salaryReqChainId || undefined,
+      });
+      toast.success(t("approval_submitted"));
+      // Persist the non-salary edits so the user's other field changes aren't lost
+      await persistEdit({ includeSalary: false });
+      setSalaryReqOpen(false);
+      setSalaryReqReason("");
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setSalaryReqSubmitting(false);
+    }
   };
 
   return (
