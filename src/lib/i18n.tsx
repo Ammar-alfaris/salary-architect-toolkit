@@ -1515,6 +1515,11 @@ const ar: Dict = {
   entity_merit_cycle: "دورة Merit",
   entity_bonus_cycle: "دورة Bonus",
   entity_salary_structure: "هيكل رواتب",
+  entity_salary_change: "تغيير الراتب",
+  salary_change: "تغيير الراتب",
+  request_salary_approval: "طلب اعتماد تغيير الراتب",
+  salary_change_requires_approval: "تغيير الراتب يتطلب اعتماد. الرجاء تقديم طلب اعتماد.",
+  change: "التغيير",
 
   // Submit for approval (cycles/structures)
   submit_for_approval: "تقديم للاعتماد",
