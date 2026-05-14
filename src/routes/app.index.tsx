@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { fmtCurrency, fmtNumber, fmtPercent } from "@/lib/format";
 import { compaRatio } from "@/lib/comp";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, PieChart, Pie, Cell, Legend } from "recharts";
+import { ApprovalNotifications } from "@/components/approval-notifications";
 
 export const Route = createFileRoute("/app/")({ component: Dashboard });
 
