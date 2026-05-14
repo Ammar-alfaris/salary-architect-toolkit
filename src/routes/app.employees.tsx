@@ -654,9 +654,71 @@ function EmployeesPage() {
               </div>
             </div>
           )}
-          <DialogFooter>
+          {salaryChanged && (
+            <div className="rounded-md border bg-muted/30 p-3 text-xs space-y-1">
+              <div className="font-medium">{t("salary_change") || "Salary change"}</div>
+              <div className="text-muted-foreground">
+                {fmtCurrency(Number(editTarget.base_salary), defaultCurrency, locale)} → {fmtCurrency(Number(editForm.base_salary), defaultCurrency, locale)}
+              </div>
+              {salaryRequiresApproval && !perms.canAdmin && (
+                <div className="text-warning">{t("salary_change_requires_approval") || "Salary change requires approval. Please request approval instead."}</div>
+              )}
+            </div>
+          )}
+          <DialogFooter className="gap-2 flex-col sm:flex-row">
             <Button variant="ghost" onClick={() => { setEditTarget(null); setEditForm(null); }}>{t("cancel")}</Button>
-            <Button onClick={handleSaveEdit}>{t("save_changes")}</Button>
+            {salaryChanged && (
+              <Button variant="outline" onClick={() => setSalaryReqOpen(true)} disabled={salaryChains.length === 0}>
+                <Send className="w-4 h-4 me-1" /> {t("request_salary_approval") || "Request salary approval"}
+              </Button>
+            )}
+            <Button onClick={handleSaveEdit} disabled={blockDirectSalary}>{t("save_changes")}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Salary change approval request dialog */}
+      <Dialog open={salaryReqOpen} onOpenChange={setSalaryReqOpen}>
+        <DialogContent className="max-w-[95vw] sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{t("request_salary_approval") || "Request salary approval"}</DialogTitle>
+          </DialogHeader>
+          {editTarget && editForm && (
+            <div className="space-y-3">
+              <div className="rounded-md border p-3 text-sm space-y-1">
+                <div className="font-medium">{`${editForm.first_name} ${editForm.last_name}`.trim() || editTarget.employee_code}</div>
+                <div className="text-muted-foreground text-xs">
+                  {t("current_salary") || "Current"}: {fmtCurrency(Number(editTarget.base_salary), defaultCurrency, locale)}
+                </div>
+                <div className="text-xs">
+                  {t("new_salary") || "New"}: <span className="font-semibold">{fmtCurrency(Number(editForm.base_salary), defaultCurrency, locale)}</span>
+                </div>
+              </div>
+              {salaryChains.length > 1 && (
+                <div className="space-y-1.5">
+                  <Label className="text-xs">{t("approval_chain") || "Approval chain"}</Label>
+                  <Select value={salaryReqChainId} onValueChange={setSalaryReqChainId}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {salaryChains.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}{c.is_default ? " ★" : ""}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              <div className="space-y-1.5">
+                <Label className="text-xs">{t("approval_reason")}</Label>
+                <Textarea rows={3} value={salaryReqReason} onChange={(e) => setSalaryReqReason(e.target.value)} />
+              </div>
+              {salaryChains.length === 0 && (
+                <p className="text-xs text-warning">{t("no_chains_configured") || "No approval chain set up for salary changes yet."}</p>
+              )}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSalaryReqOpen(false)}>{t("cancel")}</Button>
+            <Button onClick={submitSalaryApproval} disabled={salaryReqSubmitting || salaryChains.length === 0}>
+              <Send className="w-4 h-4 me-1" /> {t("send_request") || "Send request"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
