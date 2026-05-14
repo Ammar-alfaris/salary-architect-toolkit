@@ -103,6 +103,7 @@ function Dashboard() {
           <div className="text-sm text-muted-foreground">{t("loading")}</div>
         ) : (
           <>
+            <ApprovalNotifications />
             <div data-tour="kpis" className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
               <Kpi label={t("total_employees")} value={fmtNumber(employees.length, locale)} icon={Users} />
               <Kpi label={t("active_structures")} value={fmtNumber(structures.length, locale)} icon={Layers} />
