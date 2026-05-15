@@ -957,6 +957,7 @@ export type Database = {
           custom_amount: number
           education_amount: number
           employee_id: string
+          food_amount: number
           hardship_amount: number
           housing_amount: number
           id: string
@@ -971,6 +972,7 @@ export type Database = {
           custom_amount?: number
           education_amount?: number
           employee_id: string
+          food_amount?: number
           hardship_amount?: number
           housing_amount?: number
           id?: string
@@ -985,6 +987,7 @@ export type Database = {
           custom_amount?: number
           education_amount?: number
           employee_id?: string
+          food_amount?: number
           hardship_amount?: number
           housing_amount?: number
           id?: string
@@ -1010,17 +1013,96 @@ export type Database = {
           },
         ]
       }
+      employee_custom_allowances: {
+        Row: {
+          annual_amount: number
+          created_at: string
+          employee_id: string
+          id: string
+          name: string
+        }
+        Insert: {
+          annual_amount?: number
+          created_at?: string
+          employee_id: string
+          id?: string
+          name: string
+        }
+        Update: {
+          annual_amount?: number
+          created_at?: string
+          employee_id?: string
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_custom_allowances_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employee_custom_field_values: {
+        Row: {
+          created_at: string
+          employee_id: string
+          field_def_id: string
+          id: string
+          value_text: string | null
+        }
+        Insert: {
+          created_at?: string
+          employee_id: string
+          field_def_id: string
+          id?: string
+          value_text?: string | null
+        }
+        Update: {
+          created_at?: string
+          employee_id?: string
+          field_def_id?: string
+          id?: string
+          value_text?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_custom_field_values_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_custom_field_values_field_def_id_fkey"
+            columns: ["field_def_id"]
+            isOneToOne: false
+            referencedRelation: "org_custom_field_defs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employees: {
         Row: {
           archived: boolean
           base_salary: number
+          business_unit: string | null
+          contract_end_date: string | null
+          contract_start_date: string | null
+          cost_center: string | null
           created_at: string
+          currency: string | null
+          date_of_birth: string | null
           department: string | null
           email: string | null
           employee_code: string
           employment_status: Database["public"]["Enums"]["employment_status"]
+          employment_type: string | null
           first_name: string
           full_name: string | null
+          gender: string | null
           grade_id: string | null
           hire_date: string | null
           id: string
@@ -1028,22 +1110,34 @@ export type Database = {
           job_title: string | null
           last_name: string
           location: string | null
+          manager_id: string | null
           manager_name: string | null
+          nationality: string | null
           organization_id: string
           performance_rating: string | null
+          phone_number: string | null
+          salary_effective_date: string | null
           salary_structure_id: string | null
           target_bonus_percent: number
         }
         Insert: {
           archived?: boolean
           base_salary?: number
+          business_unit?: string | null
+          contract_end_date?: string | null
+          contract_start_date?: string | null
+          cost_center?: string | null
           created_at?: string
+          currency?: string | null
+          date_of_birth?: string | null
           department?: string | null
           email?: string | null
           employee_code: string
           employment_status?: Database["public"]["Enums"]["employment_status"]
+          employment_type?: string | null
           first_name: string
           full_name?: string | null
+          gender?: string | null
           grade_id?: string | null
           hire_date?: string | null
           id?: string
@@ -1051,22 +1145,34 @@ export type Database = {
           job_title?: string | null
           last_name: string
           location?: string | null
+          manager_id?: string | null
           manager_name?: string | null
+          nationality?: string | null
           organization_id: string
           performance_rating?: string | null
+          phone_number?: string | null
+          salary_effective_date?: string | null
           salary_structure_id?: string | null
           target_bonus_percent?: number
         }
         Update: {
           archived?: boolean
           base_salary?: number
+          business_unit?: string | null
+          contract_end_date?: string | null
+          contract_start_date?: string | null
+          cost_center?: string | null
           created_at?: string
+          currency?: string | null
+          date_of_birth?: string | null
           department?: string | null
           email?: string | null
           employee_code?: string
           employment_status?: Database["public"]["Enums"]["employment_status"]
+          employment_type?: string | null
           first_name?: string
           full_name?: string | null
+          gender?: string | null
           grade_id?: string | null
           hire_date?: string | null
           id?: string
@@ -1074,9 +1180,13 @@ export type Database = {
           job_title?: string | null
           last_name?: string
           location?: string | null
+          manager_id?: string | null
           manager_name?: string | null
+          nationality?: string | null
           organization_id?: string
           performance_rating?: string | null
+          phone_number?: string | null
+          salary_effective_date?: string | null
           salary_structure_id?: string | null
           target_bonus_percent?: number
         }
@@ -1086,6 +1196,13 @@ export type Database = {
             columns: ["grade_id"]
             isOneToOne: false
             referencedRelation: "salary_grades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employees_manager_id_fkey"
+            columns: ["manager_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
             referencedColumns: ["id"]
           },
           {
@@ -1287,6 +1404,41 @@ export type Database = {
             columns: ["merit_cycle_id"]
             isOneToOne: false
             referencedRelation: "merit_cycles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_custom_field_defs: {
+        Row: {
+          created_at: string
+          field_type: string
+          id: string
+          key: string
+          label: string
+          organization_id: string
+        }
+        Insert: {
+          created_at?: string
+          field_type?: string
+          id?: string
+          key: string
+          label: string
+          organization_id: string
+        }
+        Update: {
+          created_at?: string
+          field_type?: string
+          id?: string
+          key?: string
+          label?: string
+          organization_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_custom_field_defs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
