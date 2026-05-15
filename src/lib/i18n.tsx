@@ -920,8 +920,6 @@ const en: Dict = {
   add_custom_allowance: "Add custom allowance",
   custom_allowance_name: "Allowance name",
   annual_amount: "Annual amount",
-  total_allowances: "Total allowances",
-  total_cash_compensation: "Total cash compensation",
   edit_profile: "Edit profile",
   save_profile: "Save profile",
   saving: "Saving…",
