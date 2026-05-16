@@ -50,6 +50,9 @@ function EmployeesPage() {
 
   const [search, setSearch] = useState("");
   const [deptFilter, setDeptFilter] = useState("all");
+  const [gradeFilter, setGradeFilter] = useState("all");
+  const [locationFilter, setLocationFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [page, setPage] = useState(1);
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -93,15 +96,19 @@ function EmployeesPage() {
 
   const gradeMap = useMemo(() => new Map(grades.map((g: any) => [g.id, g])), [grades]);
   const departments = useMemo(() => Array.from(new Set(employees.map((e: any) => e.department).filter(Boolean))), [employees]);
+  const locations = useMemo(() => Array.from(new Set(employees.map((e: any) => e.location).filter(Boolean))), [employees]);
 
   const filtered = useMemo(
     () =>
       employees.filter((e: any) => {
         const ms = !search || e.full_name?.toLowerCase().includes(search.toLowerCase()) || e.employee_code?.toLowerCase().includes(search.toLowerCase());
         const md = deptFilter === "all" || e.department === deptFilter;
-        return ms && md;
+        const mg = gradeFilter === "all" || e.grade_id === gradeFilter;
+        const ml = locationFilter === "all" || e.location === locationFilter;
+        const mst = statusFilter === "all" || e.employment_status === statusFilter;
+        return ms && md && mg && ml && mst;
       }),
-    [employees, search, deptFilter],
+    [employees, search, deptFilter, gradeFilter, locationFilter, statusFilter],
   );
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
@@ -218,20 +225,32 @@ function EmployeesPage() {
     try {
       const { employees: rows, gradeMap, ratingMap } = await parseEmployeeTemplate(file);
       if (rows.length === 0) return toast.error(t("no_employees_match"));
-      // Build code → grade_id map (app grade codes G01..G15)
       const codeToGrade = new Map<string, string>();
       grades.forEach((g: any) => codeToGrade.set(String(g.grade_code).toLowerCase(), g.id));
+
+      // Load custom field defs to map header keys → field_def_id
+      const { data: defs } = await supabase.from("org_custom_field_defs").select("*").eq("organization_id", organizationId);
+      const defByKey = new Map<string, any>();
+      (defs ?? []).forEach((d: any) => defByKey.set(String(d.key).toLowerCase(), d));
+
+      const KNOWN = new Set<string>([
+        "employee_code","first_name","last_name","email","phone_number","date_of_birth","nationality","gender",
+        "department","job_title","job_family","location","cost_center","business_unit","employment_type","employment_status",
+        "hire_date","contract_start_date","contract_end_date","manager_name",
+        "company_grade","mapped_grade","grade_code","base_salary","currency","salary_effective_date","target_bonus_percent",
+        "company_rating","mapped_rating","performance_rating",
+        "housing_allowance","transportation_allowance","mobile_allowance","food_allowance","shift_allowance","hardship_allowance",
+      ]);
 
       const existingCodes = new Set(employees.map((e: any) => String(e.employee_code).toLowerCase()));
       const unmappedGrades = new Set<string>();
       const unmappedRatings = new Set<string>();
       let ok = 0;
       let fail = 0;
-      const toInsert: any[] = [];
+
       for (const r of rows) {
         const code = String(r.employee_code ?? "").trim();
         if (!code || existingCodes.has(code.toLowerCase())) { fail++; continue; }
-        // Resolve grade: mapped_grade > grade_code > company_grade via gradeMap
         let appGrade = String(r.mapped_grade ?? r.grade_code ?? "").trim();
         const companyGrade = String(r.company_grade ?? "").trim();
         if (!appGrade && companyGrade) {
@@ -239,35 +258,75 @@ function EmployeesPage() {
           if (!appGrade) unmappedGrades.add(companyGrade);
         }
         const gradeId = appGrade ? codeToGrade.get(appGrade.toLowerCase()) ?? null : null;
-        // Resolve rating
         let rating = String(r.mapped_rating ?? r.performance_rating ?? "").trim();
         const companyRating = String(r.company_rating ?? "").trim();
         if (!rating && companyRating) {
           rating = ratingMap.get(companyRating.toLowerCase()) ?? "";
           if (!rating) unmappedRatings.add(companyRating);
         }
-        toInsert.push({
+        const empRow = {
           organization_id: organizationId,
           employee_code: code,
           first_name: String(r.first_name ?? "").trim() || "—",
           last_name: String(r.last_name ?? "").trim() || "—",
           email: String(r.email ?? "").trim() || null,
+          phone_number: String(r.phone_number ?? "").trim() || null,
+          date_of_birth: r.date_of_birth ? String(r.date_of_birth) : null,
+          nationality: String(r.nationality ?? "").trim() || null,
+          gender: String(r.gender ?? "").trim() || null,
           department: String(r.department ?? "").trim() || null,
           job_title: String(r.job_title ?? "").trim() || null,
           job_family: String(r.job_family ?? "").trim() || null,
           location: String(r.location ?? "").trim() || null,
+          cost_center: String(r.cost_center ?? "").trim() || null,
+          business_unit: String(r.business_unit ?? "").trim() || null,
+          employment_type: String(r.employment_type ?? "").trim() || null,
           grade_id: gradeId,
           base_salary: Number(r.base_salary) || 0,
+          currency: String(r.currency ?? "").trim() || null,
+          salary_effective_date: r.salary_effective_date ? String(r.salary_effective_date) : null,
           target_bonus_percent: Number(r.target_bonus_percent) || 0,
           performance_rating: rating || "Meets",
           hire_date: r.hire_date ? String(r.hire_date) : null,
+          contract_start_date: r.contract_start_date ? String(r.contract_start_date) : null,
+          contract_end_date: r.contract_end_date ? String(r.contract_end_date) : null,
           manager_name: String(r.manager_name ?? "").trim() || null,
-        });
+        };
+        const { data: created, error } = await supabase.from("employees").insert(empRow).select("id").single();
+        if (error || !created) { fail++; continue; }
+        const empId = created.id;
+
+        // Standard allowances
+        const housing = Number(r.housing_allowance) || 0;
+        const transport = Number(r.transportation_allowance) || 0;
+        const mobile = Number(r.mobile_allowance) || 0;
+        const food = Number(r.food_allowance) || 0;
+        const shift = Number(r.shift_allowance) || 0;
+        const hardship = Number(r.hardship_allowance) || 0;
+        if (housing || transport || mobile || food || shift || hardship) {
+          await supabase.from("employee_allowances").insert({
+            employee_id: empId,
+            housing_amount: housing, transport_amount: transport, mobile_amount: mobile,
+            food_amount: food, shift_amount: shift, hardship_amount: hardship,
+            total_allowance_amount: housing + transport + mobile + food + shift + hardship,
+          });
+        }
+
+        // Walk extra columns
+        for (const [k, v] of Object.entries(r)) {
+          const key = String(k).trim();
+          if (!key || KNOWN.has(key)) continue;
+          const valStr = v == null ? "" : String(v).trim();
+          if (!valStr) continue;
+          if (key.toLowerCase().endsWith("_allowance")) {
+            const amount = Number(v) || 0;
+            if (amount) await supabase.from("employee_custom_allowances").insert({ employee_id: empId, name: key.replace(/_allowance$/i, "").replace(/_/g, " "), annual_amount: amount });
+          } else {
+            const def = defByKey.get(key.toLowerCase());
+            if (def) await supabase.from("employee_custom_field_values").insert({ employee_id: empId, field_def_id: def.id, value_text: valStr });
+          }
+        }
         ok++;
-      }
-      if (toInsert.length) {
-        const { error } = await supabase.from("employees").insert(toInsert);
-        if (error) { toast.error(error.message); return; }
       }
       toast.success(t("import_results", { ok, fail }));
       if (unmappedGrades.size) toast.warning(t("unmapped_grades_warn", { list: Array.from(unmappedGrades).slice(0, 8).join(", ") }));
@@ -503,10 +562,33 @@ function EmployeesPage() {
             />
           </div>
           <Select value={deptFilter} onValueChange={(v) => { setDeptFilter(v); setPage(1); }}>
-            <SelectTrigger className="w-full sm:w-48"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-full sm:w-44"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t("all_departments")}</SelectItem>
               {departments.map((d) => <SelectItem key={d as string} value={d as string}>{d as string}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={gradeFilter} onValueChange={(v) => { setGradeFilter(v); setPage(1); }}>
+            <SelectTrigger className="w-full sm:w-36"><SelectValue placeholder={t("filter_grade")} /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t("all_grades")}</SelectItem>
+              {grades.map((g: any) => <SelectItem key={g.id} value={g.id}>{g.grade_code}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={locationFilter} onValueChange={(v) => { setLocationFilter(v); setPage(1); }}>
+            <SelectTrigger className="w-full sm:w-40"><SelectValue placeholder={t("filter_location")} /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t("all_locations")}</SelectItem>
+              {locations.map((l) => <SelectItem key={l as string} value={l as string}>{l as string}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
+            <SelectTrigger className="w-full sm:w-36"><SelectValue placeholder={t("filter_status")} /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t("all_statuses")}</SelectItem>
+              <SelectItem value="active">active</SelectItem>
+              <SelectItem value="on_leave">on_leave</SelectItem>
+              <SelectItem value="terminated">terminated</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -574,21 +656,14 @@ function EmployeesPage() {
                           <td className="px-4 py-2.5 text-end num">{perms.canViewSalary ? compa?.toFixed(2) ?? "—" : "—"}</td>
                           <td className="px-4 py-2.5 text-end num">{e.target_bonus_percent}%</td>
                           <td className="px-4 py-2.5 text-end">
-                            <div className="inline-flex gap-0.5">
-                              {perms.canEdit && (
-                                <Button size="icon" variant="ghost" onClick={() => openEdit(e)} aria-label={t("edit_employee")}>
-                                  <Pencil className="w-4 h-4" />
-                                </Button>
-                              )}
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                aria-label={t("view_profile")}
-                                onClick={() => navigate({ to: "/app/employees/$id", params: { id: e.id } })}
-                              >
-                                <Eye className="w-4 h-4" />
-                              </Button>
-                            </div>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              aria-label={t("view_profile")}
+                              onClick={() => navigate({ to: "/app/employees/$id", params: { id: e.id } })}
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
                           </td>
                         </tr>
                       );
