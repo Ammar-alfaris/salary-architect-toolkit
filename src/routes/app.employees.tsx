@@ -50,6 +50,9 @@ function EmployeesPage() {
 
   const [search, setSearch] = useState("");
   const [deptFilter, setDeptFilter] = useState("all");
+  const [gradeFilter, setGradeFilter] = useState("all");
+  const [locationFilter, setLocationFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [page, setPage] = useState(1);
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -93,15 +96,19 @@ function EmployeesPage() {
 
   const gradeMap = useMemo(() => new Map(grades.map((g: any) => [g.id, g])), [grades]);
   const departments = useMemo(() => Array.from(new Set(employees.map((e: any) => e.department).filter(Boolean))), [employees]);
+  const locations = useMemo(() => Array.from(new Set(employees.map((e: any) => e.location).filter(Boolean))), [employees]);
 
   const filtered = useMemo(
     () =>
       employees.filter((e: any) => {
         const ms = !search || e.full_name?.toLowerCase().includes(search.toLowerCase()) || e.employee_code?.toLowerCase().includes(search.toLowerCase());
         const md = deptFilter === "all" || e.department === deptFilter;
-        return ms && md;
+        const mg = gradeFilter === "all" || e.grade_id === gradeFilter;
+        const ml = locationFilter === "all" || e.location === locationFilter;
+        const mst = statusFilter === "all" || e.employment_status === statusFilter;
+        return ms && md && mg && ml && mst;
       }),
-    [employees, search, deptFilter],
+    [employees, search, deptFilter, gradeFilter, locationFilter, statusFilter],
   );
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
@@ -555,10 +562,33 @@ function EmployeesPage() {
             />
           </div>
           <Select value={deptFilter} onValueChange={(v) => { setDeptFilter(v); setPage(1); }}>
-            <SelectTrigger className="w-full sm:w-48"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-full sm:w-44"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t("all_departments")}</SelectItem>
               {departments.map((d) => <SelectItem key={d as string} value={d as string}>{d as string}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={gradeFilter} onValueChange={(v) => { setGradeFilter(v); setPage(1); }}>
+            <SelectTrigger className="w-full sm:w-36"><SelectValue placeholder={t("filter_grade")} /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t("all_grades")}</SelectItem>
+              {grades.map((g: any) => <SelectItem key={g.id} value={g.id}>{g.grade_code}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={locationFilter} onValueChange={(v) => { setLocationFilter(v); setPage(1); }}>
+            <SelectTrigger className="w-full sm:w-40"><SelectValue placeholder={t("filter_location")} /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t("all_locations")}</SelectItem>
+              {locations.map((l) => <SelectItem key={l as string} value={l as string}>{l as string}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
+            <SelectTrigger className="w-full sm:w-36"><SelectValue placeholder={t("filter_status")} /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t("all_statuses")}</SelectItem>
+              <SelectItem value="active">active</SelectItem>
+              <SelectItem value="on_leave">on_leave</SelectItem>
+              <SelectItem value="terminated">terminated</SelectItem>
             </SelectContent>
           </Select>
         </div>
