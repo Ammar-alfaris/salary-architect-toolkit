@@ -16,8 +16,8 @@ import { ApprovalChainEditor } from "@/components/approval-chain-editor";
 import { usePermissions } from "@/lib/rbac";
 import { toast } from "sonner";
 
-type SettingsTab = "org" | "defaults" | "approvals" | "locale";
-const VALID_TABS: SettingsTab[] = ["org", "defaults", "approvals", "locale"];
+type SettingsTab = "org" | "defaults" | "approvals" | "locale" | "fields";
+const VALID_TABS: SettingsTab[] = ["org", "defaults", "approvals", "locale", "fields"];
 
 export const Route = createFileRoute("/app/settings")({
   validateSearch: (search: Record<string, unknown>): { tab?: SettingsTab } => {
@@ -82,6 +82,7 @@ function SettingsPage() {
             <TabsTrigger value="defaults">{t("defaults")}</TabsTrigger>
             <TabsTrigger value="approvals">{t("approvals")}</TabsTrigger>
             <TabsTrigger value="locale">{t("localization")}</TabsTrigger>
+            <TabsTrigger value="fields">{t("employee_fields_tab")}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="org" className="mt-4">
@@ -173,8 +174,73 @@ function SettingsPage() {
               </div>
             </div>
           </TabsContent>
+          <TabsContent value="fields" className="mt-4">
+            <CustomFieldsAdmin organizationId={organizationId} canAdmin={perms.canAdmin} />
+          </TabsContent>
         </Tabs>
       </div>
+    </div>
+  );
+}
+
+function CustomFieldsAdmin({ organizationId, canAdmin }: { organizationId: string | null; canAdmin: boolean }) {
+  const { t } = useI18n();
+  const [defs, setDefs] = useState<any[]>([]);
+  const [label, setLabel] = useState("");
+  const [key, setKey] = useState("");
+  const [ftype, setFtype] = useState("text");
+
+  const load = async () => {
+    if (!organizationId) return;
+    const { data } = await supabase.from("org_custom_field_defs").select("*").eq("organization_id", organizationId).order("created_at");
+    setDefs(data ?? []);
+  };
+  useEffect(() => { load(); /* eslint-disable-next-line */ }, [organizationId]);
+
+  const add = async () => {
+    if (!organizationId || !label.trim() || !key.trim()) return;
+    const k = key.trim().toLowerCase().replace(/[^a-z0-9_]/g, "_");
+    const { error } = await supabase.from("org_custom_field_defs").insert({ organization_id: organizationId, label: label.trim(), key: k, field_type: ftype });
+    if (error) return toast.error(error.message);
+    setLabel(""); setKey(""); setFtype("text");
+    await load();
+  };
+  const remove = async (id: string) => {
+    const { error } = await supabase.from("org_custom_field_defs").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    await load();
+  };
+
+  return (
+    <div className="border rounded-lg bg-card p-5 space-y-4">
+      <h3 className="font-semibold text-sm">{t("custom_employee_fields")}</h3>
+      {defs.length === 0 ? <p className="text-xs text-muted-foreground">{t("no_custom_fields_yet")}</p> : (
+        <div className="space-y-1">
+          {defs.map((d) => (
+            <div key={d.id} className="flex items-center justify-between rounded border px-3 py-2 text-sm">
+              <div><span className="font-medium">{d.label}</span> <span className="text-xs text-muted-foreground ms-2">{d.key} • {d.field_type}</span></div>
+              {canAdmin && <Button size="sm" variant="ghost" onClick={() => remove(d.id)}>{t("remove")}</Button>}
+            </div>
+          ))}
+        </div>
+      )}
+      {canAdmin && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-2 pt-3 border-t">
+          <div><Label className="text-xs">{t("custom_field_label")}</Label><Input value={label} onChange={(e) => setLabel(e.target.value)} /></div>
+          <div><Label className="text-xs">{t("custom_field_key")}</Label><Input value={key} onChange={(e) => setKey(e.target.value)} placeholder="national_id" /></div>
+          <div><Label className="text-xs">{t("custom_field_type")}</Label>
+            <Select value={ftype} onValueChange={setFtype}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="text">{t("field_type_text")}</SelectItem>
+                <SelectItem value="number">{t("field_type_number")}</SelectItem>
+                <SelectItem value="date">{t("field_type_date")}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-end"><Button onClick={add} disabled={!label || !key}>{t("add_field")}</Button></div>
+        </div>
+      )}
     </div>
   );
 }
