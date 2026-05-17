@@ -660,7 +660,7 @@ function EmployeesPage() {
                               size="icon"
                               variant="ghost"
                               aria-label={t("view_profile")}
-                              onClick={() => navigate({ to: "/app/employees/$id", params: { id: e.id } })}
+                              onClick={() => navigate({ to: "/app/employees_/$id", params: { id: e.id } })}
                             >
                               <Eye className="w-4 h-4" />
                             </Button>
