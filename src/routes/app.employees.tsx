@@ -56,7 +56,14 @@ function EmployeesPage() {
   const [page, setPage] = useState(1);
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [form, setForm] = useState({ employee_code: "", first_name: "", last_name: "", department: "", job_title: "", job_family: "", location: "", base_salary: 0, target_bonus_percent: 10, grade_id: "", performance_rating: "Meets" });
+  const [form, setForm] = useState({
+    employee_code: "", first_name: "", last_name: "",
+    email: "", phone_number: "", date_of_birth: "", nationality: "", gender: "",
+    department: "", job_title: "", job_family: "", location: "",
+    cost_center: "", business_unit: "", employment_type: "", employment_status: "active",
+    hire_date: "", contract_start_date: "", contract_end_date: "", manager_name: "",
+    base_salary: 0, target_bonus_percent: 10, grade_id: "", performance_rating: "Meets",
+  });
   const [editTarget, setEditTarget] = useState<any | null>(null);
   const [editForm, setEditForm] = useState<any>(null);
   const [salaryReqOpen, setSalaryReqOpen] = useState(false);
