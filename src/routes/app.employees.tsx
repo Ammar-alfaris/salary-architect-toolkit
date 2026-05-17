@@ -158,7 +158,7 @@ function EmployeesPage() {
         cost_center: form.cost_center || null,
         business_unit: form.business_unit || null,
         employment_type: form.employment_type || null,
-        employment_status: form.employment_status || "active",
+        employment_status: (form.employment_status || "active") as "active" | "on_leave" | "terminated",
         hire_date: form.hire_date || null,
         contract_start_date: form.contract_start_date || null,
         contract_end_date: form.contract_end_date || null,
