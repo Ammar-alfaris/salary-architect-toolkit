@@ -15,7 +15,7 @@ import { logAudit } from "@/lib/audit";
 import { ArrowLeft, Pencil, Plus, Save, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/app/employees_/$id")({ component: EmployeeProfile });
+export const Route = createFileRoute("/app/employees/$id")({ component: EmployeeProfile });
 
 const EMPLOYMENT_TYPES = ["Full-time", "Part-time", "Contract", "Intern"];
 const EMPLOYMENT_STATUSES = ["active", "on_leave", "terminated"];

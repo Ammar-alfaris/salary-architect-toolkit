@@ -465,7 +465,7 @@ export interface FileRoutesById {
   '/app/analytics/compa': typeof AppAnalyticsCompaRoute
   '/app/analytics/equity': typeof AppAnalyticsEquityRoute
   '/app/analytics/penetration': typeof AppAnalyticsPenetrationRoute
-  '/app/employees_/$id': typeof AppEmployeesIdRoute
+  '/app/employees/$id': typeof AppEmployeesIdRoute
   '/admin/blog/': typeof AdminBlogIndexRoute
   '/admin/emails/': typeof AdminEmailsIndexRoute
   '/admin/tickets/': typeof AdminTicketsIndexRoute
@@ -621,7 +621,7 @@ export interface FileRouteTypes {
     | '/app/analytics/compa'
     | '/app/analytics/equity'
     | '/app/analytics/penetration'
-    | '/app/employees_/$id'
+    | '/app/employees/$id'
     | '/admin/blog/'
     | '/admin/emails/'
     | '/admin/tickets/'
@@ -918,8 +918,8 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminBlogIndexRouteImport
       parentRoute: typeof AdminBlogRoute
     }
-    '/app/employees_/$id': {
-      id: '/app/employees_/$id'
+    '/app/employees/$id': {
+      id: '/app/employees/$id'
       path: '/employees/$id'
       fullPath: '/app/employees/$id'
       preLoaderRoute: typeof AppEmployeesIdRouteImport
