@@ -693,7 +693,7 @@ function EmployeesPage() {
 
       {/* Edit dialog */}
       <Dialog open={!!editTarget} onOpenChange={(o) => { if (!o) { setEditTarget(null); setEditForm(null); } }}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{t("edit_employee")}{editTarget ? ` — ${editTarget.full_name ?? editTarget.employee_code}` : ""}</DialogTitle>
           </DialogHeader>
