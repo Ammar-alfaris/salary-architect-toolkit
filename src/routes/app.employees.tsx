@@ -146,10 +146,23 @@ function EmployeesPage() {
         employee_code: code,
         first_name: form.first_name,
         last_name: form.last_name,
+        email: form.email || null,
+        phone_number: form.phone_number || null,
+        date_of_birth: form.date_of_birth || null,
+        nationality: form.nationality || null,
+        gender: form.gender || null,
         department: form.department || null,
         job_title: form.job_title || null,
         job_family: form.job_family || null,
         location: form.location || null,
+        cost_center: form.cost_center || null,
+        business_unit: form.business_unit || null,
+        employment_type: form.employment_type || null,
+        employment_status: form.employment_status || "active",
+        hire_date: form.hire_date || null,
+        contract_start_date: form.contract_start_date || null,
+        contract_end_date: form.contract_end_date || null,
+        manager_name: form.manager_name || null,
         base_salary: form.base_salary,
         target_bonus_percent: form.target_bonus_percent,
         grade_id: form.grade_id || null,
@@ -168,7 +181,14 @@ function EmployeesPage() {
       after: { base_salary: form.base_salary, target_bonus_percent: form.target_bonus_percent, grade_id: form.grade_id || null },
     });
     setOpen(false);
-    setForm({ employee_code: "", first_name: "", last_name: "", department: "", job_title: "", job_family: "", location: "", base_salary: 0, target_bonus_percent: 10, grade_id: "", performance_rating: "Meets" });
+    setForm({
+      employee_code: "", first_name: "", last_name: "",
+      email: "", phone_number: "", date_of_birth: "", nationality: "", gender: "",
+      department: "", job_title: "", job_family: "", location: "",
+      cost_center: "", business_unit: "", employment_type: "", employment_status: "active",
+      hire_date: "", contract_start_date: "", contract_end_date: "", manager_name: "",
+      base_salary: 0, target_bonus_percent: 10, grade_id: "", performance_rating: "Meets",
+    });
     refresh();
     window.dispatchEvent(new CustomEvent("tour:employee-added"));
   };
