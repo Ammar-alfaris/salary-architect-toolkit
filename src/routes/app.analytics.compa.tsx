@@ -259,7 +259,7 @@ function OutlierTable({
               {rows.slice(0, 50).map((r) => (
                 <tr key={r.id} className="border-t hover:bg-muted/20">
                   <td className="py-1.5">
-                    <Link to="/app/employees/$id" params={{ id: r.id }} className="hover:underline font-medium">
+                    <Link to="/app/employees_/$id" params={{ id: r.id }} className="hover:underline font-medium">
                       {r.name}
                     </Link>
                     {r.dept && <div className="text-xs text-muted-foreground">{r.dept}</div>}
