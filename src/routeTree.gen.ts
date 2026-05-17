@@ -48,7 +48,7 @@ import { Route as AdminAnnouncementsRouteImport } from './routes/admin.announcem
 import { Route as AdminTicketsIndexRouteImport } from './routes/admin.tickets.index'
 import { Route as AdminEmailsIndexRouteImport } from './routes/admin.emails.index'
 import { Route as AdminBlogIndexRouteImport } from './routes/admin.blog.index'
-import { Route as AppEmployeesIdRouteImport } from './routes/app.employees.$id'
+import { Route as AppEmployeesIdRouteImport } from './routes/app.employees_.$id'
 import { Route as AppAnalyticsPenetrationRouteImport } from './routes/app.analytics.penetration'
 import { Route as AppAnalyticsEquityRouteImport } from './routes/app.analytics.equity'
 import { Route as AppAnalyticsCompaRouteImport } from './routes/app.analytics.compa'
@@ -257,9 +257,9 @@ const AdminBlogIndexRoute = AdminBlogIndexRouteImport.update({
   getParentRoute: () => AdminBlogRoute,
 } as any)
 const AppEmployeesIdRoute = AppEmployeesIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => AppEmployeesRoute,
+  id: '/employees_/$id',
+  path: '/employees/$id',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppAnalyticsPenetrationRoute = AppAnalyticsPenetrationRouteImport.update({
   id: '/analytics/penetration',
@@ -342,7 +342,7 @@ export interface FileRoutesByFullPath {
   '/app/approvals': typeof AppApprovalsRoute
   '/app/audit': typeof AppAuditRoute
   '/app/bonus': typeof AppBonusRoute
-  '/app/employees': typeof AppEmployeesRouteWithChildren
+  '/app/employees': typeof AppEmployeesRoute
   '/app/help': typeof AppHelpRoute
   '/app/matrix': typeof AppMatrixRoute
   '/app/merit': typeof AppMeritRoute
@@ -390,7 +390,7 @@ export interface FileRoutesByTo {
   '/app/approvals': typeof AppApprovalsRoute
   '/app/audit': typeof AppAuditRoute
   '/app/bonus': typeof AppBonusRoute
-  '/app/employees': typeof AppEmployeesRouteWithChildren
+  '/app/employees': typeof AppEmployeesRoute
   '/app/help': typeof AppHelpRoute
   '/app/matrix': typeof AppMatrixRoute
   '/app/merit': typeof AppMeritRoute
@@ -444,7 +444,7 @@ export interface FileRoutesById {
   '/app/approvals': typeof AppApprovalsRoute
   '/app/audit': typeof AppAuditRoute
   '/app/bonus': typeof AppBonusRoute
-  '/app/employees': typeof AppEmployeesRouteWithChildren
+  '/app/employees': typeof AppEmployeesRoute
   '/app/help': typeof AppHelpRoute
   '/app/matrix': typeof AppMatrixRoute
   '/app/merit': typeof AppMeritRoute
@@ -465,7 +465,7 @@ export interface FileRoutesById {
   '/app/analytics/compa': typeof AppAnalyticsCompaRoute
   '/app/analytics/equity': typeof AppAnalyticsEquityRoute
   '/app/analytics/penetration': typeof AppAnalyticsPenetrationRoute
-  '/app/employees/$id': typeof AppEmployeesIdRoute
+  '/app/employees_/$id': typeof AppEmployeesIdRoute
   '/admin/blog/': typeof AdminBlogIndexRoute
   '/admin/emails/': typeof AdminEmailsIndexRoute
   '/admin/tickets/': typeof AdminTicketsIndexRoute
@@ -621,7 +621,7 @@ export interface FileRouteTypes {
     | '/app/analytics/compa'
     | '/app/analytics/equity'
     | '/app/analytics/penetration'
-    | '/app/employees/$id'
+    | '/app/employees_/$id'
     | '/admin/blog/'
     | '/admin/emails/'
     | '/admin/tickets/'
@@ -918,12 +918,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminBlogIndexRouteImport
       parentRoute: typeof AdminBlogRoute
     }
-    '/app/employees/$id': {
-      id: '/app/employees/$id'
-      path: '/$id'
+    '/app/employees_/$id': {
+      id: '/app/employees_/$id'
+      path: '/employees/$id'
       fullPath: '/app/employees/$id'
       preLoaderRoute: typeof AppEmployeesIdRouteImport
-      parentRoute: typeof AppEmployeesRoute
+      parentRoute: typeof AppRoute
     }
     '/app/analytics/penetration': {
       id: '/app/analytics/penetration'
@@ -1094,24 +1094,12 @@ const AdminRouteChildren: AdminRouteChildren = {
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
-interface AppEmployeesRouteChildren {
-  AppEmployeesIdRoute: typeof AppEmployeesIdRoute
-}
-
-const AppEmployeesRouteChildren: AppEmployeesRouteChildren = {
-  AppEmployeesIdRoute: AppEmployeesIdRoute,
-}
-
-const AppEmployeesRouteWithChildren = AppEmployeesRoute._addFileChildren(
-  AppEmployeesRouteChildren,
-)
-
 interface AppRouteChildren {
   AppAllowancesRoute: typeof AppAllowancesRoute
   AppApprovalsRoute: typeof AppApprovalsRoute
   AppAuditRoute: typeof AppAuditRoute
   AppBonusRoute: typeof AppBonusRoute
-  AppEmployeesRoute: typeof AppEmployeesRouteWithChildren
+  AppEmployeesRoute: typeof AppEmployeesRoute
   AppHelpRoute: typeof AppHelpRoute
   AppMatrixRoute: typeof AppMatrixRoute
   AppMeritRoute: typeof AppMeritRoute
@@ -1125,6 +1113,7 @@ interface AppRouteChildren {
   AppAnalyticsCompaRoute: typeof AppAnalyticsCompaRoute
   AppAnalyticsEquityRoute: typeof AppAnalyticsEquityRoute
   AppAnalyticsPenetrationRoute: typeof AppAnalyticsPenetrationRoute
+  AppEmployeesIdRoute: typeof AppEmployeesIdRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -1132,7 +1121,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppApprovalsRoute: AppApprovalsRoute,
   AppAuditRoute: AppAuditRoute,
   AppBonusRoute: AppBonusRoute,
-  AppEmployeesRoute: AppEmployeesRouteWithChildren,
+  AppEmployeesRoute: AppEmployeesRoute,
   AppHelpRoute: AppHelpRoute,
   AppMatrixRoute: AppMatrixRoute,
   AppMeritRoute: AppMeritRoute,
@@ -1146,6 +1135,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAnalyticsCompaRoute: AppAnalyticsCompaRoute,
   AppAnalyticsEquityRoute: AppAnalyticsEquityRoute,
   AppAnalyticsPenetrationRoute: AppAnalyticsPenetrationRoute,
+  AppEmployeesIdRoute: AppEmployeesIdRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
@@ -1175,3 +1165,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
