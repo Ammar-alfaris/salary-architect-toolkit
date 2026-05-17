@@ -555,13 +555,62 @@ function EmployeesPage() {
                     <DialogTitle>{t("add_employee_title")}</DialogTitle>
                   </DialogHeader>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="md:col-span-2 text-xs font-semibold uppercase text-muted-foreground tracking-wide pt-1">{t("personal_info") || "Personal info"}</div>
                     <div className="space-y-1.5"><Label>{t("first_name")}</Label><Input value={form.first_name} onChange={(e) => setForm({ ...form, first_name: e.target.value })} /></div>
                     <div className="space-y-1.5"><Label>{t("last_name")}</Label><Input value={form.last_name} onChange={(e) => setForm({ ...form, last_name: e.target.value })} /></div>
+                    <div className="space-y-1.5"><Label>{t("email")}</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
+                    <div className="space-y-1.5"><Label>{t("phone_number")}</Label><Input value={form.phone_number} onChange={(e) => setForm({ ...form, phone_number: e.target.value })} /></div>
+                    <div className="space-y-1.5"><Label>{t("date_of_birth")}</Label><Input type="date" value={form.date_of_birth} onChange={(e) => setForm({ ...form, date_of_birth: e.target.value })} /></div>
+                    <div className="space-y-1.5"><Label>{t("nationality")}</Label><Input value={form.nationality} onChange={(e) => setForm({ ...form, nationality: e.target.value })} /></div>
+                    <div className="space-y-1.5">
+                      <Label>{t("gender")}</Label>
+                      <Select value={form.gender} onValueChange={(v) => setForm({ ...form, gender: v })}>
+                        <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="male">{t("gender_male")}</SelectItem>
+                          <SelectItem value="female">{t("gender_female")}</SelectItem>
+                          <SelectItem value="other">{t("gender_other")}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="md:col-span-2 text-xs font-semibold uppercase text-muted-foreground tracking-wide pt-3">{t("employment_info") || "Employment info"}</div>
                     <div className="space-y-1.5"><Label>{t("employee_code")}</Label><Input placeholder={t("auto")} value={form.employee_code} onChange={(e) => setForm({ ...form, employee_code: e.target.value })} /></div>
                     <div className="space-y-1.5"><Label>{t("department")}</Label><Input value={form.department} onChange={(e) => setForm({ ...form, department: e.target.value })} /></div>
                     <div className="space-y-1.5"><Label>{t("job_title")}</Label><Input value={form.job_title} onChange={(e) => setForm({ ...form, job_title: e.target.value })} /></div>
-                    <div className="space-y-1.5"><Label>{t("location")}</Label><Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} /></div>
                     <div className="space-y-1.5"><Label>{t("job_family")}</Label><Input placeholder={t("job_family_helper")} value={form.job_family} onChange={(e) => setForm({ ...form, job_family: e.target.value })} /></div>
+                    <div className="space-y-1.5"><Label>{t("location")}</Label><Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} /></div>
+                    <div className="space-y-1.5"><Label>{t("cost_center")}</Label><Input value={form.cost_center} onChange={(e) => setForm({ ...form, cost_center: e.target.value })} /></div>
+                    <div className="space-y-1.5"><Label>{t("business_unit")}</Label><Input value={form.business_unit} onChange={(e) => setForm({ ...form, business_unit: e.target.value })} /></div>
+                    <div className="space-y-1.5">
+                      <Label>{t("employment_type")}</Label>
+                      <Select value={form.employment_type} onValueChange={(v) => setForm({ ...form, employment_type: v })}>
+                        <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="full_time">{t("employment_type_full_time")}</SelectItem>
+                          <SelectItem value="part_time">{t("employment_type_part_time")}</SelectItem>
+                          <SelectItem value="contract">{t("employment_type_contract")}</SelectItem>
+                          <SelectItem value="intern">{t("employment_type_intern")}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>{t("filter_status")}</Label>
+                      <Select value={form.employment_status} onValueChange={(v) => setForm({ ...form, employment_status: v })}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="active">active</SelectItem>
+                          <SelectItem value="on_leave">on_leave</SelectItem>
+                          <SelectItem value="terminated">terminated</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5"><Label>{t("hire_date")}</Label><Input type="date" value={form.hire_date} onChange={(e) => setForm({ ...form, hire_date: e.target.value })} /></div>
+                    <div className="space-y-1.5"><Label>{t("contract_start_date")}</Label><Input type="date" value={form.contract_start_date} onChange={(e) => setForm({ ...form, contract_start_date: e.target.value })} /></div>
+                    <div className="space-y-1.5"><Label>{t("contract_end_date")}</Label><Input type="date" value={form.contract_end_date} onChange={(e) => setForm({ ...form, contract_end_date: e.target.value })} /></div>
+                    <div className="space-y-1.5 md:col-span-2"><Label>{t("direct_manager")}</Label><Input value={form.manager_name} onChange={(e) => setForm({ ...form, manager_name: e.target.value })} /></div>
+
+                    <div className="md:col-span-2 text-xs font-semibold uppercase text-muted-foreground tracking-wide pt-3">{t("compensation") || "Compensation"}</div>
                     <div className="space-y-1.5"><Label>{t("base_salary")}</Label><Input type="number" value={form.base_salary} onChange={(e) => setForm({ ...form, base_salary: +e.target.value || 0 })} /></div>
                     <div className="space-y-1.5"><Label>{t("target_bonus_pct")}</Label><Input type="number" step="0.5" value={form.target_bonus_percent} onChange={(e) => setForm({ ...form, target_bonus_percent: +e.target.value || 0 })} /></div>
                     <div className="space-y-1.5">
