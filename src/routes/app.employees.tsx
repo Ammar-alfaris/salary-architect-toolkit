@@ -22,6 +22,7 @@ import { autoAssignGrades, suggestStructureFromSalaries } from "@/lib/auto-assig
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { createRequest, fetchPolicy, listValidChainsForEntity, type ApprovalChain } from "@/lib/approvals";
 import { Textarea } from "@/components/ui/textarea";
+import { validateEmployeeForm } from "@/lib/validators/employee";
 
 
 export const Route = createFileRoute("/app/employees")({ component: EmployeesPage });
@@ -138,7 +139,9 @@ function EmployeesPage() {
   const handleAdd = async () => {
     if (!organizationId) return;
     if (!perms.canEdit) return toast.error(t("insufficient_permissions"));
-    const code = form.employee_code || `EMP-${Date.now().toString().slice(-5)}`;
+    const v = validateEmployeeForm(form);
+    if (!v.ok) return toast.error(v.message);
+    const code = v.data.employee_code || `EMP-${Date.now().toString().slice(-5)}`;
     const { data, error } = await supabase
       .from("employees")
       .insert({
@@ -415,6 +418,8 @@ function EmployeesPage() {
   const persistEdit = async (opts: { includeSalary: boolean }) => {
     if (!organizationId || !editTarget || !editForm) return;
     if (!perms.canEdit) return toast.error(t("insufficient_permissions"));
+    const v = validateEmployeeForm(editForm);
+    if (!v.ok) return toast.error(v.message);
     const before = {
       base_salary: Number(editTarget.base_salary),
       target_bonus_percent: Number(editTarget.target_bonus_percent),
