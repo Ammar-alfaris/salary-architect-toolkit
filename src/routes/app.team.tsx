@@ -196,7 +196,7 @@ function TeamPage() {
                   <UserPlus className="w-4 h-4 me-1" /> {t("invite_member")}
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="max-w-[95vw] sm:max-w-lg max-h-[90vh] overflow-y-auto">
                 <DialogHeader><DialogTitle>{t("invite_member_title")}</DialogTitle></DialogHeader>
                 <div className="space-y-3">
                   <div className="space-y-1.5">

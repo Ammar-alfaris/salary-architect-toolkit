@@ -354,7 +354,7 @@ function StructuresPage() {
       </AlertDialog>
 
       <Dialog open={!!editing} onOpenChange={(o) => { if (!o) setEditing(null); }}>
-        <DialogContent>
+        <DialogContent className="max-w-[95vw] sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{t("edit_structure")}</DialogTitle>
           </DialogHeader>
