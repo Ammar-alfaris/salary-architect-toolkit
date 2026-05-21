@@ -164,7 +164,8 @@ function CompaAnalytics() {
 
           <div className="border rounded-lg bg-card p-4">
             <h3 className="font-semibold text-sm mb-3">{t("band")}</h3>
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[420px]">
               <thead className="text-xs uppercase text-muted-foreground">
                 <tr><th className="text-start py-1.5">{t("band")}</th><th className="text-end py-1.5">{t("count")}</th><th className="text-end py-1.5">{t("share")}</th></tr>
               </thead>
@@ -178,6 +179,7 @@ function CompaAnalytics() {
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
         </div>
 

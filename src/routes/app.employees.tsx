@@ -910,7 +910,7 @@ function EmployeesPage() {
 
       {/* Salary change approval request dialog */}
       <Dialog open={salaryReqOpen} onOpenChange={setSalaryReqOpen}>
-        <DialogContent className="max-w-[95vw] sm:max-w-lg">
+        <DialogContent className="max-w-[95vw] sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{t("request_salary_approval") || "Request salary approval"}</DialogTitle>
           </DialogHeader>
