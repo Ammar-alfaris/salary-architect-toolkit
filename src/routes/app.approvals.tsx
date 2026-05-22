@@ -69,7 +69,7 @@ function ApprovalsPage() {
 
   const filtered = useMemo(() => requests.filter((r) => (tab === "all" ? true : r.status === tab)), [requests, tab]);
 
-  const openAction = (req: any, action: DecisionAction) => {
+  const openAction = (req: ApprovalRequest, action: DecisionAction) => {
     setActive({ req, action });
     setNote("");
     const base = req.final_payload ?? req.proposed_payload ?? {};
@@ -101,27 +101,27 @@ function ApprovalsPage() {
     } catch (e: any) { toast.error(e.message); }
   };
 
-  const applyApproved = async (req: any) => {
+  const applyApproved = async (req: ApprovalRequest) => {
     if (!confirm(t("apply_changes") + "?")) return;
     if (!organizationId) return;
-    const payload = req.final_payload ?? req.proposed_payload ?? {};
+    const payload = (req.final_payload ?? req.proposed_payload ?? {}) as Record<string, unknown>;
     try {
       const headers = await getServerFnAuthHeaders();
       if (req.entity_type === "merit_cycle") {
-        const recs = ((payload as any).recommendations ?? []).map((r: any) => ({
-          id: r.id,
+        const recs = ((payload.recommendations as Array<Record<string, unknown>>) ?? []).map((r) => ({
+          id: String(r.id),
           base: Number(r.base) || 0,
           pct: Number(r.pct) || 0,
           increase: Number(r.increase) || 0,
           newSalary: Number(r.newSalary) || 0,
         }));
         await assertServerFnResult(await applyMeritFn({
-          data: { organizationId, cycleId: req.entity_id, recommendations: recs },
+          data: { organizationId, cycleId: req.entity_id!, recommendations: recs },
           headers,
         }));
       } else if (req.entity_type === "bonus_cycle") {
-        const results = ((payload as any).results ?? []).map((r: any) => ({
-          id: r.id,
+        const results = ((payload.results as Array<Record<string, unknown>>) ?? []).map((r) => ({
+          id: String(r.id),
           base: Number(r.base) || 0,
           target: Number(r.target) || 0,
           bonus: Number(r.bonus) || 0,
@@ -129,25 +129,25 @@ function ApprovalsPage() {
         await assertServerFnResult(await applyBonusFn({
           data: {
             organizationId,
-            cycleId: req.entity_id,
+            cycleId: req.entity_id!,
             results,
-            bulkPerf: Number((payload as any).bulkPerf) || 1,
-            bulkBiz: Number((payload as any).bulkBiz) || 1,
+            bulkPerf: Number(payload.bulkPerf) || 1,
+            bulkBiz: Number(payload.bulkBiz) || 1,
           },
           headers,
         }));
       } else if (req.entity_type === "salary_change") {
-        const newSalary = Number((payload as any).new_salary);
+        const newSalary = Number(payload.new_salary);
         if (!isFinite(newSalary) || newSalary <= 0) {
           throw new Error("Invalid proposed salary");
         }
         await assertServerFnResult(await applySalaryFn({
-          data: { organizationId, employeeId: req.entity_id, newSalary },
+          data: { organizationId, employeeId: req.entity_id!, newSalary },
           headers,
         }));
       }
       await markApplied(req.id);
-      await logAudit({ organizationId, action: "update", entityType: req.entity_type, entityId: req.entity_id, entityLabel: req.entity_label, metadata: { applied: true, finalized: true } });
+      await logAudit({ organizationId, action: "update", entityType: req.entity_type as ApprovalEntity, entityId: req.entity_id ?? undefined, entityLabel: req.entity_label ?? undefined, metadata: { applied: true, finalized: true } });
       toast.success(t("apply_merit_done"));
       load();
     } catch (e: any) { toast.error(e.message); }
