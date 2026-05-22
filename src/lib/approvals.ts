@@ -281,14 +281,15 @@ export async function isCurrentUserApprover(requestId: string): Promise<boolean>
   const step = await getCurrentApprover(requestId);
   if (!step) return false;
 
+  const stepRow = step as Tables<"approval_chain_steps">;
   // Match by user ID
-  if ((step as any).approver_user_id === me.id) return true;
+  if (stepRow.approver_user_id === me.id) return true;
 
   // Match by email
-  if ((step as any).approver_email && (step as any).approver_email.toLowerCase() === (me.email ?? "").toLowerCase()) return true;
+  if (stepRow.approver_email && stepRow.approver_email.toLowerCase() === (me.email ?? "").toLowerCase()) return true;
 
   // Match by role — any user holding that role in the org can approve
-  if ((step as any).approver_role) {
+  if (stepRow.approver_role) {
     const { data: req } = await supabase
       .from("approval_requests")
       .select("organization_id")
@@ -300,7 +301,7 @@ export async function isCurrentUserApprover(requestId: string): Promise<boolean>
         .select("role")
         .eq("user_id", me.id)
         .eq("organization_id", req.organization_id)
-        .eq("role", (step as any).approver_role)
+        .eq("role", stepRow.approver_role as Tables<"user_roles">["role"])
         .maybeSingle();
       if (roleRow) return true;
     }
