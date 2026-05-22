@@ -1,6 +1,7 @@
 // Approval-chain helpers: chains, steps, multi-step request lifecycle, diffing.
 import { supabase } from "@/integrations/supabase/client";
 import type { ApprovalEntity } from "@/lib/governance";
+import type { Tables, TablesUpdate } from "@/integrations/supabase/types";
 
 export type ApprovalRequireFlags = Partial<Record<ApprovalEntity | "allowance_change", boolean>>;
 
