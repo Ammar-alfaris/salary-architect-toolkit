@@ -290,11 +290,11 @@ function ApprovalsPage() {
 }
 
 function RequestCard({ req, fmt, isRequester, canDecide, onAction, onApply, onViewDiff }: {
-  req: any; fmt: (s: string) => string; isRequester: boolean; canDecide: boolean;
+  req: ApprovalRequest; fmt: (s: string) => string; isRequester: boolean; canDecide: boolean;
   onAction: (a: DecisionAction) => void; onApply: () => void; onViewDiff: () => void;
 }) {
   const { t } = useI18n();
-  const [approver, setApprover] = useState<any>(null);
+  const [approver, setApprover] = useState<ApprovalStep | null>(null);
   const [isAssignedApprover, setIsAssignedApprover] = useState(false);
   useEffect(() => {
     if (req.status !== "pending") return;
