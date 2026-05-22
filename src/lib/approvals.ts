@@ -213,7 +213,7 @@ export async function recordDecision(opts: {
     edits: (opts.edits ?? {}) as never,
   });
 
-  const updates: any = { reviewed_by: user.id, reviewed_by_email: user.email, reviewed_at: new Date().toISOString() };
+  const updates: TablesUpdate<"approval_requests"> = { reviewed_by: user.id, reviewed_by_email: user.email, reviewed_at: new Date().toISOString() };
   if (opts.note) updates.decision_note = opts.note;
   if (opts.finalPayload) updates.final_payload = opts.finalPayload as never;
 
