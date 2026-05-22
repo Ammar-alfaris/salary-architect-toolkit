@@ -249,14 +249,7 @@ function EmployeesPage() {
       const defByKey = new Map<string, any>();
       (defs ?? []).forEach((d: any) => defByKey.set(String(d.key).toLowerCase(), d));
 
-      const KNOWN = new Set<string>([
-        "employee_code","first_name","last_name","email","phone_number","date_of_birth","nationality","gender",
-        "department","job_title","job_family","location","cost_center","business_unit","employment_type","employment_status",
-        "hire_date","contract_start_date","contract_end_date","manager_name",
-        "company_grade","mapped_grade","grade_code","base_salary","currency","salary_effective_date","target_bonus_percent",
-        "company_rating","mapped_rating","performance_rating",
-        "housing_allowance","transportation_allowance","mobile_allowance","food_allowance","shift_allowance","hardship_allowance",
-      ]);
+      const KNOWN = EMPLOYEE_KNOWN_CSV_KEYS;
 
       const existingCodes = new Set(employees.map((e: any) => String(e.employee_code).toLowerCase()));
       const unmappedGrades = new Set<string>();
