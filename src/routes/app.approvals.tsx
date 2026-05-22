@@ -23,7 +23,12 @@ import { getServerFnAuthHeaders, assertServerFnResult } from "@/lib/server-fn-au
 import { CheckCircle2, XCircle, Clock, FileBarChart, Layers, Gift, TrendingUp, Info, ShieldCheck, Undo2, Pencil, Eye, DollarSign } from "lucide-react";
 import { toast } from "sonner";
 
+import type { Tables } from "@/integrations/supabase/types";
+
 export const Route = createFileRoute("/app/approvals")({ component: ApprovalsPage });
+
+type ApprovalRequest = Tables<"approval_requests">;
+type ApprovalStep = Tables<"approval_chain_steps">;
 
 const ENTITY_ICON: Record<ApprovalEntity, typeof Layers> = {
   merit_cycle: TrendingUp,
