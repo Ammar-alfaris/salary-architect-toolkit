@@ -43,9 +43,9 @@ function ApprovalsPage() {
   const { organizationId, user } = useAuth();
   const { t, locale } = useI18n();
   const perms = usePermissions();
-  const [requests, setRequests] = useState<any[]>([]);
+  const [requests, setRequests] = useState<ApprovalRequest[]>([]);
   const [tab, setTab] = useState("pending");
-  const [active, setActive] = useState<{ req: any; action: DecisionAction } | null>(null);
+  const [active, setActive] = useState<{ req: ApprovalRequest; action: DecisionAction } | null>(null);
   const [note, setNote] = useState("");
   const [editsObj, setEditsObj] = useState<Record<string, any>>({});
   const [diffReq, setDiffReq] = useState<any | null>(null);
