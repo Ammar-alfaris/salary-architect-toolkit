@@ -227,17 +227,17 @@ function ApprovalsPage() {
             {/* Show summary for approve/reject/send_back actions */}
             {active && active.action !== "edited" && (
               <ApprovalSummary
-                entityType={active.req.entity_type}
-                entityLabel={active.req.entity_label}
-                payload={active.req.final_payload ?? active.req.proposed_payload ?? {}}
-                requestedBy={active.req.requested_by_email}
-                reason={active.req.reason}
+                entityType={active.req.entity_type as ApprovalEntity}
+                entityLabel={active.req.entity_label ?? undefined}
+                payload={(active.req.final_payload ?? active.req.proposed_payload ?? {}) as Record<string, unknown>}
+                requestedBy={active.req.requested_by_email ?? undefined}
+                reason={active.req.reason ?? undefined}
               />
             )}
             
             {/* Show editable table for edit action */}
             {active?.action === "edited" && (
-              <PayloadEditor entityType={active.req.entity_type} value={editsObj} onChange={setEditsObj} />
+              <PayloadEditor entityType={active.req.entity_type as ApprovalEntity} value={editsObj} onChange={setEditsObj} />
             )}
             
             {/* Decision note */}
