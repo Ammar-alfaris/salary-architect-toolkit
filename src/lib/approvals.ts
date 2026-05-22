@@ -31,7 +31,7 @@ export const DEFAULT_POLICY: OrgApprovalPolicy = {
 
 export async function fetchPolicy(orgId: string): Promise<OrgApprovalPolicy> {
   const { data } = await supabase.from("organizations").select("approval_settings").eq("id", orgId).maybeSingle();
-  const raw = (data as any)?.approval_settings ?? {};
+  const raw = (data?.approval_settings ?? {}) as Partial<OrgApprovalPolicy>;
   return {
     ...DEFAULT_POLICY,
     ...raw,
