@@ -90,9 +90,9 @@ function ApprovalsPage() {
       await logAudit({
         organizationId: organizationId!,
         action: "update",
-        entityType: active.req.entity_type,
-        entityId: active.req.entity_id,
-        entityLabel: active.req.entity_label,
+        entityType: active.req.entity_type as ApprovalEntity,
+        entityId: active.req.entity_id ?? undefined,
+        entityLabel: active.req.entity_label ?? undefined,
         metadata: { approval_decision: active.action, note },
       });
       toast.success(t(active.action === "approved" || active.action === "edited" ? "approval_approved" : active.action === "rejected" ? "approval_rejected" : "approval_submitted"));
