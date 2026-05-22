@@ -17,6 +17,9 @@ import { ApprovalDiff } from "@/components/approval-diff";
 import { ApprovalSummary } from "@/components/approval-summary";
 import { usePermissions } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
+import { useServerFn } from "@tanstack/react-start";
+import { applySalaryChange, applyMeritCycle, applyBonusCycle } from "@/lib/comp-apply.functions";
+import { getServerFnAuthHeaders, assertServerFnResult } from "@/lib/server-fn-auth";
 import { CheckCircle2, XCircle, Clock, FileBarChart, Layers, Gift, TrendingUp, Info, ShieldCheck, Undo2, Pencil, Eye, DollarSign } from "lucide-react";
 import { toast } from "sonner";
 
