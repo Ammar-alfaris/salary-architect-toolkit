@@ -1,6 +1,7 @@
 // Approval-chain helpers: chains, steps, multi-step request lifecycle, diffing.
 import { supabase } from "@/integrations/supabase/client";
 import type { ApprovalEntity } from "@/lib/governance";
+import type { Tables, TablesUpdate } from "@/integrations/supabase/types";
 
 export type ApprovalRequireFlags = Partial<Record<ApprovalEntity | "allowance_change", boolean>>;
 
@@ -30,7 +31,7 @@ export const DEFAULT_POLICY: OrgApprovalPolicy = {
 
 export async function fetchPolicy(orgId: string): Promise<OrgApprovalPolicy> {
   const { data } = await supabase.from("organizations").select("approval_settings").eq("id", orgId).maybeSingle();
-  const raw = (data as any)?.approval_settings ?? {};
+  const raw = (data?.approval_settings ?? {}) as Partial<OrgApprovalPolicy>;
   return {
     ...DEFAULT_POLICY,
     ...raw,
@@ -212,7 +213,7 @@ export async function recordDecision(opts: {
     edits: (opts.edits ?? {}) as never,
   });
 
-  const updates: any = { reviewed_by: user.id, reviewed_by_email: user.email, reviewed_at: new Date().toISOString() };
+  const updates: TablesUpdate<"approval_requests"> = { reviewed_by: user.id, reviewed_by_email: user.email, reviewed_at: new Date().toISOString() };
   if (opts.note) updates.decision_note = opts.note;
   if (opts.finalPayload) updates.final_payload = opts.finalPayload as never;
 
@@ -255,8 +256,8 @@ export interface DiffRow { key: string; before: unknown; after: unknown; changed
 export function diffPayloads(before: Record<string, unknown>, after: Record<string, unknown>): DiffRow[] {
   const keys = Array.from(new Set([...Object.keys(before ?? {}), ...Object.keys(after ?? {})]));
   return keys.map((k) => {
-    const b = (before as any)?.[k];
-    const a = (after as any)?.[k];
+    const b = before?.[k];
+    const a = after?.[k];
     const changed = JSON.stringify(b) !== JSON.stringify(a);
     return { key: k, before: b, after: a, changed };
   });
@@ -280,14 +281,15 @@ export async function isCurrentUserApprover(requestId: string): Promise<boolean>
   const step = await getCurrentApprover(requestId);
   if (!step) return false;
 
+  const stepRow = step as Tables<"approval_chain_steps">;
   // Match by user ID
-  if ((step as any).approver_user_id === me.id) return true;
+  if (stepRow.approver_user_id === me.id) return true;
 
   // Match by email
-  if ((step as any).approver_email && (step as any).approver_email.toLowerCase() === (me.email ?? "").toLowerCase()) return true;
+  if (stepRow.approver_email && stepRow.approver_email.toLowerCase() === (me.email ?? "").toLowerCase()) return true;
 
   // Match by role — any user holding that role in the org can approve
-  if ((step as any).approver_role) {
+  if (stepRow.approver_role) {
     const { data: req } = await supabase
       .from("approval_requests")
       .select("organization_id")
@@ -299,7 +301,7 @@ export async function isCurrentUserApprover(requestId: string): Promise<boolean>
         .select("role")
         .eq("user_id", me.id)
         .eq("organization_id", req.organization_id)
-        .eq("role", (step as any).approver_role)
+        .eq("role", stepRow.approver_role as Tables<"user_roles">["role"])
         .maybeSingle();
       if (roleRow) return true;
     }

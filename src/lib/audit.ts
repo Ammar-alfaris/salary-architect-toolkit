@@ -16,6 +16,7 @@ export type AuditEntity =
   | "salary_grade"
   | "bonus_cycle"
   | "merit_cycle"
+  | "salary_change"
   | "allowance_policy"
   | "organization"
   | "user_role"

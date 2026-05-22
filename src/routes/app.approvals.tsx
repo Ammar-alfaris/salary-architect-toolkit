@@ -17,10 +17,18 @@ import { ApprovalDiff } from "@/components/approval-diff";
 import { ApprovalSummary } from "@/components/approval-summary";
 import { usePermissions } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
+import { useServerFn } from "@tanstack/react-start";
+import { applySalaryChange, applyMeritCycle, applyBonusCycle } from "@/lib/comp-apply.functions";
+import { getServerFnAuthHeaders, assertServerFnResult } from "@/lib/server-fn-auth";
 import { CheckCircle2, XCircle, Clock, FileBarChart, Layers, Gift, TrendingUp, Info, ShieldCheck, Undo2, Pencil, Eye, DollarSign } from "lucide-react";
 import { toast } from "sonner";
 
+import type { Tables } from "@/integrations/supabase/types";
+
 export const Route = createFileRoute("/app/approvals")({ component: ApprovalsPage });
+
+type ApprovalRequest = Tables<"approval_requests">;
+type ApprovalStep = Tables<"approval_chain_steps">;
 
 const ENTITY_ICON: Record<ApprovalEntity, typeof Layers> = {
   merit_cycle: TrendingUp,
@@ -35,13 +43,16 @@ function ApprovalsPage() {
   const { organizationId, user } = useAuth();
   const { t, locale } = useI18n();
   const perms = usePermissions();
-  const [requests, setRequests] = useState<any[]>([]);
+  const [requests, setRequests] = useState<ApprovalRequest[]>([]);
   const [tab, setTab] = useState("pending");
-  const [active, setActive] = useState<{ req: any; action: DecisionAction } | null>(null);
+  const [active, setActive] = useState<{ req: ApprovalRequest; action: DecisionAction } | null>(null);
   const [note, setNote] = useState("");
   const [editsObj, setEditsObj] = useState<Record<string, any>>({});
   const [diffReq, setDiffReq] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
+  const applySalaryFn = useServerFn(applySalaryChange);
+  const applyMeritFn = useServerFn(applyMeritCycle);
+  const applyBonusFn = useServerFn(applyBonusCycle);
 
   const load = async () => {
     if (!organizationId) return;
@@ -58,7 +69,7 @@ function ApprovalsPage() {
 
   const filtered = useMemo(() => requests.filter((r) => (tab === "all" ? true : r.status === tab)), [requests, tab]);
 
-  const openAction = (req: any, action: DecisionAction) => {
+  const openAction = (req: ApprovalRequest, action: DecisionAction) => {
     setActive({ req, action });
     setNote("");
     const base = req.final_payload ?? req.proposed_payload ?? {};
@@ -79,9 +90,9 @@ function ApprovalsPage() {
       await logAudit({
         organizationId: organizationId!,
         action: "update",
-        entityType: active.req.entity_type,
-        entityId: active.req.entity_id,
-        entityLabel: active.req.entity_label,
+        entityType: active.req.entity_type as ApprovalEntity,
+        entityId: active.req.entity_id ?? undefined,
+        entityLabel: active.req.entity_label ?? undefined,
         metadata: { approval_decision: active.action, note },
       });
       toast.success(t(active.action === "approved" || active.action === "edited" ? "approval_approved" : active.action === "rejected" ? "approval_rejected" : "approval_submitted"));
@@ -90,62 +101,53 @@ function ApprovalsPage() {
     } catch (e: any) { toast.error(e.message); }
   };
 
-  const applyApproved = async (req: any) => {
+  const applyApproved = async (req: ApprovalRequest) => {
     if (!confirm(t("apply_changes") + "?")) return;
-    const payload = req.final_payload ?? req.proposed_payload ?? {};
+    if (!organizationId) return;
+    const payload = (req.final_payload ?? req.proposed_payload ?? {}) as Record<string, unknown>;
     try {
+      const headers = await getServerFnAuthHeaders();
       if (req.entity_type === "merit_cycle") {
-        const recs = (payload as any).recommendations ?? [];
-        if (recs.length) {
-          await supabase.from("merit_results").insert(recs.map((r: any) => ({
-            merit_cycle_id: req.entity_id, employee_id: r.id,
-            current_salary: r.base, recommended_increase_percent: r.pct,
-            increase_amount: r.increase, new_salary: r.newSalary,
-          })) as never);
-          await Promise.all(recs.map((r: any) => supabase.from("employees").update({ base_salary: r.newSalary }).eq("id", r.id)));
-        }
-        // Finalize the merit cycle so it becomes a locked, approved record
-        await supabase.from("merit_cycles").update({
-          status: "closed",
-          approved_at: new Date().toISOString(),
-          approved_by: user?.id ?? null,
-          approved_by_email: user?.email ?? null,
-          final_payload: payload as never,
-          finalized_at: new Date().toISOString(),
-        }).eq("id", req.entity_id);
+        const recs = ((payload.recommendations as Array<Record<string, unknown>>) ?? []).map((r) => ({
+          id: String(r.id),
+          base: Number(r.base) || 0,
+          pct: Number(r.pct) || 0,
+          increase: Number(r.increase) || 0,
+          newSalary: Number(r.newSalary) || 0,
+        }));
+        await assertServerFnResult(await applyMeritFn({
+          data: { organizationId, cycleId: req.entity_id!, recommendations: recs },
+          headers,
+        }));
       } else if (req.entity_type === "bonus_cycle") {
-        const results = (payload as any).results ?? [];
-        if (results.length) {
-          await supabase.from("bonus_results").insert(results.map((r: any) => ({
-            bonus_cycle_id: req.entity_id, employee_id: r.id,
-            base_salary: r.base, target_bonus_percent: r.target,
-            performance_multiplier: (payload as any).bulkPerf ?? 1,
-            business_multiplier: (payload as any).bulkBiz ?? 1,
-            individual_modifier: 1, calculated_bonus: r.bonus, proration_factor: 1,
-          })) as never);
-        }
-        // Finalize the bonus cycle so it becomes a locked, approved record
-        await supabase.from("bonus_cycles").update({
-          status: "closed",
-          approved_at: new Date().toISOString(),
-          approved_by: user?.id ?? null,
-          approved_by_email: user?.email ?? null,
-          final_payload: payload as never,
-          finalized_at: new Date().toISOString(),
-        }).eq("id", req.entity_id);
+        const results = ((payload.results as Array<Record<string, unknown>>) ?? []).map((r) => ({
+          id: String(r.id),
+          base: Number(r.base) || 0,
+          target: Number(r.target) || 0,
+          bonus: Number(r.bonus) || 0,
+        }));
+        await assertServerFnResult(await applyBonusFn({
+          data: {
+            organizationId,
+            cycleId: req.entity_id!,
+            results,
+            bulkPerf: Number(payload.bulkPerf) || 1,
+            bulkBiz: Number(payload.bulkBiz) || 1,
+          },
+          headers,
+        }));
       } else if (req.entity_type === "salary_change") {
-        const newSalary = Number((payload as any).new_salary);
+        const newSalary = Number(payload.new_salary);
         if (!isFinite(newSalary) || newSalary <= 0) {
           throw new Error("Invalid proposed salary");
         }
-        const { error } = await supabase
-          .from("employees")
-          .update({ base_salary: newSalary })
-          .eq("id", req.entity_id);
-        if (error) throw error;
+        await assertServerFnResult(await applySalaryFn({
+          data: { organizationId, employeeId: req.entity_id!, newSalary },
+          headers,
+        }));
       }
       await markApplied(req.id);
-      await logAudit({ organizationId: organizationId!, action: "update", entityType: req.entity_type, entityId: req.entity_id, entityLabel: req.entity_label, metadata: { applied: true, finalized: true } });
+      await logAudit({ organizationId, action: "update", entityType: req.entity_type as ApprovalEntity, entityId: req.entity_id ?? undefined, entityLabel: req.entity_label ?? undefined, metadata: { applied: true, finalized: true } });
       toast.success(t("apply_merit_done"));
       load();
     } catch (e: any) { toast.error(e.message); }
@@ -225,17 +227,17 @@ function ApprovalsPage() {
             {/* Show summary for approve/reject/send_back actions */}
             {active && active.action !== "edited" && (
               <ApprovalSummary
-                entityType={active.req.entity_type}
-                entityLabel={active.req.entity_label}
-                payload={active.req.final_payload ?? active.req.proposed_payload ?? {}}
-                requestedBy={active.req.requested_by_email}
-                reason={active.req.reason}
+                entityType={active.req.entity_type as ApprovalEntity}
+                entityLabel={active.req.entity_label ?? undefined}
+                payload={(active.req.final_payload ?? active.req.proposed_payload ?? {}) as Record<string, unknown>}
+                requestedBy={active.req.requested_by_email ?? undefined}
+                reason={active.req.reason ?? undefined}
               />
             )}
             
             {/* Show editable table for edit action */}
             {active?.action === "edited" && (
-              <PayloadEditor entityType={active.req.entity_type} value={editsObj} onChange={setEditsObj} />
+              <PayloadEditor entityType={active.req.entity_type as ApprovalEntity} value={editsObj} onChange={setEditsObj} />
             )}
             
             {/* Decision note */}
@@ -288,11 +290,11 @@ function ApprovalsPage() {
 }
 
 function RequestCard({ req, fmt, isRequester, canDecide, onAction, onApply, onViewDiff }: {
-  req: any; fmt: (s: string) => string; isRequester: boolean; canDecide: boolean;
+  req: ApprovalRequest; fmt: (s: string) => string; isRequester: boolean; canDecide: boolean;
   onAction: (a: DecisionAction) => void; onApply: () => void; onViewDiff: () => void;
 }) {
   const { t } = useI18n();
-  const [approver, setApprover] = useState<any>(null);
+  const [approver, setApprover] = useState<ApprovalStep | null>(null);
   const [isAssignedApprover, setIsAssignedApprover] = useState(false);
   useEffect(() => {
     if (req.status !== "pending") return;
