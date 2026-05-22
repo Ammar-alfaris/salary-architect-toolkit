@@ -45,6 +45,9 @@ function ApprovalsPage() {
   const [editsObj, setEditsObj] = useState<Record<string, any>>({});
   const [diffReq, setDiffReq] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
+  const applySalaryFn = useServerFn(applySalaryChange);
+  const applyMeritFn = useServerFn(applyMeritCycle);
+  const applyBonusFn = useServerFn(applyBonusCycle);
 
   const load = async () => {
     if (!organizationId) return;
