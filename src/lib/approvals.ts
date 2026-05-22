@@ -256,8 +256,8 @@ export interface DiffRow { key: string; before: unknown; after: unknown; changed
 export function diffPayloads(before: Record<string, unknown>, after: Record<string, unknown>): DiffRow[] {
   const keys = Array.from(new Set([...Object.keys(before ?? {}), ...Object.keys(after ?? {})]));
   return keys.map((k) => {
-    const b = (before as any)?.[k];
-    const a = (after as any)?.[k];
+    const b = before?.[k];
+    const a = after?.[k];
     const changed = JSON.stringify(b) !== JSON.stringify(a);
     return { key: k, before: b, after: a, changed };
   });
