@@ -156,7 +156,8 @@ export const applyMeritCycle = createServerFn({ method: "POST" })
         status: "closed",
         approved_at: new Date().toISOString(),
         approved_by: context.userId,
-        approved_by_email: u.user?.email ?? null,
+        approved_by_email: u2.user?.email ?? null,
+
         finalized_at: new Date().toISOString(),
       })
       .eq("id", data.cycleId);
