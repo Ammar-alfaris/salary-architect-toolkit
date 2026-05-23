@@ -63,8 +63,25 @@ export const applySalaryChange = createServerFn({ method: "POST" })
       .update({ base_salary: data.newSalary })
       .eq("id", data.employeeId);
     if (error) throw new Response(error.message, { status: 500 });
-    return { ok: true, previous: Number(emp.base_salary), next: data.newSalary };
+
+    // Salary history (immutable audit trail)
+    const prev = Number(emp.base_salary) || 0;
+    const pct = prev > 0 ? ((data.newSalary - prev) / prev) * 100 : null;
+    const { data: u } = await context.supabase.auth.getUser();
+    await context.supabase.from("salary_history").insert({
+      organization_id: data.organizationId,
+      employee_id: data.employeeId,
+      previous_salary: prev,
+      new_salary: data.newSalary,
+      change_percent: pct,
+      reason: "manual_edit",
+      changed_by: context.userId,
+      changed_by_email: u.user?.email ?? null,
+    } as never);
+
+    return { ok: true, previous: prev, next: data.newSalary };
   });
+
 
 // ─── Merit cycle finalization ──────────────────────────────────────────────
 export const applyMeritCycle = createServerFn({ method: "POST" })
