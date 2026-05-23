@@ -63,8 +63,25 @@ export const applySalaryChange = createServerFn({ method: "POST" })
       .update({ base_salary: data.newSalary })
       .eq("id", data.employeeId);
     if (error) throw new Response(error.message, { status: 500 });
-    return { ok: true, previous: Number(emp.base_salary), next: data.newSalary };
+
+    // Salary history (immutable audit trail)
+    const prev = Number(emp.base_salary) || 0;
+    const pct = prev > 0 ? ((data.newSalary - prev) / prev) * 100 : null;
+    const { data: u } = await context.supabase.auth.getUser();
+    await context.supabase.from("salary_history").insert({
+      organization_id: data.organizationId,
+      employee_id: data.employeeId,
+      previous_salary: prev,
+      new_salary: data.newSalary,
+      change_percent: pct,
+      reason: "manual_edit",
+      changed_by: context.userId,
+      changed_by_email: u.user?.email ?? null,
+    } as never);
+
+    return { ok: true, previous: prev, next: data.newSalary };
   });
+
 
 // ─── Merit cycle finalization ──────────────────────────────────────────────
 export const applyMeritCycle = createServerFn({ method: "POST" })
@@ -104,6 +121,8 @@ export const applyMeritCycle = createServerFn({ method: "POST" })
       const { error: insErr } = await context.supabase.from("merit_results").insert(rows as never);
       if (insErr) throw new Response(insErr.message, { status: 500 });
 
+      const { data: u } = await context.supabase.auth.getUser();
+      const historyRows: any[] = [];
       for (const r of data.recommendations) {
         const { error: upErr } = await context.supabase
           .from("employees")
@@ -111,17 +130,34 @@ export const applyMeritCycle = createServerFn({ method: "POST" })
           .eq("id", r.id)
           .eq("organization_id", data.organizationId);
         if (upErr) throw new Response(upErr.message, { status: 500 });
+        historyRows.push({
+          organization_id: data.organizationId,
+          employee_id: r.id,
+          previous_salary: r.base,
+          new_salary: r.newSalary,
+          change_percent: r.pct,
+          reason: "merit_cycle",
+          reference_type: "merit_cycle",
+          reference_id: data.cycleId,
+          changed_by: context.userId,
+          changed_by_email: u.user?.email ?? null,
+        });
+      }
+      if (historyRows.length) {
+        await context.supabase.from("salary_history").insert(historyRows as never);
       }
     }
 
-    const { data: u } = await context.supabase.auth.getUser();
+    const { data: u2 } = await context.supabase.auth.getUser();
+
     const { error: closeErr } = await context.supabase
       .from("merit_cycles")
       .update({
         status: "closed",
         approved_at: new Date().toISOString(),
         approved_by: context.userId,
-        approved_by_email: u.user?.email ?? null,
+        approved_by_email: u2.user?.email ?? null,
+
         finalized_at: new Date().toISOString(),
       })
       .eq("id", data.cycleId);

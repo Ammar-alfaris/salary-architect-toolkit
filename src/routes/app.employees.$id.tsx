@@ -36,29 +36,34 @@ function EmployeeProfile() {
   const [customAllowances, setCustomAllowances] = useState<any[]>([]);
   const [fieldDefs, setFieldDefs] = useState<any[]>([]);
   const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
+  const [salaryHistory, setSalaryHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<any>(null);
+
 
   const reload = async () => {
     setLoading(true);
     const { data: e } = await supabase.from("employees").select("*").eq("id", id).maybeSingle();
     setEmp(e);
     if (!e) { setLoading(false); return; }
-    const [{ data: gs }, { data: ms }, { data: al }, { data: ca }, { data: fd }, { data: fv }] = await Promise.all([
+    const [{ data: gs }, { data: ms }, { data: al }, { data: ca }, { data: fd }, { data: fv }, { data: sh }] = await Promise.all([
       supabase.from("salary_grades").select("*"),
       supabase.from("employees").select("id, full_name, employee_code").eq("organization_id", e.organization_id).eq("archived", false).neq("id", e.id).order("full_name"),
       supabase.from("employee_allowances").select("*").eq("employee_id", e.id).maybeSingle(),
       supabase.from("employee_custom_allowances").select("*").eq("employee_id", e.id).order("created_at"),
       supabase.from("org_custom_field_defs").select("*").eq("organization_id", e.organization_id).order("created_at"),
       supabase.from("employee_custom_field_values").select("*").eq("employee_id", e.id),
+      supabase.from("salary_history").select("*").eq("employee_id", e.id).order("created_at", { ascending: false }).limit(50),
     ]);
     setGrades(gs ?? []);
     setManagers(ms ?? []);
     setAllowances(al ?? null);
     setCustomAllowances(ca ?? []);
     setFieldDefs(fd ?? []);
+    setSalaryHistory(sh ?? []);
+
     const vmap: Record<string, string> = {};
     (fv ?? []).forEach((v: any) => { vmap[v.field_def_id] = v.value_text ?? ""; });
     setFieldValues(vmap);
@@ -126,6 +131,27 @@ function EmployeeProfile() {
       };
       const { error: e1 } = await supabase.from("employees").update(update).eq("id", emp.id);
       if (e1) throw e1;
+
+      // Salary history entry if base salary changed
+      const prevSalary = Number(emp.base_salary) || 0;
+      const nextSalary = Number(form.base_salary) || 0;
+      if (prevSalary !== nextSalary) {
+        const { data: u } = await supabase.auth.getUser();
+        const pct = prevSalary > 0 ? ((nextSalary - prevSalary) / prevSalary) * 100 : null;
+        await supabase.from("salary_history").insert({
+          organization_id: organizationId,
+          employee_id: emp.id,
+          previous_salary: prevSalary,
+          new_salary: nextSalary,
+          change_percent: pct,
+          currency: form.currency || null,
+          effective_date: form.salary_effective_date || null,
+          reason: "manual_edit",
+          changed_by: u.user?.id ?? null,
+          changed_by_email: u.user?.email ?? null,
+        });
+      }
+
 
       // Upsert standard allowances row
       const aPayload = {
@@ -392,10 +418,48 @@ function EmployeeProfile() {
             </div>
           </Section>
         )}
+
+        <div className="lg:col-span-2">
+          <Section title={t("salary_history") || "Salary history"}>
+            {salaryHistory.length === 0 ? (
+              <p className="text-xs text-muted-foreground">{t("no_salary_history") || "No salary changes recorded yet."}</p>
+            ) : (
+              <div className="overflow-x-auto -mx-5 px-5">
+                <table className="w-full text-sm">
+                  <thead className="text-xs uppercase text-muted-foreground border-b">
+                    <tr>
+                      <th className="text-start py-2 pe-3">{t("date") || "Date"}</th>
+                      <th className="text-end py-2 px-3">{t("previous") || "Previous"}</th>
+                      <th className="text-end py-2 px-3">{t("new") || "New"}</th>
+                      <th className="text-end py-2 px-3">%</th>
+                      <th className="text-start py-2 px-3">{t("reason") || "Reason"}</th>
+                      <th className="text-start py-2 ps-3">{t("by") || "By"}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {salaryHistory.map((h) => (
+                      <tr key={h.id} className="border-b last:border-0">
+                        <td className="py-2 pe-3 text-muted-foreground whitespace-nowrap">{new Date(h.created_at).toLocaleDateString(locale === "ar" ? "ar" : "en")}</td>
+                        <td className="py-2 px-3 text-end num">{h.previous_salary != null ? fmtCurrency(Number(h.previous_salary), h.currency || cur, locale) : "—"}</td>
+                        <td className="py-2 px-3 text-end num font-medium">{fmtCurrency(Number(h.new_salary), h.currency || cur, locale)}</td>
+                        <td className={`py-2 px-3 text-end num ${Number(h.change_amount) > 0 ? "text-success" : Number(h.change_amount) < 0 ? "text-destructive" : ""}`}>
+                          {h.change_percent != null ? `${Number(h.change_percent) > 0 ? "+" : ""}${Number(h.change_percent).toFixed(1)}%` : "—"}
+                        </td>
+                        <td className="py-2 px-3 text-xs">{t(`salary_reason_${h.reason}`) || h.reason}</td>
+                        <td className="py-2 ps-3 text-xs text-muted-foreground truncate max-w-[160px]">{h.changed_by_email || "—"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Section>
+        </div>
       </div>
     </div>
   );
 }
+
 
 function Row({ label, value }: { label: string; value: React.ReactNode }) {
   return <div className="flex justify-between gap-4 text-sm"><dt className="text-muted-foreground">{label}</dt><dd className="text-end num">{value ?? "—"}</dd></div>;

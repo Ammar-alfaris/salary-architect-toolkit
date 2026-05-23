@@ -1682,6 +1682,78 @@ export type Database = {
           },
         ]
       }
+      salary_history: {
+        Row: {
+          change_amount: number | null
+          change_percent: number | null
+          changed_by: string | null
+          changed_by_email: string | null
+          created_at: string
+          currency: string | null
+          effective_date: string | null
+          employee_id: string
+          id: string
+          new_salary: number
+          note: string | null
+          organization_id: string
+          previous_salary: number | null
+          reason: Database["public"]["Enums"]["salary_change_reason"]
+          reference_id: string | null
+          reference_type: string | null
+        }
+        Insert: {
+          change_amount?: number | null
+          change_percent?: number | null
+          changed_by?: string | null
+          changed_by_email?: string | null
+          created_at?: string
+          currency?: string | null
+          effective_date?: string | null
+          employee_id: string
+          id?: string
+          new_salary: number
+          note?: string | null
+          organization_id: string
+          previous_salary?: number | null
+          reason?: Database["public"]["Enums"]["salary_change_reason"]
+          reference_id?: string | null
+          reference_type?: string | null
+        }
+        Update: {
+          change_amount?: number | null
+          change_percent?: number | null
+          changed_by?: string | null
+          changed_by_email?: string | null
+          created_at?: string
+          currency?: string | null
+          effective_date?: string | null
+          employee_id?: string
+          id?: string
+          new_salary?: number
+          note?: string | null
+          organization_id?: string
+          previous_salary?: number | null
+          reason?: Database["public"]["Enums"]["salary_change_reason"]
+          reference_id?: string | null
+          reference_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "salary_history_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "salary_history_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       salary_structures: {
         Row: {
           archived: boolean
@@ -2092,6 +2164,15 @@ export type Database = {
         | "billing_manager"
         | "viewer"
       progression_type: "fixed" | "custom"
+      salary_change_reason:
+        | "manual_edit"
+        | "merit_cycle"
+        | "bonus_adjustment"
+        | "promotion"
+        | "market_adjustment"
+        | "correction"
+        | "approval_applied"
+        | "other"
       spread_type: "fixed" | "variable"
     }
     CompositeTypes: {
@@ -2232,6 +2313,16 @@ export const Constants = {
         "viewer",
       ],
       progression_type: ["fixed", "custom"],
+      salary_change_reason: [
+        "manual_edit",
+        "merit_cycle",
+        "bonus_adjustment",
+        "promotion",
+        "market_adjustment",
+        "correction",
+        "approval_applied",
+        "other",
+      ],
       spread_type: ["fixed", "variable"],
     },
   },
