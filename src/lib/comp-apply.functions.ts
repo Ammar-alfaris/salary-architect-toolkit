@@ -121,6 +121,8 @@ export const applyMeritCycle = createServerFn({ method: "POST" })
       const { error: insErr } = await context.supabase.from("merit_results").insert(rows as never);
       if (insErr) throw new Response(insErr.message, { status: 500 });
 
+      const { data: u } = await context.supabase.auth.getUser();
+      const historyRows: any[] = [];
       for (const r of data.recommendations) {
         const { error: upErr } = await context.supabase
           .from("employees")
@@ -128,8 +130,24 @@ export const applyMeritCycle = createServerFn({ method: "POST" })
           .eq("id", r.id)
           .eq("organization_id", data.organizationId);
         if (upErr) throw new Response(upErr.message, { status: 500 });
+        historyRows.push({
+          organization_id: data.organizationId,
+          employee_id: r.id,
+          previous_salary: r.base,
+          new_salary: r.newSalary,
+          change_percent: r.pct,
+          reason: "merit_cycle",
+          reference_type: "merit_cycle",
+          reference_id: data.cycleId,
+          changed_by: context.userId,
+          changed_by_email: u.user?.email ?? null,
+        });
+      }
+      if (historyRows.length) {
+        await context.supabase.from("salary_history").insert(historyRows as never);
       }
     }
+
 
     const { data: u } = await context.supabase.auth.getUser();
     const { error: closeErr } = await context.supabase
