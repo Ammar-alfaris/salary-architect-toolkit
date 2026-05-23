@@ -48,19 +48,22 @@ function EmployeeProfile() {
     const { data: e } = await supabase.from("employees").select("*").eq("id", id).maybeSingle();
     setEmp(e);
     if (!e) { setLoading(false); return; }
-    const [{ data: gs }, { data: ms }, { data: al }, { data: ca }, { data: fd }, { data: fv }] = await Promise.all([
+    const [{ data: gs }, { data: ms }, { data: al }, { data: ca }, { data: fd }, { data: fv }, { data: sh }] = await Promise.all([
       supabase.from("salary_grades").select("*"),
       supabase.from("employees").select("id, full_name, employee_code").eq("organization_id", e.organization_id).eq("archived", false).neq("id", e.id).order("full_name"),
       supabase.from("employee_allowances").select("*").eq("employee_id", e.id).maybeSingle(),
       supabase.from("employee_custom_allowances").select("*").eq("employee_id", e.id).order("created_at"),
       supabase.from("org_custom_field_defs").select("*").eq("organization_id", e.organization_id).order("created_at"),
       supabase.from("employee_custom_field_values").select("*").eq("employee_id", e.id),
+      supabase.from("salary_history").select("*").eq("employee_id", e.id).order("created_at", { ascending: false }).limit(50),
     ]);
     setGrades(gs ?? []);
     setManagers(ms ?? []);
     setAllowances(al ?? null);
     setCustomAllowances(ca ?? []);
     setFieldDefs(fd ?? []);
+    setSalaryHistory(sh ?? []);
+
     const vmap: Record<string, string> = {};
     (fv ?? []).forEach((v: any) => { vmap[v.field_def_id] = v.value_text ?? ""; });
     setFieldValues(vmap);
