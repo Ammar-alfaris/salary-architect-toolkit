@@ -148,8 +148,8 @@ export const applyMeritCycle = createServerFn({ method: "POST" })
       }
     }
 
+    const { data: u2 } = await context.supabase.auth.getUser();
 
-    const { data: u } = await context.supabase.auth.getUser();
     const { error: closeErr } = await context.supabase
       .from("merit_cycles")
       .update({
