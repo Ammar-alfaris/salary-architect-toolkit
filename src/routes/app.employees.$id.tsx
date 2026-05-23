@@ -132,6 +132,27 @@ function EmployeeProfile() {
       const { error: e1 } = await supabase.from("employees").update(update).eq("id", emp.id);
       if (e1) throw e1;
 
+      // Salary history entry if base salary changed
+      const prevSalary = Number(emp.base_salary) || 0;
+      const nextSalary = Number(form.base_salary) || 0;
+      if (prevSalary !== nextSalary) {
+        const { data: u } = await supabase.auth.getUser();
+        const pct = prevSalary > 0 ? ((nextSalary - prevSalary) / prevSalary) * 100 : null;
+        await supabase.from("salary_history").insert({
+          organization_id: organizationId,
+          employee_id: emp.id,
+          previous_salary: prevSalary,
+          new_salary: nextSalary,
+          change_percent: pct,
+          currency: form.currency || null,
+          effective_date: form.salary_effective_date || null,
+          reason: "manual_edit",
+          changed_by: u.user?.id ?? null,
+          changed_by_email: u.user?.email ?? null,
+        });
+      }
+
+
       // Upsert standard allowances row
       const aPayload = {
         employee_id: emp.id,
