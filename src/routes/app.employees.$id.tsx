@@ -36,10 +36,12 @@ function EmployeeProfile() {
   const [customAllowances, setCustomAllowances] = useState<any[]>([]);
   const [fieldDefs, setFieldDefs] = useState<any[]>([]);
   const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
+  const [salaryHistory, setSalaryHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<any>(null);
+
 
   const reload = async () => {
     setLoading(true);
