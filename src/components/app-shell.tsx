@@ -2,7 +2,7 @@ import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
   LayoutDashboard, Layers, Grid3x3, Gift, TrendingUp, Wallet, Users, FileBarChart,
   Settings as SettingsIcon, ShieldCheck, LogOut, Moon, Sun, Languages, Search, Bell,
-  Menu, BarChart3, Activity, Scale, CheckSquare, UsersRound, LifeBuoy, ChevronDown,
+  Menu, BarChart3, Activity, Scale, CheckSquare, UsersRound, LifeBuoy, ChevronDown, Sparkles,
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { useTheme } from "@/lib/theme";
@@ -26,6 +26,7 @@ type NavGroup = { id: string; key: string; icon: any; items: NavItem[] };
 const GROUPS: NavGroup[] = [
   { id: "overview", key: "nav_overview", icon: LayoutDashboard, items: [
     { to: "/app", icon: LayoutDashboard, key: "dashboard" },
+    { to: "/app/assistant", icon: Sparkles, key: "ai_assistant" },
   ]},
   { id: "compensation", key: "nav_compensation", icon: Layers, items: [
     { to: "/app/structures", icon: Layers, key: "salary_structures" },
