@@ -14,6 +14,56 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/blog/$slug")({
   component: BlogPost,
+  loader: async ({ params }) => {
+    const { data } = await supabase
+      .from("blog_posts")
+      .select("title,slug,excerpt,featured_image_url,publish_at,updated_at,seo_title,seo_description")
+      .eq("slug", params.slug)
+      .eq("status", "published")
+      .maybeSingle();
+    return { post: data as null | {
+      title: string; slug: string; excerpt: string | null;
+      featured_image_url: string | null; publish_at: string | null;
+      updated_at: string | null; seo_title: string | null; seo_description: string | null;
+    } };
+  },
+  head: ({ params, loaderData }) => {
+    const post = loaderData?.post;
+    const url = `https://totalreward.app/blog/${params.slug}`;
+    const title = post?.seo_title || post?.title || "Blog — Total Reward";
+    const desc = post?.seo_description || post?.excerpt || "Read this article on Total Reward.";
+    const img = post?.featured_image_url || undefined;
+    return {
+      meta: [
+        { title: `${title} — Total Reward` },
+        { name: "description", content: desc },
+        { property: "og:title", content: title },
+        { property: "og:description", content: desc },
+        { property: "og:url", content: url },
+        { property: "og:type", content: "article" },
+        ...(img ? [{ property: "og:image" as const, content: img }, { name: "twitter:image" as const, content: img }] : []),
+      ],
+      links: [{ rel: "canonical", href: url }],
+      scripts: post
+        ? [
+            {
+              type: "application/ld+json",
+              children: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "Article",
+                headline: post.title,
+                description: desc,
+                image: img,
+                datePublished: post.publish_at,
+                dateModified: post.updated_at || post.publish_at,
+                mainEntityOfPage: url,
+                publisher: { "@type": "Organization", name: "Total Reward" },
+              }),
+            },
+          ]
+        : [],
+    };
+  },
 });
 
 interface Post {
