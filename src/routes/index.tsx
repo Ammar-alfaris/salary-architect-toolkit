@@ -14,8 +14,15 @@ export const Route = createFileRoute("/")({
   component: Landing,
   head: () => ({
     meta: [
-      { title: "RewardArchitect — Salary structures, bonuses, merit & allowances" },
-      { name: "description", content: "An enterprise compensation platform for HR teams. Build salary grades, run bonus and merit cycles, and manage allowances in one place." },
+      { title: "Total Reward — Compensation Platform for HR Teams" },
+      { name: "description", content: "Build salary grades, run bonus and merit cycles, and manage allowances on one enterprise compensation platform." },
+      { property: "og:title", content: "Total Reward — Compensation Platform for HR Teams" },
+      { property: "og:description", content: "Build salary grades, run bonus and merit cycles, and manage allowances on one enterprise compensation platform." },
+      { property: "og:url", content: "https://totalreward.app/" },
+      { property: "og:type", content: "website" },
+    ],
+    links: [
+      { rel: "canonical", href: "https://totalreward.app/" },
     ],
   }),
 });

@@ -14,9 +14,14 @@ export const Route = createFileRoute("/blog")({
   head: () => ({
     meta: [
       { title: "Blog — Total Reward" },
-      { name: "description", content: "Insights on compensation strategy, salary structures, bonus design, merit cycles and equity." },
-      { property: "og:title", content: "Total Reward Blog" },
+      { name: "description", content: "Insights on compensation strategy, salary structures, bonus design, merit cycles and pay equity." },
+      { property: "og:title", content: "Blog — Total Reward" },
       { property: "og:description", content: "Insights on compensation strategy from the Total Reward team." },
+      { property: "og:url", content: "https://totalreward.app/blog" },
+      { property: "og:type", content: "website" },
+    ],
+    links: [
+      { rel: "canonical", href: "https://totalreward.app/blog" },
     ],
   }),
 });

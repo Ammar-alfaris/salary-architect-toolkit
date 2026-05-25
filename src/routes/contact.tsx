@@ -21,8 +21,15 @@ export const Route = createFileRoute("/contact")({
   component: ContactPage,
   head: () => ({
     meta: [
-      { title: "Contact Us — TotalReward" },
-      { name: "description", content: "Get in touch with our team. We'll respond as quickly as possible." },
+      { title: "Contact — Total Reward" },
+      { name: "description", content: "Get in touch with the Total Reward team for questions, demos, or support. We respond as quickly as possible." },
+      { property: "og:title", content: "Contact — Total Reward" },
+      { property: "og:description", content: "Get in touch with the Total Reward team for questions, demos, or support." },
+      { property: "og:url", content: "https://totalreward.app/contact" },
+      { property: "og:type", content: "website" },
+    ],
+    links: [
+      { rel: "canonical", href: "https://totalreward.app/contact" },
     ],
   }),
 });
