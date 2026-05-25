@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as BlogRouteImport } from './routes/blog'
@@ -62,6 +63,11 @@ import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/e
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PricingRoute = PricingRouteImport.update({
   id: '/pricing',
   path: '/pricing',
@@ -332,6 +338,7 @@ export interface FileRoutesByFullPath {
   '/blog': typeof BlogRouteWithChildren
   '/contact': typeof ContactRoute
   '/pricing': typeof PricingRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/announcements': typeof AdminAnnouncementsRoute
   '/admin/audit': typeof AdminAuditRoute
   '/admin/blog': typeof AdminBlogRouteWithChildren
@@ -384,6 +391,7 @@ export interface FileRoutesByTo {
   '/blog': typeof BlogRouteWithChildren
   '/contact': typeof ContactRoute
   '/pricing': typeof PricingRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/announcements': typeof AdminAnnouncementsRoute
   '/admin/audit': typeof AdminAuditRoute
   '/admin/messages': typeof AdminMessagesRoute
@@ -436,6 +444,7 @@ export interface FileRoutesById {
   '/blog': typeof BlogRouteWithChildren
   '/contact': typeof ContactRoute
   '/pricing': typeof PricingRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/announcements': typeof AdminAnnouncementsRoute
   '/admin/audit': typeof AdminAuditRoute
   '/admin/blog': typeof AdminBlogRouteWithChildren
@@ -492,6 +501,7 @@ export interface FileRouteTypes {
     | '/blog'
     | '/contact'
     | '/pricing'
+    | '/sitemap.xml'
     | '/admin/announcements'
     | '/admin/audit'
     | '/admin/blog'
@@ -544,6 +554,7 @@ export interface FileRouteTypes {
     | '/blog'
     | '/contact'
     | '/pricing'
+    | '/sitemap.xml'
     | '/admin/announcements'
     | '/admin/audit'
     | '/admin/messages'
@@ -595,6 +606,7 @@ export interface FileRouteTypes {
     | '/blog'
     | '/contact'
     | '/pricing'
+    | '/sitemap.xml'
     | '/admin/announcements'
     | '/admin/audit'
     | '/admin/blog'
@@ -650,6 +662,7 @@ export interface RootRouteChildren {
   BlogRoute: typeof BlogRouteWithChildren
   ContactRoute: typeof ContactRoute
   PricingRoute: typeof PricingRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
@@ -657,6 +670,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pricing': {
       id: '/pricing'
       path: '/pricing'
@@ -1189,6 +1209,7 @@ const rootRouteChildren: RootRouteChildren = {
   BlogRoute: BlogRouteWithChildren,
   ContactRoute: ContactRoute,
   PricingRoute: PricingRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,

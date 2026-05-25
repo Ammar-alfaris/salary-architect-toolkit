@@ -28,18 +28,33 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "RewardArchitect — Compensation, structured." },
+      { title: "Total Reward — Compensation Platform" },
       { name: "description", content: "Design salary structures, plan bonuses, run merit cycles, and manage allowances — built for Total Rewards teams." },
-      { property: "og:title", content: "RewardArchitect — Compensation, structured." },
-      { property: "og:description", content: "Design salary structures, plan bonuses, run merit cycles, and manage allowances — built for Total Rewards teams." },
+      { property: "og:site_name", content: "Total Reward" },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-      { name: "twitter:title", content: "RewardArchitect — Compensation, structured." },
-      { name: "twitter:description", content: "Design salary structures, plan bonuses, run merit cycles, and manage allowances — built for Total Rewards teams." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/32426e65-0f5a-4aaa-ae2c-aeb3c29aa583/id-preview-9ff3d0b2--2acbe2f2-b7be-4735-8fa4-d80fac74d23c.lovable.app-1777532312790.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/32426e65-0f5a-4aaa-ae2c-aeb3c29aa583/id-preview-9ff3d0b2--2acbe2f2-b7be-4735-8fa4-d80fac74d23c.lovable.app-1777532312790.png" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [{ rel: "stylesheet", href: appCss }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Organization",
+              name: "Total Reward",
+              url: "https://totalreward.app",
+            },
+            {
+              "@type": "WebSite",
+              name: "Total Reward",
+              url: "https://totalreward.app",
+            },
+          ],
+        }),
+      },
+    ],
   }),
   shellComponent: RootShell,
   component: RootComponent,

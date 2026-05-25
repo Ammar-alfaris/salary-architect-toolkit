@@ -16,8 +16,30 @@ export const Route = createFileRoute("/pricing")({
   component: PricingPage,
   head: () => ({
     meta: [
-      { title: "Pricing — TotalReward" },
-      { name: "description", content: "Simple, transparent pricing for compensation teams of all sizes." },
+      { title: "Pricing — Total Reward" },
+      { name: "description", content: "Simple, transparent pricing for compensation teams of all sizes. Compare plans and start a free trial." },
+      { property: "og:title", content: "Pricing — Total Reward" },
+      { property: "og:description", content: "Simple, transparent pricing for compensation teams of all sizes." },
+      { property: "og:url", content: "https://totalreward.app/pricing" },
+      { property: "og:type", content: "website" },
+    ],
+    links: [
+      { rel: "canonical", href: "https://totalreward.app/pricing" },
+    ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: [
+            { "@type": "Question", name: "Can I change plans later?", acceptedAnswer: { "@type": "Answer", text: "Yes. You can upgrade or downgrade at any time — changes take effect immediately and are prorated." } },
+            { "@type": "Question", name: "Is there a free trial?", acceptedAnswer: { "@type": "Answer", text: "Most plans include a free trial period. No credit card is required to get started." } },
+            { "@type": "Question", name: "What currencies are supported?", acceptedAnswer: { "@type": "Answer", text: "Plans are billed in the currency shown on the plan card. Contact us if you need local pricing." } },
+            { "@type": "Question", name: "What happens when I reach my employee limit?", acceptedAnswer: { "@type": "Answer", text: "You'll be prompted to upgrade to a higher plan. Your existing data is never deleted." } },
+          ],
+        }),
+      },
     ],
   }),
 });
