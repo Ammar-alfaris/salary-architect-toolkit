@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /app/
+Disallow: /admin/
+Disallow: /auth
+Disallow: /lovable/
+
+Sitemap: https://totalreward.app/sitemap.xml

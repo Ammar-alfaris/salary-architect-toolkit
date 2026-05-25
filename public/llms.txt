@@ -1,0 +1,10 @@
+# Total Reward
+
+> Total Reward is a compensation platform for HR and Total Rewards teams. Design salary structures, plan bonuses, run merit cycles, and manage allowances in one place — with full Arabic and English support.
+
+## Pages
+
+- [Home](/): Product overview, modules, and how Total Reward helps comp teams.
+- [Pricing](/pricing): Plans, included features, employee/user limits, and FAQ.
+- [Blog](/blog): Articles on compensation strategy, salary structures, bonus design, merit cycles, and pay equity.
+- [Contact](/contact): Reach the Total Reward team for questions, demos, or support.
