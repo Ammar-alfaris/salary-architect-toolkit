@@ -261,8 +261,9 @@ function AuthPage() {
             <div className="border rounded-xl bg-card p-6 shadow-[var(--shadow-elegant)]">
               <form onSubmit={handleSetPassword} className="space-y-3">
                 <div className="space-y-1.5">
-                  <Label>{t("full_name")}</Label>
+                  <Label htmlFor="sp-full-name">{t("full_name")}</Label>
                   <Input
+                    id="sp-full-name"
                     required
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
@@ -271,8 +272,9 @@ function AuthPage() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label>{t("password")}</Label>
+                  <Label htmlFor="sp-password">{t("password")}</Label>
                   <Input
+                    id="sp-password"
                     type="password"
                     required
                     minLength={6}
@@ -282,8 +284,9 @@ function AuthPage() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label>{t("confirm_password")}</Label>
+                  <Label htmlFor="sp-confirm-password">{t("confirm_password")}</Label>
                   <Input
+                    id="sp-confirm-password"
                     type="password"
                     required
                     minLength={6}
@@ -343,12 +346,12 @@ function AuthPage() {
               <TabsContent value="signin" className="mt-4">
                 <form onSubmit={handleSignIn} className="space-y-3">
                   <div className="space-y-1.5">
-                    <Label>{t("email")}</Label>
-                    <Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+                    <Label htmlFor="signin-email">{t("email")}</Label>
+                    <Input id="signin-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
                   </div>
                   <div className="space-y-1.5">
-                    <Label>{t("password")}</Label>
-                    <Input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+                    <Label htmlFor="signin-password">{t("password")}</Label>
+                    <Input id="signin-password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
                   </div>
                   <Button type="submit" className="w-full" disabled={loading}>{loading ? "…" : t("sign_in")}</Button>
                   {unverifiedEmail && (
@@ -361,16 +364,17 @@ function AuthPage() {
               <TabsContent value="signup" className="mt-4">
                 <form onSubmit={handleSignUp} className="space-y-3">
                   <div className="space-y-1.5">
-                    <Label>{t("full_name")}</Label>
-                    <Input required value={fullName} onChange={(e) => setFullName(e.target.value)} autoFocus />
+                    <Label htmlFor="signup-full-name">{t("full_name")}</Label>
+                    <Input id="signup-full-name" required value={fullName} onChange={(e) => setFullName(e.target.value)} autoFocus />
                   </div>
                   <div className="space-y-1.5">
-                    <Label>{t("email")}</Label>
-                    <Input 
-                      type="email" 
-                      required 
-                      value={email} 
-                      onChange={(e) => !isInvitedFlow && setEmail(e.target.value)} 
+                    <Label htmlFor="signup-email">{t("email")}</Label>
+                    <Input
+                      id="signup-email"
+                      type="email"
+                      required
+                      value={email}
+                      onChange={(e) => !isInvitedFlow && setEmail(e.target.value)}
                       readOnly={isInvitedFlow && !!inviteEmail}
                       className={isInvitedFlow && inviteEmail ? "bg-muted cursor-not-allowed" : ""}
                     />
@@ -379,8 +383,8 @@ function AuthPage() {
                     )}
                   </div>
                   <div className="space-y-1.5">
-                    <Label>{t("password")}</Label>
-                    <Input type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} />
+                    <Label htmlFor="signup-password">{t("password")}</Label>
+                    <Input id="signup-password" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} />
                   </div>
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading ? "…" : (isInvitedFlow ? (t("accept_invitation") || "Accept Invitation") : t("sign_up"))}
