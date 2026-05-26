@@ -157,6 +157,7 @@ function BlogPost() {
         </div>
       </header>
 
+      <main>
       <article className="container mx-auto px-4 max-w-6xl">
         <div className="pt-10 md:pt-14 pb-6 max-w-3xl mx-auto">
           <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground mb-4">
