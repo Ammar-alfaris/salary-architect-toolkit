@@ -264,6 +264,7 @@ function BlogPost() {
           </section>
         )}
       </article>
+      </main>
 
       <footer className="border-t py-8 text-center text-xs text-muted-foreground">
         © {new Date().getFullYear()} Total Reward
