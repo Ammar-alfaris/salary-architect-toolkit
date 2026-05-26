@@ -150,8 +150,8 @@ function BlogPost() {
           <Link to="/"><Logo size={32} /></Link>
           <div className="flex items-center gap-1">
             <Button variant="ghost" size="sm" asChild><Link to="/blog"><ArrowLeft className={`w-4 h-4 me-1 ${ar ? "rotate-180" : ""}`} />{ar ? "المدونة" : "Blog"}</Link></Button>
-            <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setLocale(ar ? "en" : "ar")}><Languages className="w-4 h-4" /></Button>
-            <Button variant="ghost" size="icon" className="h-9 w-9" onClick={toggle}>{theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}</Button>
+            <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setLocale(ar ? "en" : "ar")} aria-label={ar ? "تغيير اللغة" : "Change language"}><Languages className="w-4 h-4" /></Button>
+            <Button variant="ghost" size="icon" className="h-9 w-9" onClick={toggle} aria-label={ar ? "تبديل المظهر" : "Toggle theme"}>{theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}</Button>
             <Button size="sm" asChild><Link to="/auth">{ar ? "ابدأ" : "Get started"}</Link></Button>
           </div>
         </div>
@@ -172,9 +172,9 @@ function BlogPost() {
           {post.excerpt && <p className="mt-5 text-lg text-muted-foreground leading-relaxed">{post.excerpt}</p>}
           <div className="mt-6 flex items-center gap-2">
             <span className="text-xs text-muted-foreground inline-flex items-center gap-1"><Share2 className="w-3.5 h-3.5" />{ar ? "شارك:" : "Share:"}</span>
-            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => share("x")}><Twitter className="w-3.5 h-3.5" /></Button>
-            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => share("li")}><Linkedin className="w-3.5 h-3.5" /></Button>
-            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => share("copy")}><LinkIcon className="w-3.5 h-3.5" /></Button>
+            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => share("x")} aria-label={ar ? "شارك على تويتر" : "Share on Twitter"}><Twitter className="w-3.5 h-3.5" /></Button>
+            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => share("li")} aria-label={ar ? "شارك على لينكدإن" : "Share on LinkedIn"}><Linkedin className="w-3.5 h-3.5" /></Button>
+            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => share("copy")} aria-label={ar ? "نسخ الرابط" : "Copy link"}><LinkIcon className="w-3.5 h-3.5" /></Button>
           </div>
         </div>
 

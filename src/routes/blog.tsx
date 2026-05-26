@@ -82,10 +82,10 @@ function BlogIndex() {
             <Link to="/blog" className="text-foreground font-medium">{ar ? "المدونة" : "Blog"}</Link>
           </nav>
           <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setLocale(ar ? "en" : "ar")}>
+            <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setLocale(ar ? "en" : "ar")} aria-label={ar ? "تغيير اللغة" : "Change language"}>
               <Languages className="w-4 h-4" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-9 w-9" onClick={toggle}>
+            <Button variant="ghost" size="icon" className="h-9 w-9" onClick={toggle} aria-label={ar ? "تبديل المظهر" : "Toggle theme"}>
               {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </Button>
             <Button size="sm" asChild><Link to="/auth">{ar ? "ابدأ مجاناً" : "Get started"}</Link></Button>
@@ -116,6 +116,8 @@ function BlogIndex() {
               onChange={(e) => setQ(e.target.value)}
               placeholder={ar ? "ابحث في المقالات…" : "Search articles…"}
               className={ar ? "pr-9" : "pl-9"}
+              aria-label={ar ? "ابحث في المقالات" : "Search articles"}
+              type="search"
             />
           </div>
         </div>

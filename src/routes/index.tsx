@@ -163,6 +163,7 @@ function Landing() {
         </SheetContent>
       </Sheet>
 
+      <main>
       {/* ───────── Hero ───────── */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 -z-10 opacity-50" style={{ background: "radial-gradient(ellipse at top, var(--primary-glow), transparent 60%)" }} />
@@ -266,6 +267,7 @@ function Landing() {
           </div>
         </div>
       </section>
+      </main>
 
       {/* ───────── Footer ───────── */}
       <footer className="border-t mt-12">
