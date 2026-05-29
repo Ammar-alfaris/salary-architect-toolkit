@@ -31,6 +31,7 @@ import { Route as AppMatrixRouteImport } from './routes/app.matrix'
 import { Route as AppHelpRouteImport } from './routes/app.help'
 import { Route as AppEmployeesRouteImport } from './routes/app.employees'
 import { Route as AppBonusRouteImport } from './routes/app.bonus'
+import { Route as AppBillingRouteImport } from './routes/app.billing'
 import { Route as AppAuditRouteImport } from './routes/app.audit'
 import { Route as AppApprovalsRouteImport } from './routes/app.approvals'
 import { Route as AppAllowancesRouteImport } from './routes/app.allowances'
@@ -61,6 +62,7 @@ import { Route as AdminBlogIdRouteImport } from './routes/admin.blog.$id'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
+import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -170,6 +172,11 @@ const AppEmployeesRoute = AppEmployeesRouteImport.update({
 const AppBonusRoute = AppBonusRouteImport.update({
   id: '/bonus',
   path: '/bonus',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppBillingRoute = AppBillingRouteImport.update({
+  id: '/billing',
+  path: '/billing',
   getParentRoute: () => AppRoute,
 } as any)
 const AppAuditRoute = AppAuditRouteImport.update({
@@ -323,6 +330,12 @@ const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
   path: '/lovable/email/auth/preview',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicPaymentsWebhookRoute =
+  ApiPublicPaymentsWebhookRouteImport.update({
+    id: '/api/public/payments/webhook',
+    path: '/api/public/payments/webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -348,6 +361,7 @@ export interface FileRoutesByFullPath {
   '/app/allowances': typeof AppAllowancesRoute
   '/app/approvals': typeof AppApprovalsRoute
   '/app/audit': typeof AppAuditRoute
+  '/app/billing': typeof AppBillingRoute
   '/app/bonus': typeof AppBonusRoute
   '/app/employees': typeof AppEmployeesRouteWithChildren
   '/app/help': typeof AppHelpRoute
@@ -374,6 +388,7 @@ export interface FileRoutesByFullPath {
   '/admin/blog/': typeof AdminBlogIndexRoute
   '/admin/emails/': typeof AdminEmailsIndexRoute
   '/admin/tickets/': typeof AdminTicketsIndexRoute
+  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -397,6 +412,7 @@ export interface FileRoutesByTo {
   '/app/allowances': typeof AppAllowancesRoute
   '/app/approvals': typeof AppApprovalsRoute
   '/app/audit': typeof AppAuditRoute
+  '/app/billing': typeof AppBillingRoute
   '/app/bonus': typeof AppBonusRoute
   '/app/employees': typeof AppEmployeesRouteWithChildren
   '/app/help': typeof AppHelpRoute
@@ -423,6 +439,7 @@ export interface FileRoutesByTo {
   '/admin/blog': typeof AdminBlogIndexRoute
   '/admin/emails': typeof AdminEmailsIndexRoute
   '/admin/tickets': typeof AdminTicketsIndexRoute
+  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -452,6 +469,7 @@ export interface FileRoutesById {
   '/app/allowances': typeof AppAllowancesRoute
   '/app/approvals': typeof AppApprovalsRoute
   '/app/audit': typeof AppAuditRoute
+  '/app/billing': typeof AppBillingRoute
   '/app/bonus': typeof AppBonusRoute
   '/app/employees': typeof AppEmployeesRouteWithChildren
   '/app/help': typeof AppHelpRoute
@@ -478,6 +496,7 @@ export interface FileRoutesById {
   '/admin/blog/': typeof AdminBlogIndexRoute
   '/admin/emails/': typeof AdminEmailsIndexRoute
   '/admin/tickets/': typeof AdminTicketsIndexRoute
+  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -508,6 +527,7 @@ export interface FileRouteTypes {
     | '/app/allowances'
     | '/app/approvals'
     | '/app/audit'
+    | '/app/billing'
     | '/app/bonus'
     | '/app/employees'
     | '/app/help'
@@ -534,6 +554,7 @@ export interface FileRouteTypes {
     | '/admin/blog/'
     | '/admin/emails/'
     | '/admin/tickets/'
+    | '/api/public/payments/webhook'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
@@ -557,6 +578,7 @@ export interface FileRouteTypes {
     | '/app/allowances'
     | '/app/approvals'
     | '/app/audit'
+    | '/app/billing'
     | '/app/bonus'
     | '/app/employees'
     | '/app/help'
@@ -583,6 +605,7 @@ export interface FileRouteTypes {
     | '/admin/blog'
     | '/admin/emails'
     | '/admin/tickets'
+    | '/api/public/payments/webhook'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
@@ -611,6 +634,7 @@ export interface FileRouteTypes {
     | '/app/allowances'
     | '/app/approvals'
     | '/app/audit'
+    | '/app/billing'
     | '/app/bonus'
     | '/app/employees'
     | '/app/help'
@@ -637,6 +661,7 @@ export interface FileRouteTypes {
     | '/admin/blog/'
     | '/admin/emails/'
     | '/admin/tickets/'
+    | '/api/public/payments/webhook'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
@@ -651,6 +676,7 @@ export interface RootRouteChildren {
   ContactRoute: typeof ContactRoute
   PricingRoute: typeof PricingRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
@@ -810,6 +836,13 @@ declare module '@tanstack/react-router' {
       path: '/bonus'
       fullPath: '/app/bonus'
       preLoaderRoute: typeof AppBonusRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/billing': {
+      id: '/app/billing'
+      path: '/billing'
+      fullPath: '/app/billing'
+      preLoaderRoute: typeof AppBillingRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/audit': {
@@ -1022,6 +1055,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/payments/webhook': {
+      id: '/api/public/payments/webhook'
+      path: '/api/public/payments/webhook'
+      fullPath: '/api/public/payments/webhook'
+      preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -1130,6 +1170,7 @@ interface AppRouteChildren {
   AppAllowancesRoute: typeof AppAllowancesRoute
   AppApprovalsRoute: typeof AppApprovalsRoute
   AppAuditRoute: typeof AppAuditRoute
+  AppBillingRoute: typeof AppBillingRoute
   AppBonusRoute: typeof AppBonusRoute
   AppEmployeesRoute: typeof AppEmployeesRouteWithChildren
   AppHelpRoute: typeof AppHelpRoute
@@ -1151,6 +1192,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAllowancesRoute: AppAllowancesRoute,
   AppApprovalsRoute: AppApprovalsRoute,
   AppAuditRoute: AppAuditRoute,
+  AppBillingRoute: AppBillingRoute,
   AppBonusRoute: AppBonusRoute,
   AppEmployeesRoute: AppEmployeesRouteWithChildren,
   AppHelpRoute: AppHelpRoute,
@@ -1189,6 +1231,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContactRoute: ContactRoute,
   PricingRoute: PricingRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
