@@ -1527,9 +1527,13 @@ export type Database = {
           max_users: number
           monthly_price: number
           name: string
+          onboarding_type: string
+          paddle_annual_price_id: string | null
+          paddle_monthly_price_id: string | null
           slug: string
           sort_order: number
           status: string
+          support_tier: string
           trial_days: number
           updated_at: string
         }
@@ -1547,9 +1551,13 @@ export type Database = {
           max_users?: number
           monthly_price?: number
           name: string
+          onboarding_type?: string
+          paddle_annual_price_id?: string | null
+          paddle_monthly_price_id?: string | null
           slug: string
           sort_order?: number
           status?: string
+          support_tier?: string
           trial_days?: number
           updated_at?: string
         }
@@ -1567,9 +1575,13 @@ export type Database = {
           max_users?: number
           monthly_price?: number
           name?: string
+          onboarding_type?: string
+          paddle_annual_price_id?: string | null
+          paddle_monthly_price_id?: string | null
           slug?: string
           sort_order?: number
           status?: string
+          support_tier?: string
           trial_days?: number
           updated_at?: string
         }
@@ -1827,11 +1839,16 @@ export type Database = {
           amount: number
           auto_renew: boolean
           billing_cycle: string
+          cancel_at_period_end: boolean
           created_at: string
           end_at: string | null
+          environment: string
           id: string
           notes: string | null
           organization_id: string
+          paddle_customer_id: string | null
+          paddle_price_id: string | null
+          paddle_subscription_id: string | null
           payment_status: string
           plan_id: string | null
           renewal_at: string | null
@@ -1840,16 +1857,22 @@ export type Database = {
           trial_end_at: string | null
           trial_start_at: string | null
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           amount?: number
           auto_renew?: boolean
           billing_cycle?: string
+          cancel_at_period_end?: boolean
           created_at?: string
           end_at?: string | null
+          environment?: string
           id?: string
           notes?: string | null
           organization_id: string
+          paddle_customer_id?: string | null
+          paddle_price_id?: string | null
+          paddle_subscription_id?: string | null
           payment_status?: string
           plan_id?: string | null
           renewal_at?: string | null
@@ -1858,16 +1881,22 @@ export type Database = {
           trial_end_at?: string | null
           trial_start_at?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           amount?: number
           auto_renew?: boolean
           billing_cycle?: string
+          cancel_at_period_end?: boolean
           created_at?: string
           end_at?: string | null
+          environment?: string
           id?: string
           notes?: string | null
           organization_id?: string
+          paddle_customer_id?: string | null
+          paddle_price_id?: string | null
+          paddle_subscription_id?: string | null
           payment_status?: string
           plan_id?: string | null
           renewal_at?: string | null
@@ -1876,6 +1905,7 @@ export type Database = {
           trial_end_at?: string | null
           trial_start_at?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: [
           {
