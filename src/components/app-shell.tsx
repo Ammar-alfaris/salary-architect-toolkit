@@ -2,7 +2,7 @@ import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
   LayoutDashboard, Layers, Grid3x3, Gift, TrendingUp, Wallet, Users, FileBarChart,
   Settings as SettingsIcon, ShieldCheck, LogOut, Moon, Sun, Languages, Search, Bell,
-  Menu, BarChart3, Activity, Scale, CheckSquare, UsersRound, LifeBuoy, ChevronDown, Sparkles,
+  Menu, BarChart3, Activity, Scale, CheckSquare, UsersRound, LifeBuoy, ChevronDown, Sparkles, CreditCard,
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { useTheme } from "@/lib/theme";
@@ -56,6 +56,7 @@ const GROUPS: NavGroup[] = [
   ]},
   { id: "settings", key: "nav_settings", icon: SettingsIcon, items: [
     { to: "/app/settings", icon: SettingsIcon, key: "settings" },
+    { to: "/app/billing", icon: CreditCard, key: "billing_title" },
   ]},
 ];
 
