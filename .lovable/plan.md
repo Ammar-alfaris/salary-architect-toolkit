@@ -1,88 +1,152 @@
-# Employee Profile & Data Model Overhaul
+## نظرة عامة
 
-## Goal
-Turn the current minimal employee record (modal-based edit) into a full, dedicated profile page backed by a richer data model, with better list controls, custom fields, custom allowances, and a matching Excel import/export.
+سنقوم بتفعيل **Paddle (Seamless Payments by Paddle)** كمزود دفع لتطبيق Total Reward، وربطه بالباقات الموجودة في لوحة تحكم الأدمن، وإعادة تصميم صفحة التسعير لتعكس قرارك بتوحيد المزايا.
 
-## 1. Database changes (migration)
+> ملاحظة مهمة: فحص الأهلية الآلي لـ Paddle رفض حالياً بسبب وجود ميزتي **CV Analysis** و **Merit AI recommendations** (مصنّفتان ضمن "AI في التوظيف وإدارة العاملين"). بناءً على اختيارك، سنقوم بإزالة هاتين الميزتين قبل تفعيل Paddle. إن لم نتمكن من اجتياز الفحص بعد الإزالة، سأبلغك للنقاش قبل المتابعة.
 
-**Extend `employees`** with new columns (all nullable except where noted):
-- Personal: `phone_number`, `date_of_birth` (date), `nationality`, `gender`
-- Employment: `employment_type` (text, e.g. full_time/part_time/contract), `contract_start_date`, `contract_end_date`, `cost_center`, `business_unit`, `manager_id` (uuid → employees.id, ON DELETE SET NULL)
-- Compensation: `currency` (text, default org currency), `salary_effective_date` (date)
-- (`age` and `years_of_service` are derived in the UI from DOB / hire_date — not stored.)
+---
 
-**New table `employee_custom_allowances`** — flexible per-employee named allowances:
-- `id`, `employee_id` (FK cascade), `name` (text), `annual_amount` numeric(14,2), `created_at`
-- RLS mirroring `employee_allowances` (org members read; admin/manager/analyst write).
+## الخطة
 
-**Extend `employee_allowances`** with `food_amount numeric(14,2) default 0` (housing, transport, mobile, shift, hardship already exist; food is new; `education_amount` stays for backward compat but is hidden in UI in favor of food per request).
+### 1. إزالة ميزات AI غير المؤهلة
 
-**New table `org_custom_field_defs`** — admin-defined custom fields:
-- `id`, `organization_id` (FK), `key` (text, unique per org), `label` (text), `field_type` (text: text/number/date), `created_at`
-- RLS: org members read; admin/manager write.
+- حذف صفحة `src/routes/app.assistant.tsx` ودالة `src/lib/assistant.functions.ts`.
+- إزالة رابط "AI Assistant" من `src/components/app-shell.tsx` ومفاتيح الترجمة المرتبطة.
+- إزالة منطق توصيات الزيادة المبنية على AI من `src/routes/app.merit.tsx` (الإبقاء على مصفوفة merit التقليدية بدون توليد AI). يبقى merit cycle يدوياً قائماً على مصفوفة الأداء × compa-ratio لكن بدون استدعاء نموذج لغوي.
+- تنظيف `routeTree.gen.ts` تلقائياً عبر vite plugin.
 
-**New table `employee_custom_field_values`**:
-- `id`, `employee_id` (FK cascade), `field_def_id` (FK cascade), `value_text` (text), unique (employee_id, field_def_id)
-- RLS via parent employee org.
+### 2. إعادة تشغيل فحص الأهلية وتفعيل Paddle
 
-Index: `employees(organization_id, employee_code)`, `employees(manager_id)`.
+- استدعاء `recommend_payment_provider` مجدداً للتحقق من اجتياز الفحص.
+- إذا نجح: استدعاء `enable_paddle_payments` لإنشاء بيئة sandbox تلقائياً.
+- المستخدم لا يحتاج لإنشاء حساب Paddle خارجي — الإعداد كامل عبر Lovable.
 
-## 2. Routing & UI
+### 3. ربط الباقات بـ Paddle (مزامنة المنتجات)
 
-**Replace edit modal with dedicated profile route.**
-- Repurpose existing `src/routes/app.employees.$id.tsx` (currently a small read-only profile) into the full editable profile page. Sections (cards):
-  1. **Header**: avatar initials, full name, code, status badge, manager link, Edit/Save toggle, back to list.
-  2. **Personal Info**: first/last name, email, phone, DOB (with auto-computed age shown read-only), nationality, gender.
-  3. **Employment Info**: employee_code, department, job_title, job_family, location, cost_center, business_unit, employment_type, employment_status, hire_date, contract_start/end_date, years_of_service (read-only derived), manager (searchable picker → `manager_id`).
-  4. **Compensation**: grade picker, base_salary, currency, salary_effective_date, target_bonus_percent, performance_rating, compa_ratio (derived, read-only), range position bar.
-  5. **Allowances**: standard fields (housing, transportation, mobile, food, shift, hardship) + dynamic list of custom allowances (add/edit/remove rows with `name` + `annual_amount`). Live totals: Total Allowances, Total Cash Compensation (base + bonus + allowances).
-  6. **Custom Fields**: render all org-defined custom fields with appropriate inputs.
+- استخدام أداة `batch_create_product` لإنشاء 4 منتجات في Paddle مطابقة للباقات الموجودة في جدول `plans`:
+  - Starter — 199$/شهر، 1999$/سنة
+  - Growth — 299$/شهر، 2999$/سنة
+  - Professional — 499$/شهر، 4999$/سنة (recommended)
+  - Enterprise — 999$/شهر، 9999$/سنة
+- إضافة عمودين جديدين على جدول `plans`: `paddle_monthly_price_id` و `paddle_annual_price_id` لحفظ المعرفات الراجعة من Paddle.
+- تحديث صفحة الأدمن `src/routes/admin.plans.tsx` لعرض هذه الحقول للقراءة فقط (تظهر فقط بعد التزامن).
 
-- Edit mode: single page-level "Edit" button toggles all sections to editable; "Save" persists everything atomically (employee row + allowances row + custom allowances diff + custom field values upsert). Cancel reverts.
+### 4. توحيد المزايا في قاعدة البيانات
 
-- In `src/routes/app.employees.tsx`, change row click and the existing pencil button to navigate to `/app/employees/$id` instead of opening the edit dialog. Keep the lightweight "Add employee" dialog for creation only (or also route to the profile in a "new" mode — see open question).
+- migration لتحديث حقل `features` في جميع الباقات الأربع ليكون متطابقاً 100% ويحوي المزايا المتوفّرة فعلياً في التطبيق فقط:
+  - `salary_structures`, `matrix`, `bonus`, `merit`, `allowances`, `registry` (employees)
+  - `approvals` (سلاسل الموافقات)
+  - `reports`, `analytics` (compa/equity/penetration)
+  - `ar_support` (دعم العربية الكامل)
+  - `audit_log`
+  - `multi_admin`
+- حذف ميزة `api` من النموذج بالكامل (غير مقدّمة).
+- إضافة عمودين جديدين على `plans` للتفرقة:
+  - `support_tier` enum: `email` | `priority` | `dedicated`
+  - `onboarding_type` enum: `self_serve` | `guided` | `custom`
+- تعبئة القيم:
 
-## 3. Employees list improvements (`app.employees.tsx`)
+  | الباقة       | المستخدمون | الموظفون | الدعم     | الإعداد    |
+  | ------------ | ---------- | -------- | --------- | ---------- |
+  | Starter      | 3          | 50       | email     | self_serve |
+  | Growth       | 5          | 100      | email     | guided     |
+  | Professional | 10         | 300      | priority  | guided     |
+  | Enterprise   | 15         | 800      | dedicated | custom     |
 
-- Search input matches `employee_code` OR `full_name` (already partial; ensure both).
-- Filter dropdowns: department, grade, location, employment_status (multi or single select).
-- Column visibility toggle (popover with checkboxes), persisted in localStorage per org.
-- Default visible columns: name, code, department, job_title, grade, base_salary, compa_ratio.
 
-## 4. Excel import/export (`src/lib/excel.ts` + employees route handlers)
+### 5. إعادة تصميم صفحة التسعير `/pricing`
 
-**Template + import**:
-- Add columns for every new standard field above plus `housing_allowance, transportation_allowance, mobile_allowance, food_allowance, shift_allowance, hardship_allowance`.
-- Any unknown column whose header ends in `_allowance` (or doesn't match a known field) is treated as a **custom allowance**: header = name, value = annual_amount, written to `employee_custom_allowances`.
-- Org-defined custom fields appear as columns using their `key`; values written to `employee_custom_field_values`.
-- Update bilingual instructions sheet (EN + AR) listing all new columns and the custom-allowance/custom-field rules.
+بدلاً من 4 أعمدة كل منها يكرر نفس قائمة المزايا، سيكون التصميم:
 
-**Export**:
-- Pull every field from `employees`, `employee_allowances`, `employee_custom_allowances`, and `employee_custom_field_values` and emit one row per employee with all standard + custom columns. Mirror the import schema so round-trip works.
+```text
+┌─────────────────────────────────────────────────────┐
+│  All plans include every feature                    │
+│  ✓ Salary structures   ✓ Bonus cycles   ✓ Merit    │
+│  ✓ Approvals  ✓ Analytics  ✓ Arabic  ✓ Audit log   │
+└─────────────────────────────────────────────────────┘
 
-## 5. Settings — custom field admin
+┌──────────┬──────────┬──────────────┬────────────┐
+│ Starter  │ Growth   │ Professional │ Enterprise │
+│ $199/mo  │ $299/mo  │ $499/mo ★    │ $999/mo    │
+│          │          │              │            │
+│ 3 users  │ 5 users  │ 10 users     │ 15 users   │
+│ 50 emp.  │ 100 emp. │ 300 emp.     │ 800 emp.   │
+│ Email    │ Email    │ Priority     │ Dedicated  │
+│ Self     │ Guided   │ Guided       │ Custom     │
+│          │          │              │            │
+│ [Start]  │ [Start]  │ [Start]      │ [Contact]  │
+└──────────┴──────────┴──────────────┴────────────┘
+```
 
-Add a small "Custom employee fields" section under `app.settings.tsx` (admin only) to create/rename/delete entries in `org_custom_field_defs`. Used by the profile page and import/export.
+- شريط علوي "All plans include every feature" مع شبكة أيقونات للمزايا (مرة واحدة فقط).
+- بطاقات الباقات تركّز فقط على: السعر، المستخدمون، الموظفون، مستوى الدعم، نوع الإعداد، زر CTA.
+- تبديل شهري/سنوي مع شارة الادخار.
+- بطاقة Enterprise بزر "Contact sales" بدل checkout مباشر (اختياري بحسب رغبتك).
+- FAQ موجود يبقى كما هو مع تحديث الأسئلة.
 
-## 6. i18n
+### 6. تدفّق الشراء والاشتراك
 
-Add EN/AR strings for all new labels, sections, allowance names, and validation messages in `src/lib/i18n.tsx`.
+- صفحة جديدة `src/routes/app.billing.tsx` (داخل التطبيق بعد تسجيل الدخول) تعرض:
+  - الاشتراك الحالي والباقة وعدد المقاعد المستخدمة/المتاحة.
+  - زر "Change plan" و "Cancel subscription".
+- زر "Start trial / Subscribe" في `/pricing` يستدعي `create_checkout_session` من Paddle ويحوّل المستخدم لصفحة Paddle hosted checkout.
+- بعد العودة، صفحة `src/routes/billing.success.tsx` تؤكد الاشتراك.
 
-## Files touched (estimate)
+### 7. Webhooks ومزامنة الحالة
 
-- New migration under `supabase/migrations/`.
-- Edit: `src/routes/app.employees.tsx` (remove edit dialog body, add filters/column toggle, link rows to profile).
-- Rewrite: `src/routes/app.employees.$id.tsx` (full profile w/ edit mode + sections).
-- Edit: `src/lib/excel.ts` (template, import parser, export builder).
-- Edit: `src/routes/app.settings.tsx` (custom fields admin).
-- Edit: `src/lib/i18n.tsx` (translations).
-- Possibly small helpers in `src/lib/comp.ts` (age, years_of_service, totals).
+- ملف server route عام: `src/routes/api/public/paddle-webhook.ts`:
+  - التحقق من توقيع Paddle (`paddle-signature` header).
+  - معالجة `subscription.activated`, `subscription.updated`, `subscription.canceled`, `transaction.completed`.
+  - تحديث جدول `subscriptions` (موجود حالياً) بالحقول: `plan_id`, `status`, `billing_cycle`, `amount`, `renewal_at`, `payment_status`.
+- إضافة حقول جديدة لجدول `subscriptions`: `paddle_subscription_id`, `paddle_customer_id`.
 
-## Open questions
+### 8. فرض حدود الباقة (Quota enforcement)
 
-1. For "Add employee", keep the current quick-add dialog with only required fields and then redirect to the new profile for the rest, or replace it with a full "new employee" page too?
-2. `direct_manager_id` — should it strictly point to another employee in the same org (picker only), or also allow free-text `manager_name` fallback for imports where the manager doesn't exist yet?
-3. Custom allowances on import: treat **any** unrecognized column as a custom allowance, or only those matching a naming convention (e.g. ending in `_allowance` / under an "Allowances:" prefix)? Latter is safer against typos in standard headers.
-4. Should the salary edit on this new profile still go through the existing **salary-change approval workflow** when policy is enabled (same as today), or bypass it on the profile? Recommend: keep approval flow.
+- helper جديد `src/lib/quota.ts` يعيد للمؤسسة الباقة الحالية وعدد المقاعد/الموظفين المستخدمين.
+- حظر إضافة مستخدم/موظف جديد عند تجاوز الحد، مع toast واضح ورابط لترقية الباقة.
+- نقاط الفرض: `src/routes/app.team.tsx` (دعوة مستخدم)، `src/routes/app.employees.tsx` (إضافة موظف).
 
-Once you confirm these I can implement in one pass.
+### 9. الترجمة
+
+- تحديث `src/lib/i18n/en.ts` و `ar.ts` بمفاتيح:
+  - شريط "All features in every plan"
+  - تسميات `support_tier` و `onboarding_type`
+  - رسائل تجاوز الحد
+  - صفحة الفوترة
+
+---
+
+## اقتراحات إضافية لتفرقة الباقات (للنقاش)
+
+بناءً على اختيارك لمستوى الدعم والإعداد المخصص، إليك عوامل تفرقة إضافية اختيارية يمكن إضافتها لاحقاً لتقوية تدرّج الباقات بدون كسر مبدأ "نفس المزايا":
+
+1. **عدد سلاسل الموافقة المخصّصة (Approval chains)**: مثلاً Starter=1, Growth=3, Pro=10, Enterprise=∞.
+2. **مدة الاحتفاظ بسجلات Audit**: 3 / 6 / 12 / 24 شهراً.
+3. **تكرار التصدير لإكسل**: حد شهري في Starter، غير محدود في الباقات الأعلى.
+4. **SSO / SAML**: Enterprise فقط.
+5. **اتفاقية SLA رسمية**: Pro/Enterprise فقط.
+6. **بيئة Sandbox/Test منفصلة**: Enterprise فقط.
+
+أخبرني أيها تريد ضمّها الآن لتدخل ضمن التنفيذ، أو نتركها لمرحلة لاحقة.
+
+---
+
+## تفاصيل تقنية (للمراجعة)
+
+- **Provider**: Paddle (merchant of record) — رسوم 5% + 50¢ لكل معاملة، شاملة ضرائب VAT/Sales tax وdisputes.
+- **Schema changes**: migration واحدة تضيف الأعمدة الجديدة وتحدّث features وتعبّئ support_tier/onboarding_type.
+- **RLS**: تحديث سياسات `subscriptions` لتسمح فقط لأعضاء المؤسسة بالقراءة، والـ service_role بالكتابة من الـ webhook.
+- **Server functions**: `createCheckoutSession`, `getCurrentSubscription`, `cancelSubscription` تحت `src/lib/billing.functions.ts` مع `requireSupabaseAuth`.
+- **Webhook URL** بعد النشر: `https://project--2acbe2f2-b7be-4735-8fa4-d80fac74d23c.lovable.app/api/public/paddle-webhook`.
+
+---
+
+## ما لن نعمله الآن
+
+- لن نعدّل صفحة `admin.subscriptions.tsx` (تبقى بنفس وظيفتها مع البيانات الجديدة القادمة من Paddle).
+- لن نضيف دفع لمرّة واحدة (one-time) — اشتراكات فقط.
+- لن نضيف paddle live mode (سيبقى sandbox حتى تكمل التحقق من Paddle لاحقاً).
+
+هل أبدأ التنفيذ؟
+
+اجعل العملة الريال السعودي ولا توضح بأن التواصل عن طريق الايميل اة غيره فقط ضع اولوية للتواصل والانبوردينق المتقدم للباقات المتقدمة
