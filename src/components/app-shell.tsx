@@ -26,7 +26,6 @@ type NavGroup = { id: string; key: string; icon: any; items: NavItem[] };
 const GROUPS: NavGroup[] = [
   { id: "overview", key: "nav_overview", icon: LayoutDashboard, items: [
     { to: "/app", icon: LayoutDashboard, key: "dashboard" },
-    { to: "/app/assistant", icon: Sparkles, key: "ai_assistant" },
   ]},
   { id: "compensation", key: "nav_compensation", icon: Layers, items: [
     { to: "/app/structures", icon: Layers, key: "salary_structures" },
