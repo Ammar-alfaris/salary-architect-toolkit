@@ -32,7 +32,6 @@ import { Route as AppHelpRouteImport } from './routes/app.help'
 import { Route as AppEmployeesRouteImport } from './routes/app.employees'
 import { Route as AppBonusRouteImport } from './routes/app.bonus'
 import { Route as AppAuditRouteImport } from './routes/app.audit'
-import { Route as AppAssistantRouteImport } from './routes/app.assistant'
 import { Route as AppApprovalsRouteImport } from './routes/app.approvals'
 import { Route as AppAllowancesRouteImport } from './routes/app.allowances'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
@@ -176,11 +175,6 @@ const AppBonusRoute = AppBonusRouteImport.update({
 const AppAuditRoute = AppAuditRouteImport.update({
   id: '/audit',
   path: '/audit',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppAssistantRoute = AppAssistantRouteImport.update({
-  id: '/assistant',
-  path: '/assistant',
   getParentRoute: () => AppRoute,
 } as any)
 const AppApprovalsRoute = AppApprovalsRouteImport.update({
@@ -353,7 +347,6 @@ export interface FileRoutesByFullPath {
   '/admin/users': typeof AdminUsersRoute
   '/app/allowances': typeof AppAllowancesRoute
   '/app/approvals': typeof AppApprovalsRoute
-  '/app/assistant': typeof AppAssistantRoute
   '/app/audit': typeof AppAuditRoute
   '/app/bonus': typeof AppBonusRoute
   '/app/employees': typeof AppEmployeesRouteWithChildren
@@ -403,7 +396,6 @@ export interface FileRoutesByTo {
   '/admin/users': typeof AdminUsersRoute
   '/app/allowances': typeof AppAllowancesRoute
   '/app/approvals': typeof AppApprovalsRoute
-  '/app/assistant': typeof AppAssistantRoute
   '/app/audit': typeof AppAuditRoute
   '/app/bonus': typeof AppBonusRoute
   '/app/employees': typeof AppEmployeesRouteWithChildren
@@ -459,7 +451,6 @@ export interface FileRoutesById {
   '/admin/users': typeof AdminUsersRoute
   '/app/allowances': typeof AppAllowancesRoute
   '/app/approvals': typeof AppApprovalsRoute
-  '/app/assistant': typeof AppAssistantRoute
   '/app/audit': typeof AppAuditRoute
   '/app/bonus': typeof AppBonusRoute
   '/app/employees': typeof AppEmployeesRouteWithChildren
@@ -516,7 +507,6 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/app/allowances'
     | '/app/approvals'
-    | '/app/assistant'
     | '/app/audit'
     | '/app/bonus'
     | '/app/employees'
@@ -566,7 +556,6 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/app/allowances'
     | '/app/approvals'
-    | '/app/assistant'
     | '/app/audit'
     | '/app/bonus'
     | '/app/employees'
@@ -621,7 +610,6 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/app/allowances'
     | '/app/approvals'
-    | '/app/assistant'
     | '/app/audit'
     | '/app/bonus'
     | '/app/employees'
@@ -829,13 +817,6 @@ declare module '@tanstack/react-router' {
       path: '/audit'
       fullPath: '/app/audit'
       preLoaderRoute: typeof AppAuditRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/assistant': {
-      id: '/app/assistant'
-      path: '/assistant'
-      fullPath: '/app/assistant'
-      preLoaderRoute: typeof AppAssistantRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/approvals': {
@@ -1148,7 +1129,6 @@ const AppEmployeesRouteWithChildren = AppEmployeesRoute._addFileChildren(
 interface AppRouteChildren {
   AppAllowancesRoute: typeof AppAllowancesRoute
   AppApprovalsRoute: typeof AppApprovalsRoute
-  AppAssistantRoute: typeof AppAssistantRoute
   AppAuditRoute: typeof AppAuditRoute
   AppBonusRoute: typeof AppBonusRoute
   AppEmployeesRoute: typeof AppEmployeesRouteWithChildren
@@ -1170,7 +1150,6 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppAllowancesRoute: AppAllowancesRoute,
   AppApprovalsRoute: AppApprovalsRoute,
-  AppAssistantRoute: AppAssistantRoute,
   AppAuditRoute: AppAuditRoute,
   AppBonusRoute: AppBonusRoute,
   AppEmployeesRoute: AppEmployeesRouteWithChildren,
@@ -1217,12 +1196,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}
