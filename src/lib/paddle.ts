@@ -1,6 +1,7 @@
 import { resolvePaddlePrice } from "@/lib/payments.functions";
 
-const clientToken = import.meta.env.VITE_PAYMENTS_CLIENT_TOKEN as string | undefined;
+const liveToken = import.meta.env.VITE_PAYMENTS_CLIENT_TOKEN as string | undefined;
+const sandboxToken = import.meta.env.VITE_PAYMENTS_CLIENT_TOKEN_SANDBOX as string | undefined;
 
 declare global {
   interface Window {
@@ -8,23 +9,32 @@ declare global {
   }
 }
 
+function isPreviewHost(): boolean {
+  if (typeof window === "undefined") return false;
+  const host = window.location.hostname;
+  return (
+    host.includes("id-preview--") ||
+    host.endsWith("-dev.lovable.app") ||
+    host === "localhost"
+  );
+}
+
 export function getPaddleEnvironment(): "sandbox" | "live" {
-  // Force sandbox on Lovable preview hostnames so test products are used
-  // regardless of which token was bundled at build time.
-  if (typeof window !== "undefined") {
-    const host = window.location.hostname;
-    if (host.includes("id-preview--") || host.endsWith("-dev.lovable.app") || host === "localhost") {
-      return "sandbox";
-    }
-  }
-  return clientToken?.startsWith("test_") ? "sandbox" : "live";
+  if (isPreviewHost() && sandboxToken) return "sandbox";
+  return liveToken?.startsWith("test_") ? "sandbox" : "live";
+}
+
+function getClientToken(): string | undefined {
+  if (isPreviewHost() && sandboxToken) return sandboxToken;
+  return liveToken;
 }
 
 let paddleInitialized = false;
 
 export async function initializePaddle() {
   if (paddleInitialized) return;
-  if (!clientToken) throw new Error("VITE_PAYMENTS_CLIENT_TOKEN is not set");
+  const token = getClientToken();
+  if (!token) throw new Error("VITE_PAYMENTS_CLIENT_TOKEN is not set");
 
   return new Promise<void>((resolve, reject) => {
     const script = document.createElement("script");
@@ -32,7 +42,7 @@ export async function initializePaddle() {
     script.onload = () => {
       const paddleJsEnvironment = getPaddleEnvironment() === "sandbox" ? "sandbox" : "production";
       window.Paddle.Environment.set(paddleJsEnvironment);
-      window.Paddle.Initialize({ token: clientToken });
+      window.Paddle.Initialize({ token });
       paddleInitialized = true;
       resolve();
     };
