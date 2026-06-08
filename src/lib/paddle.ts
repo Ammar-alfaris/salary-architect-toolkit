@@ -9,6 +9,14 @@ declare global {
 }
 
 export function getPaddleEnvironment(): "sandbox" | "live" {
+  // Force sandbox on Lovable preview hostnames so test products are used
+  // regardless of which token was bundled at build time.
+  if (typeof window !== "undefined") {
+    const host = window.location.hostname;
+    if (host.includes("id-preview--") || host.endsWith("-dev.lovable.app") || host === "localhost") {
+      return "sandbox";
+    }
+  }
   return clientToken?.startsWith("test_") ? "sandbox" : "live";
 }
 
