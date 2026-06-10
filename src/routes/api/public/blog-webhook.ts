@@ -110,7 +110,7 @@ export const Route = createFileRoute("/api/public/blog-webhook")({
             case "create": {
               const row: Record<string, unknown> = { ...input.data };
               if (row.status === "published" && !row.publish_at) row.publish_at = new Date().toISOString();
-              const { data, error } = await supabaseAdmin.from("blog_posts").insert(row).select("*").single();
+              const { data, error } = await supabaseAdmin.from("blog_posts").insert(row as never).select("*").single();
               if (error) return json({ error: error.message }, 400);
               return json({ ok: true, post: data });
             }
@@ -119,7 +119,7 @@ export const Route = createFileRoute("/api/public/blog-webhook")({
               if (!id) return json({ error: "Not found" }, 404);
               const row: Record<string, unknown> = { ...input.data };
               if (row.status === "published" && !row.publish_at) row.publish_at = new Date().toISOString();
-              const { data, error } = await supabaseAdmin.from("blog_posts").update(row).eq("id", id).select("*").single();
+              const { data, error } = await supabaseAdmin.from("blog_posts").update(row as never).eq("id", id).select("*").single();
               if (error) return json({ error: error.message }, 400);
               return json({ ok: true, post: data });
             }
