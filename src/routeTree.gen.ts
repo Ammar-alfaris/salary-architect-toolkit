@@ -54,6 +54,7 @@ import { Route as AppEmployeesIdRouteImport } from './routes/app.employees.$id'
 import { Route as AppAnalyticsPenetrationRouteImport } from './routes/app.analytics.penetration'
 import { Route as AppAnalyticsEquityRouteImport } from './routes/app.analytics.equity'
 import { Route as AppAnalyticsCompaRouteImport } from './routes/app.analytics.compa'
+import { Route as ApiPublicBlogWebhookRouteImport } from './routes/api/public/blog-webhook'
 import { Route as AdminTicketsIdRouteImport } from './routes/admin.tickets.$id'
 import { Route as AdminOrganizationsIdRouteImport } from './routes/admin.organizations.$id'
 import { Route as AdminEmailsSendRouteImport } from './routes/admin.emails.send'
@@ -289,6 +290,11 @@ const AppAnalyticsCompaRoute = AppAnalyticsCompaRouteImport.update({
   path: '/analytics/compa',
   getParentRoute: () => AppRoute,
 } as any)
+const ApiPublicBlogWebhookRoute = ApiPublicBlogWebhookRouteImport.update({
+  id: '/api/public/blog-webhook',
+  path: '/api/public/blog-webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminTicketsIdRoute = AdminTicketsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -381,6 +387,7 @@ export interface FileRoutesByFullPath {
   '/admin/emails/send': typeof AdminEmailsSendRoute
   '/admin/organizations/$id': typeof AdminOrganizationsIdRoute
   '/admin/tickets/$id': typeof AdminTicketsIdRoute
+  '/api/public/blog-webhook': typeof ApiPublicBlogWebhookRoute
   '/app/analytics/compa': typeof AppAnalyticsCompaRoute
   '/app/analytics/equity': typeof AppAnalyticsEquityRoute
   '/app/analytics/penetration': typeof AppAnalyticsPenetrationRoute
@@ -432,6 +439,7 @@ export interface FileRoutesByTo {
   '/admin/emails/send': typeof AdminEmailsSendRoute
   '/admin/organizations/$id': typeof AdminOrganizationsIdRoute
   '/admin/tickets/$id': typeof AdminTicketsIdRoute
+  '/api/public/blog-webhook': typeof ApiPublicBlogWebhookRoute
   '/app/analytics/compa': typeof AppAnalyticsCompaRoute
   '/app/analytics/equity': typeof AppAnalyticsEquityRoute
   '/app/analytics/penetration': typeof AppAnalyticsPenetrationRoute
@@ -489,6 +497,7 @@ export interface FileRoutesById {
   '/admin/emails/send': typeof AdminEmailsSendRoute
   '/admin/organizations/$id': typeof AdminOrganizationsIdRoute
   '/admin/tickets/$id': typeof AdminTicketsIdRoute
+  '/api/public/blog-webhook': typeof ApiPublicBlogWebhookRoute
   '/app/analytics/compa': typeof AppAnalyticsCompaRoute
   '/app/analytics/equity': typeof AppAnalyticsEquityRoute
   '/app/analytics/penetration': typeof AppAnalyticsPenetrationRoute
@@ -547,6 +556,7 @@ export interface FileRouteTypes {
     | '/admin/emails/send'
     | '/admin/organizations/$id'
     | '/admin/tickets/$id'
+    | '/api/public/blog-webhook'
     | '/app/analytics/compa'
     | '/app/analytics/equity'
     | '/app/analytics/penetration'
@@ -598,6 +608,7 @@ export interface FileRouteTypes {
     | '/admin/emails/send'
     | '/admin/organizations/$id'
     | '/admin/tickets/$id'
+    | '/api/public/blog-webhook'
     | '/app/analytics/compa'
     | '/app/analytics/equity'
     | '/app/analytics/penetration'
@@ -654,6 +665,7 @@ export interface FileRouteTypes {
     | '/admin/emails/send'
     | '/admin/organizations/$id'
     | '/admin/tickets/$id'
+    | '/api/public/blog-webhook'
     | '/app/analytics/compa'
     | '/app/analytics/equity'
     | '/app/analytics/penetration'
@@ -676,6 +688,7 @@ export interface RootRouteChildren {
   ContactRoute: typeof ContactRoute
   PricingRoute: typeof PricingRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  ApiPublicBlogWebhookRoute: typeof ApiPublicBlogWebhookRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
@@ -999,6 +1012,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAnalyticsCompaRouteImport
       parentRoute: typeof AppRoute
     }
+    '/api/public/blog-webhook': {
+      id: '/api/public/blog-webhook'
+      path: '/api/public/blog-webhook'
+      fullPath: '/api/public/blog-webhook'
+      preLoaderRoute: typeof ApiPublicBlogWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/tickets/$id': {
       id: '/admin/tickets/$id'
       path: '/$id'
@@ -1231,6 +1251,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContactRoute: ContactRoute,
   PricingRoute: PricingRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  ApiPublicBlogWebhookRoute: ApiPublicBlogWebhookRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
@@ -1239,12 +1260,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}
