@@ -78,6 +78,14 @@ function readingTime(content: string | null) {
   return Math.max(1, Math.ceil(w / 200));
 }
 
+function isArabicText(...parts: (string | null | undefined)[]) {
+  const text = parts.filter(Boolean).join(" ");
+  if (!text) return false;
+  const arabic = (text.match(/[\u0600-\u06FF]/g) || []).length;
+  const latin = (text.match(/[A-Za-z]/g) || []).length;
+  return arabic > latin;
+}
+
 function BlogPost() {
   const { slug } = Route.useParams();
   const { locale, setLocale } = useI18n();
@@ -141,6 +149,10 @@ function BlogPost() {
     </div>
   );
 
+  const postIsArabic = isArabicText(post.title, post.excerpt, post.content);
+  const postDir: "rtl" | "ltr" = postIsArabic ? "rtl" : "ltr";
+  const postLang = postIsArabic ? "ar" : "en";
+
   return (
     <div className="min-h-screen bg-background" dir={ar ? "rtl" : "ltr"}>
       <ReadingProgress />
@@ -158,7 +170,7 @@ function BlogPost() {
       </header>
 
       <main>
-      <article className="container mx-auto px-4 max-w-6xl">
+      <article className="container mx-auto px-4 max-w-6xl" dir={postDir} lang={postLang}>
         <div className="pt-10 md:pt-14 pb-6 max-w-3xl mx-auto">
           <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground mb-4">
             {post.publish_at && <span>{new Date(post.publish_at).toLocaleDateString(ar ? "ar-SA" : "en-US", { year: "numeric", month: "long", day: "numeric" })}</span>}
