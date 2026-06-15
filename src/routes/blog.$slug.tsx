@@ -78,6 +78,14 @@ function readingTime(content: string | null) {
   return Math.max(1, Math.ceil(w / 200));
 }
 
+function isArabicText(...parts: (string | null | undefined)[]) {
+  const text = parts.filter(Boolean).join(" ");
+  if (!text) return false;
+  const arabic = (text.match(/[\u0600-\u06FF]/g) || []).length;
+  const latin = (text.match(/[A-Za-z]/g) || []).length;
+  return arabic > latin;
+}
+
 function BlogPost() {
   const { slug } = Route.useParams();
   const { locale, setLocale } = useI18n();
