@@ -56,7 +56,7 @@ export const Route = createFileRoute("/api/public/cron/trial-lifecycle")({
             patch.status = next;
             const { error: upErr } = await supabaseAdmin
               .from("subscriptions")
-              .update(patch)
+              .update(patch as never)
               .eq("id", r.id);
             if (!upErr) updated++;
           }
