@@ -44,7 +44,7 @@ export type PaylinkAddInvoiceResponse = {
   invoiceId?: string | number;
   orderStatus?: string;
   amount?: number;
-  [key: string]: unknown;
+  [key: string]: any;
 };
 
 export type PaylinkGetInvoiceResponse = {
@@ -53,7 +53,7 @@ export type PaylinkGetInvoiceResponse = {
   amount: number;
   paymentReceipt?: string;
   invoiceId?: string | number;
-  [key: string]: unknown;
+  [key: string]: any;
 };
 
 export type PaylinkVerifyResult = {
