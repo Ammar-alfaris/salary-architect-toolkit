@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
-import { openCheckout } from "@/lib/paddle";
+// Paylink replaces Paddle for subscription checkout.
 import { toast } from "sonner";
 import {
   Moon, Sun, Languages, Check, ArrowLeft, ChevronDown, ChevronUp,
