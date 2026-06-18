@@ -170,6 +170,7 @@ function AuthPage() {
       setMode("processing");
       await finalizeInvitationAcceptance(email);
     }
+    await maybeStartTrialFromUrl();
     toast.success(t("welcome_back"));
     navigate({ to: "/app" });
   };
@@ -219,6 +220,7 @@ function AuthPage() {
       setMode("processing");
       await finalizeInvitationAcceptance(email);
     }
+    await maybeStartTrialFromUrl();
     toast.success(t("account_created"));
     navigate({ to: "/app" });
   };
