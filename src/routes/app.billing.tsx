@@ -7,13 +7,14 @@ import { getCurrentSubscription, getCustomerPortalUrl } from "@/lib/billing.func
 import { getPaddleEnvironment } from "@/lib/paddle";
 import { getOrgUsage, type OrgUsage } from "@/lib/quota";
 import { useTrialStatus } from "@/lib/use-trial-status";
+import { getInvoiceDownloadUrl, listMyInvoices, getDefaultPaymentMethod } from "@/lib/invoice.functions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { toast } from "sonner";
-import { ExternalLink, Sparkles, Clock, AlertTriangle } from "lucide-react";
+import { ExternalLink, Sparkles, Clock, AlertTriangle, Download, CreditCard } from "lucide-react";
 
 export const Route = createFileRoute("/app/billing")({
   component: BillingPage,
@@ -25,11 +26,17 @@ function BillingPage() {
   const trial = useTrialStatus();
   const getSub = useServerFn(getCurrentSubscription);
   const getPortal = useServerFn(getCustomerPortalUrl);
+  const listInvoices = useServerFn(listMyInvoices);
+  const getMethod = useServerFn(getDefaultPaymentMethod);
+  const getDownload = useServerFn(getInvoiceDownloadUrl);
 
   const [loading, setLoading] = useState(true);
   const [sub, setSub] = useState<any>(null);
   const [usage, setUsage] = useState<OrgUsage | null>(null);
   const [opening, setOpening] = useState(false);
+  const [invoices, setInvoices] = useState<any[]>([]);
+  const [method, setMethod] = useState<any>(null);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!organizationId) return;
@@ -37,9 +44,13 @@ function BillingPage() {
     Promise.all([
       getSub({ data: { organizationId, environment: env } }),
       getOrgUsage(organizationId),
-    ]).then(([res, u]) => {
+      listInvoices(),
+      getMethod(),
+    ]).then(([res, u, inv, m]) => {
       setSub(res.subscription);
       setUsage(u);
+      setInvoices(inv.invoices ?? []);
+      setMethod(m.method);
       setLoading(false);
     });
   }, [organizationId]);
@@ -57,7 +68,21 @@ function BillingPage() {
     }
   }
 
+  async function handleDownload(orderId: string) {
+    try {
+      setDownloadingId(orderId);
+      const { url } = await getDownload({ data: { orderId } });
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch (e: any) {
+      toast.error(e?.message || "Couldn't download invoice");
+    } finally {
+      setDownloadingId(null);
+    }
+  }
+
   if (loading) return <div className="p-6 text-sm text-muted-foreground">Loading…</div>;
+
+  const isActive = sub?.status === "active";
 
   return (
     <div className="space-y-6 p-4 md:p-6">
@@ -67,7 +92,6 @@ function BillingPage() {
         <p className="text-sm text-muted-foreground">{t("billing_sub")}</p>
       </div>
 
-      {/* Trial / lifecycle status card */}
       {trial.status !== "active" && trial.status !== "none" && (
         <TrialStatusCard trial={trial} />
       )}
@@ -84,8 +108,7 @@ function BillingPage() {
                 <Link to="/pricing">{t("billing_choose_plan")}</Link>
               </Button>
             </div>
-          ) : !sub.paddle_subscription_id ? (
-            // Trial / pending subscription — show plan + pay-now CTA
+          ) : !isActive ? (
             <div className="space-y-4">
               <div className="flex items-center gap-3 flex-wrap">
                 <div className="text-xl font-semibold">{sub.plan?.name ?? "—"}</div>
@@ -121,7 +144,7 @@ function BillingPage() {
             <div className="space-y-4">
               <div className="flex items-center gap-3 flex-wrap">
                 <div className="text-xl font-semibold">{sub.plan?.name ?? "—"}</div>
-                <Badge variant={sub.status === "active" ? "default" : "secondary"}>{sub.status}</Badge>
+                <Badge variant="default">{t("billing_status_active")}</Badge>
                 {sub.cancel_at_period_end && <Badge variant="outline">{t("billing_cancels_on")} {sub.end_at ? new Date(sub.end_at).toLocaleDateString() : "—"}</Badge>}
               </div>
 
@@ -132,18 +155,72 @@ function BillingPage() {
                 {usage && <Stat label={t("billing_employees_used")} value={`${usage.employeesCount} / ${usage.maxEmployees}`} progress={usage.employeesCount/Math.max(usage.maxEmployees,1)*100} />}
               </dl>
 
+              {method && (
+                <div className="flex items-center gap-3 rounded-md border p-3 text-sm bg-muted/30">
+                  <CreditCard className="w-4 h-4 text-muted-foreground" />
+                  <div className="flex-1">
+                    <div className="font-medium">{t("billing_card_on_file")}</div>
+                    <div className="text-muted-foreground text-xs">
+                      {(method.brand || "Card").toUpperCase()} •••• {method.last4 ?? "----"}
+                      {method.exp_month && method.exp_year ? `  ·  ${String(method.exp_month).padStart(2, "0")}/${method.exp_year}` : ""}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="flex flex-wrap gap-2 pt-2">
-                <Button variant="outline" onClick={openPortal} disabled={opening}>
-                  {opening ? "…" : t("billing_change_plan")} <ExternalLink className="w-3.5 h-3.5 ms-1" />
+                <Button asChild variant="outline">
+                  <Link to="/pricing">{t("billing_change_plan")}</Link>
                 </Button>
                 <Button variant="ghost" onClick={openPortal} disabled={opening}>
-                  {t("billing_cancel")}
+                  {opening ? "…" : t("billing_cancel")} <ExternalLink className="w-3.5 h-3.5 ms-1" />
                 </Button>
               </div>
             </div>
           )}
         </CardContent>
       </Card>
+
+      {invoices.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">{t("billing_invoice_history")}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="text-xs uppercase text-muted-foreground">
+                  <tr className="border-b">
+                    <th className="text-start py-2 font-medium">{t("billing_invoice_number")}</th>
+                    <th className="text-start py-2 font-medium">{t("billing_invoice_date")}</th>
+                    <th className="text-start py-2 font-medium">{t("billing_invoice_amount")}</th>
+                    <th className="text-start py-2 font-medium">{t("billing_invoice_status")}</th>
+                    <th className="text-end py-2 font-medium"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {invoices.map((inv) => (
+                    <tr key={inv.id} className="border-b last:border-0">
+                      <td className="py-3 font-mono text-xs">{inv.invoice_number}</td>
+                      <td className="py-3">{inv.invoice_issued_at ? new Date(inv.invoice_issued_at).toLocaleDateString() : "—"}</td>
+                      <td className="py-3 font-medium">{(inv.currency ?? "SAR")} {Number(inv.paid_amount ?? inv.amount ?? 0).toFixed(2)}</td>
+                      <td className="py-3">
+                        <Badge variant={inv.status === "paid" ? "default" : "secondary"} className="capitalize">{inv.status}</Badge>
+                      </td>
+                      <td className="py-3 text-end">
+                        <Button size="sm" variant="ghost" onClick={() => handleDownload(inv.id)} disabled={downloadingId === inv.id}>
+                          <Download className="w-3.5 h-3.5 me-1" />
+                          {downloadingId === inv.id ? "…" : t("billing_invoice_download")}
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

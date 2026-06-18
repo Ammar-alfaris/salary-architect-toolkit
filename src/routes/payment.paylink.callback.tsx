@@ -4,9 +4,10 @@ import { useServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { verifyPaylinkPayment } from "@/lib/paylink.functions";
+import { getInvoiceDownloadUrl } from "@/lib/invoice.functions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle2, XCircle, Loader2, Clock } from "lucide-react";
+import { CheckCircle2, XCircle, Loader2, Clock, Download } from "lucide-react";
 
 const SearchSchema = z.object({
   orderId: z.string().uuid().optional(),
@@ -107,8 +108,9 @@ function CallbackPage() {
                 Order <span className="font-mono">{result.orderId.slice(0, 8)}</span>
                 {result.paidAmount != null && (<> — {result.paidAmount.toFixed(2)} SAR</>)}
               </p>
+              <DownloadInvoiceButton orderId={result.orderId} />
               <Button asChild className="w-full">
-                <Link to="/app">Go to your dashboard</Link>
+                <Link to="/app/billing">Go to your dashboard</Link>
               </Button>
             </>
           )}
