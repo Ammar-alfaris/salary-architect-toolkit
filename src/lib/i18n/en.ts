@@ -130,6 +130,9 @@ export const en: Dict = {
   billing_cancel_confirm: "Cancel your subscription? You'll keep access until the end of the current period.",
   billing_canceling: "Canceling…",
   billing_resume: "Resume subscription",
+  billing_pay_now_activate: "Pay now & activate",
+  billing_trial_amount: "Amount due",
+  billing_change_plan_link: "Change plan",
 
   // Quota
   quota_users_full: "You've reached your user limit ({n}). Upgrade to add more.",

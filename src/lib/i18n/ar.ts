@@ -129,6 +129,9 @@ export const ar: Dict = {
   billing_cancel_confirm: "هل تريد إلغاء اشتراكك؟ سيستمر وصولك حتى نهاية الفترة الحالية.",
   billing_canceling: "جاري الإلغاء…",
   billing_resume: "استئناف الاشتراك",
+  billing_pay_now_activate: "ادفع الآن وفعّل الاشتراك",
+  billing_trial_amount: "المبلغ المستحق",
+  billing_change_plan_link: "تغيير الباقة",
 
   // Quota
   quota_users_full: "وصلت إلى الحد الأقصى للمستخدمين ({n}). قم بالترقية لإضافة المزيد.",
