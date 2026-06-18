@@ -77,12 +77,45 @@ function BillingPage() {
           <CardTitle className="text-base">{t("billing_current_plan")}</CardTitle>
         </CardHeader>
         <CardContent>
-          {!sub || !sub.paddle_subscription_id ? (
+          {!sub ? (
             <div className="space-y-3">
               <p className="text-sm text-muted-foreground">{t("billing_no_subscription")}</p>
               <Button asChild>
                 <Link to="/pricing">{t("billing_choose_plan")}</Link>
               </Button>
+            </div>
+          ) : !sub.paddle_subscription_id ? (
+            // Trial / pending subscription — show plan + pay-now CTA
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 flex-wrap">
+                <div className="text-xl font-semibold">{sub.plan?.name ?? "—"}</div>
+                <Badge variant="secondary" className="capitalize">{sub.status}</Badge>
+              </div>
+
+              <dl className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+                <Stat label={t("billing_cycle")} value={sub.billing_cycle === "annual" ? t("billing_annual") : t("billing_monthly")} />
+                <Stat label={t("billing_trial_amount")} value={`${sub.plan?.currency ?? ""} ${Number(sub.amount ?? 0).toLocaleString()}`} />
+                {sub.trial_end_at && <Stat label={t("billing_trial_ends_on")} value={new Date(sub.trial_end_at).toLocaleDateString()} />}
+                {usage && <Stat label={t("billing_seats_used")} value={`${usage.usersCount} / ${usage.maxUsers}`} progress={usage.usersCount/Math.max(usage.maxUsers,1)*100} />}
+              </dl>
+
+              <div className="flex flex-wrap gap-2 pt-2">
+                <Button asChild size="lg">
+                  <Link
+                    to="/checkout"
+                    search={{
+                      product: sub.plan?.slug ?? sub.plan?.name ?? "plan",
+                      amount: Number(sub.amount ?? 0),
+                      title: `${sub.plan?.name ?? "Plan"} — ${sub.billing_cycle === "annual" ? t("billing_annual") : t("billing_monthly")}`,
+                    }}
+                  >
+                    {t("billing_pay_now_activate")}
+                  </Link>
+                </Button>
+                <Button asChild variant="outline">
+                  <Link to="/pricing">{t("billing_change_plan_link")}</Link>
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="space-y-4">
