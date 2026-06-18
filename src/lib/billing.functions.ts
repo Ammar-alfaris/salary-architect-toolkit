@@ -2,13 +2,16 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getPaddleClient, type PaddleEnv } from "@/lib/paddle.server";
 
-// Get current subscription for the user's organization (current env).
+// Get current subscription for the user's organization. Prefers a row for
+// the current environment, but falls back to the most recent row regardless
+// of env so a trial saved before publish still shows up after publish (and
+// vice-versa during preview testing).
 export const getCurrentSubscription = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { organizationId: string; environment: PaddleEnv }) => data)
   .handler(async ({ data, context }) => {
     const { supabase } = context;
-    const { data: row } = await supabase
+    const { data: scoped } = await supabase
       .from("subscriptions")
       .select("*, plan:plans(*)")
       .eq("organization_id", data.organizationId)
@@ -16,7 +19,16 @@ export const getCurrentSubscription = createServerFn({ method: "POST" })
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
-    return { subscription: row };
+    if (scoped) return { subscription: scoped };
+
+    const { data: any_env } = await supabase
+      .from("subscriptions")
+      .select("*, plan:plans(*)")
+      .eq("organization_id", data.organizationId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    return { subscription: any_env };
   });
 
 // Get a Paddle customer portal URL for managing/canceling subscription.
