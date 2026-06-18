@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { useTheme } from "@/lib/theme";
 import { useAuth } from "@/lib/auth";
+import { useServerFn } from "@tanstack/react-start";
+import { startTrial } from "@/lib/trial.functions";
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -75,19 +77,29 @@ function PricingPage() {
       .then(({ data }) => { setPlans((data as unknown as Plan[]) || []); setLoading(false); });
   }, []);
 
-  async function startCheckout(plan: Plan) {
-    if (!user) { window.location.href = "/auth?next=/pricing"; return; }
-    const amount = billing === "annual" ? plan.annual_price : plan.monthly_price;
-    if (!amount || amount <= 0) { toast.error("This plan isn't available for checkout yet."); return; }
-    const productKey = `${plan.slug}_${billing}`;
-    const title = `${plan.name} (${billing === "annual" ? "Annual" : "Monthly"})`;
+  const startTrialFn = useServerFn(startTrial);
+
+  useEffect(() => {
+    supabase.from("plans").select("*").eq("is_visible", true).eq("status", "active").order("sort_order")
+      .then(({ data }) => { setPlans((data as unknown as Plan[]) || []); setLoading(false); });
+  }, []);
+
+  async function handleTrialClick(plan: Plan) {
+    // Not signed in → take to signup with the chosen plan, then start trial after auth.
+    if (!user) {
+      const qs = new URLSearchParams({ plan: plan.slug, cycle: billing }).toString();
+      window.location.href = `/auth?${qs}`;
+      return;
+    }
     setCheckingOut(plan.id);
-    const qs = new URLSearchParams({
-      product: productKey,
-      amount: String(amount),
-      title,
-    }).toString();
-    window.location.href = `/checkout?${qs}`;
+    try {
+      await startTrialFn({ data: { planSlug: plan.slug, cycle: billing } });
+      toast.success(t("trial_activate_cta"));
+      window.location.href = "/app";
+    } catch (e: any) {
+      toast.error(e?.message || "Couldn't start trial");
+      setCheckingOut(null);
+    }
   }
 
 
