@@ -257,7 +257,7 @@ function Landing() {
           <p className="mt-3 text-white/85 max-w-xl mx-auto">{t("cta_sub")}</p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
             <Button size="lg" asChild className="bg-white text-slate-900 hover:bg-white/90">
-              <Link to="/auth">{t("start_free")}</Link>
+              <Link to="/pricing" search={{ intent: "trial" }}>{t("start_free")}</Link>
             </Button>
           </div>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-white/85">
