@@ -4,9 +4,10 @@ import { useServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { verifyPaylinkPayment } from "@/lib/paylink.functions";
+import { getInvoiceDownloadUrl } from "@/lib/invoice.functions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle2, XCircle, Loader2, Clock } from "lucide-react";
+import { CheckCircle2, XCircle, Loader2, Clock, Download } from "lucide-react";
 
 const SearchSchema = z.object({
   orderId: z.string().uuid().optional(),
@@ -107,8 +108,9 @@ function CallbackPage() {
                 Order <span className="font-mono">{result.orderId.slice(0, 8)}</span>
                 {result.paidAmount != null && (<> — {result.paidAmount.toFixed(2)} SAR</>)}
               </p>
+              <DownloadInvoiceButton orderId={result.orderId} />
               <Button asChild className="w-full">
-                <Link to="/app">Go to your dashboard</Link>
+                <Link to="/app/billing">Go to your dashboard</Link>
               </Button>
             </>
           )}
@@ -139,5 +141,27 @@ function CallbackPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function DownloadInvoiceButton({ orderId }: { orderId: string }) {
+  const getDownload = useServerFn(getInvoiceDownloadUrl);
+  const [loading, setLoading] = useState(false);
+  async function download() {
+    try {
+      setLoading(true);
+      const { url } = await getDownload({ data: { orderId } });
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch {
+      // silent — user can still reach the invoice from /app/billing
+    } finally {
+      setLoading(false);
+    }
+  }
+  return (
+    <Button variant="outline" className="w-full" onClick={download} disabled={loading}>
+      <Download className="me-2 h-4 w-4" />
+      {loading ? "…" : "Download invoice (PDF)"}
+    </Button>
   );
 }
