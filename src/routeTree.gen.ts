@@ -67,6 +67,7 @@ import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/e
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
+import { Route as ApiPublicCronTrialLifecycleRouteImport } from './routes/api/public/cron/trial-lifecycle'
 
 const TrustRoute = TrustRouteImport.update({
   id: '/trust',
@@ -360,6 +361,12 @@ const ApiPublicPaymentsWebhookRoute =
     path: '/api/public/payments/webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicCronTrialLifecycleRoute =
+  ApiPublicCronTrialLifecycleRouteImport.update({
+    id: '/api/public/cron/trial-lifecycle',
+    path: '/api/public/cron/trial-lifecycle',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -416,6 +423,7 @@ export interface FileRoutesByFullPath {
   '/admin/blog/': typeof AdminBlogIndexRoute
   '/admin/emails/': typeof AdminEmailsIndexRoute
   '/admin/tickets/': typeof AdminTicketsIndexRoute
+  '/api/public/cron/trial-lifecycle': typeof ApiPublicCronTrialLifecycleRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -471,6 +479,7 @@ export interface FileRoutesByTo {
   '/admin/blog': typeof AdminBlogIndexRoute
   '/admin/emails': typeof AdminEmailsIndexRoute
   '/admin/tickets': typeof AdminTicketsIndexRoute
+  '/api/public/cron/trial-lifecycle': typeof ApiPublicCronTrialLifecycleRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -532,6 +541,7 @@ export interface FileRoutesById {
   '/admin/blog/': typeof AdminBlogIndexRoute
   '/admin/emails/': typeof AdminEmailsIndexRoute
   '/admin/tickets/': typeof AdminTicketsIndexRoute
+  '/api/public/cron/trial-lifecycle': typeof ApiPublicCronTrialLifecycleRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -594,6 +604,7 @@ export interface FileRouteTypes {
     | '/admin/blog/'
     | '/admin/emails/'
     | '/admin/tickets/'
+    | '/api/public/cron/trial-lifecycle'
     | '/api/public/payments/webhook'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -649,6 +660,7 @@ export interface FileRouteTypes {
     | '/admin/blog'
     | '/admin/emails'
     | '/admin/tickets'
+    | '/api/public/cron/trial-lifecycle'
     | '/api/public/payments/webhook'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -709,6 +721,7 @@ export interface FileRouteTypes {
     | '/admin/blog/'
     | '/admin/emails/'
     | '/admin/tickets/'
+    | '/api/public/cron/trial-lifecycle'
     | '/api/public/payments/webhook'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -729,6 +742,7 @@ export interface RootRouteChildren {
   BlogIndexRoute: typeof BlogIndexRoute
   ApiPublicBlogWebhookRoute: typeof ApiPublicBlogWebhookRoute
   PaymentPaylinkCallbackRoute: typeof PaymentPaylinkCallbackRoute
+  ApiPublicCronTrialLifecycleRoute: typeof ApiPublicCronTrialLifecycleRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
@@ -1143,6 +1157,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/cron/trial-lifecycle': {
+      id: '/api/public/cron/trial-lifecycle'
+      path: '/api/public/cron/trial-lifecycle'
+      fullPath: '/api/public/cron/trial-lifecycle'
+      preLoaderRoute: typeof ApiPublicCronTrialLifecycleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -1307,6 +1328,7 @@ const rootRouteChildren: RootRouteChildren = {
   BlogIndexRoute: BlogIndexRoute,
   ApiPublicBlogWebhookRoute: ApiPublicBlogWebhookRoute,
   PaymentPaylinkCallbackRoute: PaymentPaylinkCallbackRoute,
+  ApiPublicCronTrialLifecycleRoute: ApiPublicCronTrialLifecycleRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,

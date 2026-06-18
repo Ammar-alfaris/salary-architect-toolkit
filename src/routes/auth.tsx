@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n";
 import { useServerFn } from "@tanstack/react-start";
 import { acceptInvitation } from "@/lib/invitations.functions";
+import { startTrial } from "@/lib/trial.functions";
 import { assertServerFnResult, getServerFnAuthHeaders } from "@/lib/server-fn-auth";
 import { useAuth } from "@/lib/auth";
 
@@ -31,7 +32,25 @@ function AuthPage() {
   const { t } = useI18n();
   const navigate = useNavigate();
   const acceptInviteFn = useServerFn(acceptInvitation);
+  const startTrialFn = useServerFn(startTrial);
   const { refreshOrg } = useAuth();
+
+  // Helper: kick off a trial if URL has ?plan=&cycle=
+  const maybeStartTrialFromUrl = async () => {
+    if (typeof window === "undefined") return;
+    const sp = new URLSearchParams(window.location.search);
+    const planSlug = sp.get("plan");
+    const cycle = (sp.get("cycle") as "monthly" | "annual") || "monthly";
+    if (!planSlug) return;
+    try {
+      // Give the handle_new_user trigger a beat to create org + user_roles.
+      await new Promise((r) => setTimeout(r, 600));
+      await startTrialFn({ data: { planSlug, cycle } });
+    } catch (e) {
+      // Non-fatal — user can pick a plan again from /app/billing.
+      console.error("startTrial failed", e);
+    }
+  };
 
   const getInviteState = () => {
     if (typeof window === "undefined") return { invited: false, emailParam: "" };
@@ -43,7 +62,10 @@ function AuthPage() {
   };
 
   const [mode, setMode] = useState<Mode>("auth");
-  const [tab, setTab] = useState<"signin" | "signup">("signin");
+  const [tab, setTab] = useState<"signin" | "signup">(() => {
+    if (typeof window === "undefined") return "signin";
+    return new URLSearchParams(window.location.search).get("plan") ? "signup" : "signin";
+  });
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -82,13 +104,17 @@ function AuthPage() {
 
     if (!invited) {
       if (sp.get("confirmed") === "1") toast.success(t("email_confirmed_signin"));
-      supabase.auth.getSession().then(({ data }) => {
-        if (data.session) navigate({ to: "/app" });
+      supabase.auth.getSession().then(async ({ data }) => {
+        if (data.session) {
+          await maybeStartTrialFromUrl();
+          navigate({ to: "/app" });
+        }
       });
       return;
     }
     setMode("auth");
-    setTab("signup");
+    // Default to signup tab when arriving from pricing with a chosen plan.
+    setTab(sp.get("plan") ? "signup" : "signup");
 
     supabase.auth.getSession().then(async ({ data }) => {
       if (!data.session?.user || handled.current) return;
@@ -151,6 +177,7 @@ function AuthPage() {
       setMode("processing");
       await finalizeInvitationAcceptance(email);
     }
+    await maybeStartTrialFromUrl();
     toast.success(t("welcome_back"));
     navigate({ to: "/app" });
   };
@@ -200,6 +227,7 @@ function AuthPage() {
       setMode("processing");
       await finalizeInvitationAcceptance(email);
     }
+    await maybeStartTrialFromUrl();
     toast.success(t("account_created"));
     navigate({ to: "/app" });
   };

@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/app-shell";
 import { OnboardingProvider, useOnboarding } from "@/lib/onboarding";
 import { GuidedTour } from "@/components/guided-tour";
+import { useTrialStatus } from "@/lib/use-trial-status";
 
 export const Route = createFileRoute("/app")({
   component: AppLayout,
@@ -30,13 +31,33 @@ function AppLayout() {
   return (
     <OnboardingProvider>
       <OnboardingGate>
-        <AppShell>
-          <Outlet />
-        </AppShell>
+        <SubscriptionGate>
+          <AppShell>
+            <Outlet />
+          </AppShell>
+        </SubscriptionGate>
         <GuidedTour />
       </OnboardingGate>
     </OnboardingProvider>
   );
+}
+
+// Force users with a fully-blocked subscription state to the billing page.
+function SubscriptionGate({ children }: { children: React.ReactNode }) {
+  const { status, loading } = useTrialStatus();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (loading) return;
+    const blocked = status === "restricted" || status === "dormant";
+    if (!blocked) return;
+    const allowed = ["/app/billing", "/app/help", "/app/support"];
+    const onAllowed = allowed.some((p) => location.pathname === p || location.pathname.startsWith(p + "/"));
+    if (!onAllowed) navigate({ to: "/app/billing" });
+  }, [status, loading, location.pathname]);
+
+  return <>{children}</>;
 }
 
 function OnboardingGate({ children }: { children: React.ReactNode }) {

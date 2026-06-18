@@ -6,13 +6,14 @@ import { useI18n } from "@/lib/i18n";
 import { getCurrentSubscription, getCustomerPortalUrl } from "@/lib/billing.functions";
 import { getPaddleEnvironment } from "@/lib/paddle";
 import { getOrgUsage, type OrgUsage } from "@/lib/quota";
+import { useTrialStatus } from "@/lib/use-trial-status";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { toast } from "sonner";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Sparkles, Clock, AlertTriangle } from "lucide-react";
 
 export const Route = createFileRoute("/app/billing")({
   component: BillingPage,
@@ -21,6 +22,7 @@ export const Route = createFileRoute("/app/billing")({
 function BillingPage() {
   const { t } = useI18n();
   const { organizationId } = useAuth();
+  const trial = useTrialStatus();
   const getSub = useServerFn(getCurrentSubscription);
   const getPortal = useServerFn(getCustomerPortalUrl);
 
@@ -58,12 +60,17 @@ function BillingPage() {
   if (loading) return <div className="p-6 text-sm text-muted-foreground">Loading…</div>;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4 md:p-6">
       <PaymentTestModeBanner />
       <div>
         <h1 className="text-2xl font-semibold">{t("billing_title")}</h1>
         <p className="text-sm text-muted-foreground">{t("billing_sub")}</p>
       </div>
+
+      {/* Trial / lifecycle status card */}
+      {trial.status !== "active" && trial.status !== "none" && (
+        <TrialStatusCard trial={trial} />
+      )}
 
       <Card>
         <CardHeader>
@@ -115,5 +122,42 @@ function Stat({ label, value, progress }: { label: string; value: string; progre
       <dd className="font-medium mt-0.5">{value}</dd>
       {typeof progress === "number" && <Progress value={Math.min(progress, 100)} className="h-1 mt-2" />}
     </div>
+  );
+}
+
+function TrialStatusCard({ trial }: { trial: ReturnType<typeof useTrialStatus> }) {
+  const { t } = useI18n();
+  const isWarning = trial.status === "trial_ending" || trial.status === "grace";
+  const isBlocked = trial.status === "restricted" || trial.status === "dormant" || trial.status === "canceled";
+  const Icon = isBlocked ? AlertTriangle : isWarning ? Clock : Sparkles;
+  const tone = isBlocked ? "border-red-500/40 bg-red-500/5" : isWarning ? "border-amber-500/40 bg-amber-500/5" : "border-primary/30 bg-primary/5";
+  const label =
+    trial.status === "trial" ? t("billing_trial_active") :
+    trial.status === "trial_ending" ? t("trial_ending_soon").replace("{n}", String(Math.max(trial.daysLeft, 0))) :
+    trial.status === "grace" ? t("trial_grace_msg") :
+    trial.status === "restricted" ? t("trial_restricted_msg") :
+    trial.status === "dormant" ? t("trial_dormant_msg") :
+    t("trial_canceled_msg");
+
+  return (
+    <Card className={tone}>
+      <CardContent className="p-4 sm:p-6 flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+        <div className="flex items-center gap-3 flex-1">
+          <Icon className="w-5 h-5 shrink-0" />
+          <div>
+            <div className="text-sm font-medium">{label}</div>
+            {trial.trialEndAt && (
+              <div className="text-xs text-muted-foreground mt-0.5">
+                {t("billing_trial_ends_on")}: {new Date(trial.trialEndAt).toLocaleDateString()}
+                {trial.planName ? ` · ${trial.planName}` : ""}
+              </div>
+            )}
+          </div>
+        </div>
+        <Button asChild size="lg" className="shrink-0">
+          <Link to="/pricing">{t("billing_activate_now")}</Link>
+        </Button>
+      </CardContent>
+    </Card>
   );
 }

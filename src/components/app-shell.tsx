@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/sheet";
 import { useEffect, useMemo, useState } from "react";
 import { Logo } from "@/components/logo";
+import { TrialBanner } from "@/components/trial-banner";
 
 type NavItem = { to: string; icon: any; key: string };
 type NavGroup = { id: string; key: string; icon: any; items: NavItem[] };
@@ -233,6 +234,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </DropdownMenuContent>
           </DropdownMenu>
         </header>
+        <TrialBanner />
         <main className="app-main flex-1 overflow-y-auto overflow-x-hidden overscroll-contain">{children}</main>
       </div>
     </div>

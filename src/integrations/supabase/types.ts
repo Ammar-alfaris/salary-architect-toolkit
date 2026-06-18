@@ -1907,9 +1907,13 @@ export type Database = {
           billing_cycle: string
           cancel_at_period_end: boolean
           created_at: string
+          dormant_at: string | null
           end_at: string | null
           environment: string
+          grace_end_at: string | null
           id: string
+          last_trial_email_at: string | null
+          last_trial_email_stage: string | null
           notes: string | null
           organization_id: string
           paddle_customer_id: string | null
@@ -1918,6 +1922,7 @@ export type Database = {
           payment_status: string
           plan_id: string | null
           renewal_at: string | null
+          restricted_at: string | null
           start_at: string | null
           status: string
           trial_end_at: string | null
@@ -1931,9 +1936,13 @@ export type Database = {
           billing_cycle?: string
           cancel_at_period_end?: boolean
           created_at?: string
+          dormant_at?: string | null
           end_at?: string | null
           environment?: string
+          grace_end_at?: string | null
           id?: string
+          last_trial_email_at?: string | null
+          last_trial_email_stage?: string | null
           notes?: string | null
           organization_id: string
           paddle_customer_id?: string | null
@@ -1942,6 +1951,7 @@ export type Database = {
           payment_status?: string
           plan_id?: string | null
           renewal_at?: string | null
+          restricted_at?: string | null
           start_at?: string | null
           status?: string
           trial_end_at?: string | null
@@ -1955,9 +1965,13 @@ export type Database = {
           billing_cycle?: string
           cancel_at_period_end?: boolean
           created_at?: string
+          dormant_at?: string | null
           end_at?: string | null
           environment?: string
+          grace_end_at?: string | null
           id?: string
+          last_trial_email_at?: string | null
+          last_trial_email_stage?: string | null
           notes?: string | null
           organization_id?: string
           paddle_customer_id?: string | null
@@ -1966,6 +1980,7 @@ export type Database = {
           payment_status?: string
           plan_id?: string | null
           renewal_at?: string | null
+          restricted_at?: string | null
           start_at?: string | null
           status?: string
           trial_end_at?: string | null
@@ -2235,6 +2250,8 @@ export type Database = {
         }
         Returns: number
       }
+      org_can_write: { Args: { _org: string }; Returns: boolean }
+      org_lifecycle_status: { Args: { _org: string }; Returns: string }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
