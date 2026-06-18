@@ -72,11 +72,6 @@ function PricingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [checkingOut, setCheckingOut] = useState<string | null>(null);
 
-  useEffect(() => {
-    supabase.from("plans").select("*").eq("is_visible", true).eq("status", "active").order("sort_order")
-      .then(({ data }) => { setPlans((data as unknown as Plan[]) || []); setLoading(false); });
-  }, []);
-
   const startTrialFn = useServerFn(startTrial);
 
   useEffect(() => {
@@ -274,9 +269,9 @@ function PricingPage() {
                       className="mt-6 w-full"
                       variant={plan.is_recommended ? "default" : "outline"}
                       disabled={checkingOut === plan.id}
-                      onClick={() => startCheckout(plan)}
+                      onClick={() => handleTrialClick(plan)}
                     >
-                      {checkingOut === plan.id ? "…" : t("plan_subscribe")}
+                      {checkingOut === plan.id ? "…" : t("try_free_for_days").replace("{n}", String(plan.trial_days || 14))}
                     </Button>
                   )}
                 </div>
