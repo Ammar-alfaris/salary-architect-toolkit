@@ -1033,4 +1033,12 @@ export const ar: Dict = {
   billing_activate_now: "فعّل الاشتراك الآن",
   write_blocked_title: "وضع القراءة فقط",
   write_blocked_desc: "انتهت فترتك التجريبية المجانية. فعّل اشتراكك لإجراء أي تعديلات.",
+  billing_status_active: "نشط",
+  billing_card_on_file: "بطاقة الدفع المحفوظة",
+  billing_invoice_history: "سجل الفواتير",
+  billing_invoice_number: "رقم الفاتورة",
+  billing_invoice_date: "التاريخ",
+  billing_invoice_amount: "المبلغ",
+  billing_invoice_status: "الحالة",
+  billing_invoice_download: "تنزيل",
 };
