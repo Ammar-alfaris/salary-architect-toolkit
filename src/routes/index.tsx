@@ -90,7 +90,7 @@ function Landing() {
             </Button>
             {/* Get Started — desktop only */}
             <Button size="sm" className="hidden md:inline-flex" asChild>
-              <Link to="/pricing" search={{ intent: "trial" }}>{t("get_started")}</Link>
+              <Link to="/pricing">{t("get_started")}</Link>
             </Button>
 
             {/* ── Hamburger — mobile & tablet only ── */}
@@ -155,7 +155,7 @@ function Landing() {
               <Link to="/auth" onClick={() => setMenuOpen(false)}>{t("sign_in")}</Link>
             </Button>
             <Button className="w-full" asChild>
-              <Link to="/pricing" search={{ intent: "trial" }} onClick={() => setMenuOpen(false)}>
+              <Link to="/pricing" onClick={() => setMenuOpen(false)}>
                 {t("get_started")} <ArrowRight className="w-4 h-4 ms-2" />
               </Link>
             </Button>
@@ -178,7 +178,7 @@ function Landing() {
           <p className="mt-5 text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">{t("hero_sub")}</p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Button size="lg" asChild>
-              <Link to="/pricing" search={{ intent: "trial" }}>{t("start_free")} <ArrowRight className="w-4 h-4 ms-2" /></Link>
+              <Link to="/pricing">{t("start_free")} <ArrowRight className="w-4 h-4 ms-2" /></Link>
             </Button>
             <Button size="lg" variant="outline" asChild>
               <a href="#features">{t("view_demo")}</a>
@@ -257,7 +257,7 @@ function Landing() {
           <p className="mt-3 text-white/85 max-w-xl mx-auto">{t("cta_sub")}</p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
             <Button size="lg" asChild className="bg-white text-slate-900 hover:bg-white/90">
-              <Link to="/pricing" search={{ intent: "trial" }}>{t("start_free")}</Link>
+              <Link to="/pricing">{t("start_free")}</Link>
             </Button>
           </div>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-white/85">
