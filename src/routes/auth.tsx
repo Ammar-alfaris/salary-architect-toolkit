@@ -101,8 +101,11 @@ function AuthPage() {
 
     if (!invited) {
       if (sp.get("confirmed") === "1") toast.success(t("email_confirmed_signin"));
-      supabase.auth.getSession().then(({ data }) => {
-        if (data.session) navigate({ to: "/app" });
+      supabase.auth.getSession().then(async ({ data }) => {
+        if (data.session) {
+          await maybeStartTrialFromUrl();
+          navigate({ to: "/app" });
+        }
       });
       return;
     }
