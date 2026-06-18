@@ -6,13 +6,14 @@ import { useI18n } from "@/lib/i18n";
 import { getCurrentSubscription, getCustomerPortalUrl } from "@/lib/billing.functions";
 import { getPaddleEnvironment } from "@/lib/paddle";
 import { getOrgUsage, type OrgUsage } from "@/lib/quota";
+import { useTrialStatus } from "@/lib/use-trial-status";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { toast } from "sonner";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Sparkles, Clock, AlertTriangle } from "lucide-react";
 
 export const Route = createFileRoute("/app/billing")({
   component: BillingPage,
@@ -21,6 +22,7 @@ export const Route = createFileRoute("/app/billing")({
 function BillingPage() {
   const { t } = useI18n();
   const { organizationId } = useAuth();
+  const trial = useTrialStatus();
   const getSub = useServerFn(getCurrentSubscription);
   const getPortal = useServerFn(getCustomerPortalUrl);
 
