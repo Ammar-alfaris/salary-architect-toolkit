@@ -110,7 +110,8 @@ function AuthPage() {
       return;
     }
     setMode("auth");
-    setTab("signup");
+    // Default to signup tab when arriving from pricing with a chosen plan.
+    setTab(sp.get("plan") ? "signup" : "signup");
 
     supabase.auth.getSession().then(async ({ data }) => {
       if (!data.session?.user || handled.current) return;
