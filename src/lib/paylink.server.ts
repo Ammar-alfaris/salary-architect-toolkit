@@ -161,7 +161,17 @@ export async function addInvoice(
         httpStatus: res.status,
         body: errBody,
       });
-      throw new Error(`Paylink addInvoice failed (${res.status})`);
+      let detail = "";
+      try {
+        const parsed = JSON.parse(errBody) as { detail?: string; title?: string; errorCode?: string };
+        detail = parsed.detail || parsed.title || "";
+        if (parsed.errorCode) detail = `[${parsed.errorCode}] ${detail}`;
+      } catch { /* ignore */ }
+      throw new Error(
+        detail
+          ? `Paylink: ${detail}`
+          : `Paylink addInvoice failed (${res.status})`,
+      );
     }
     const json = (await res.json()) as PaylinkAddInvoiceResponse;
     if (!json?.url || !json?.transactionNo) {
