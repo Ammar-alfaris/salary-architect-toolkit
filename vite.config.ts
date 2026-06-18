@@ -13,6 +13,7 @@ export default defineConfig({
       allowedHosts: true,
     },
     resolve: {
+      dedupe: ["react", "react-dom", "@tanstack/react-router", "@tanstack/react-start"],
       alias: {
         "entities/lib/decode.js": path.resolve(__dirname, "node_modules/entities/lib/decode.js"),
         "entities/lib/encode.js": path.resolve(__dirname, "node_modules/entities/lib/encode.js"),
