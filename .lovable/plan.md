@@ -1,109 +1,133 @@
 
-# تكامل Paylink آمن وجاهز للإنتاج
+## الهدف
+عند الضغط على "ابدأ مجانًا" يختار الزائر الباقة أولًا، ثم ينشئ حسابًا، فيبدأ تلقائيًا في فترة تجريبية مجانية بمدة وسعر يحددهما السوبر آدمن من صفحة الباقات. بعد انتهاء التجربة نطبّق سياسة تخفيض تدريجي للخدمات لتعظيم التحويل إلى اشتراك مدفوع.
 
-## 1) الأسرار (Secrets)
-سأطلب إضافة المتغيرات التالية عبر أداة الأسرار (تُحفظ في backend فقط، لا تُكشف للواجهة):
-- `PAYLINK_BASE_URL` — مثال: `https://restpilot.paylink.sa` (test) أو `https://restapi.paylink.sa` (prod)
-- `PAYLINK_API_ID`
-- `PAYLINK_SECRET_KEY`
-- `APP_BASE_URL` — مثال: `https://totalreward.app`
+---
 
-(لا حاجة لـ `PAYLINK_MERCHANT_ID` في Flow A.)
+## 1) تدفّق التسجيل الجديد (Trial-first)
 
-## 2) قاعدة البيانات — جدول `orders` جديد (migration)
+تغيير سلوك زر "ابدأ مجانًا" في الصفحة الرئيسية:
 
-أعمدة:
-- `user_id` (FK → auth.users)
-- `product_key` (نص: pricing plan أو منتج)
-- `amount` (numeric)
-- `currency` (default 'SAR')
-- `customer_name`, `customer_phone`, `customer_email`
-- `items` (jsonb)
-- `status` (enum: `pending` | `paid` | `failed` | `cancelled`)
-- `paylink_transaction_no`, `paylink_invoice_id`, `paylink_payment_url`
-- `paid_amount`, `paid_at`
-- `raw_create_response` jsonb, `raw_verify_response` jsonb
-- timestamps + trigger `updated_at`
+```
+الصفحة الرئيسية
+  └─ "ابدأ مجانًا"
+       └─ /pricing?intent=trial   ← اختيار الباقة
+            └─ "جرّبه مجانًا" (بدل "اشترك الآن")
+                 └─ /auth?next=/app&plan=<slug>&cycle=<monthly|annual>
+                      └─ إنشاء الحساب
+                           └─ إنشاء organization + subscription (status='trial')
+                                └─ /app (داخل التطبيق مباشرة)
+```
 
-السياسات (RLS):
-- `authenticated`: SELECT/INSERT الخاصة بـ `auth.uid() = user_id`
-- التحديث يقتصر على `service_role` (server functions فقط)
-- `GRANT SELECT, INSERT ON public.orders TO authenticated; GRANT ALL ON public.orders TO service_role;`
+تغييرات الواجهة في `src/routes/pricing.tsx`:
+- زر الباقات (غير Enterprise) يصبح **"جرّبه مجانًا لمدة {trial_days} يومًا"** بدل "اشترك".
+- لا يفتح Paylink checkout عند التسجيل الأول — يُمرر فقط `plan` و `cycle` إلى `/auth`.
+- بطاقة "Enterprise" تبقى "تواصل مع المبيعات".
 
-## 3) طبقة الخدمة `src/lib/paylink.server.ts`
+تغييرات في `src/routes/auth.tsx`:
+- بعد نجاح SignUp/SignIn، نقرأ `plan` و `cycle` من query، وننفّذ server function `startTrial({ planSlug, cycle })`.
 
-تعليق توضيحي في أعلى الملف يؤكد أن تأكيد الدفع يجب أن يعتمد فقط على verify endpoint من السيرفر وليس query params من الـ callback.
+server function جديدة `src/lib/trial.functions.ts` (محمية بـ `requireSupabaseAuth`):
+1. تتأكد أن المستخدم ليس عضوًا في organization حالية (وإلا تتجاهل).
+2. تنشئ organization جديدة باسم افتراضي مشتق من البريد.
+3. تربط المستخدم بدور `org_admin` في `user_roles`.
+4. تنشئ صفًا في `subscriptions`:
+   - `plan_id` = الباقة المختارة
+   - `status='trial'`، `billing_cycle=cycle`
+   - `trial_start_at = now()`، `trial_end_at = now() + plan.trial_days`
+   - `amount` = سعر الباقة (للعرض فقط؛ لا يُحصّل الآن)
+   - `payment_status='pending'`، `auto_renew=true`
 
-دوال:
-- `authenticate()` → POST `${BASE}/api/auth` بـ `{ apiId, secretKey, persistToken: false }` ⇒ يعيد `id_token`
-- `addInvoice({ amount, callBackUrl, clientName, clientMobile, orderNumber, products })` → POST `${BASE}/api/addInvoice` بـ `Authorization: Bearer <token>` ⇒ يعيد `{ transactionNo, url, ... }`
-- `getInvoice(transactionNo)` → GET `${BASE}/api/getInvoice/{transactionNo}` ⇒ يعيد حالة الفاتورة + `orderStatus` + `amount`
+إذا دخل المستخدم بدون اختيار باقة من قبل (دخول مباشر إلى /auth)، يُحوَّل بعد التسجيل إلى `/pricing?intent=trial` بدل `/app`.
 
-TypeScript types:
-- `PaylinkAuthResponse`, `PaylinkAddInvoiceResponse`, `PaylinkGetInvoiceResponse`, `PaylinkVerifyResult`
+---
 
-كل دالة داخل try/catch مع logging منظّم: `orderId`, `transactionNo`, `status`, `httpStatus` — بدون طباعة `secretKey` أو `id_token`.
+## 2) سياسة انتهاء التجربة (Graduated Lifecycle)
 
-## 4) Server functions (TanStack `createServerFn`)
+نتدرّج في تقييد الحساب بدل الإيقاف الفوري، لمنح فرص متعددة للتحويل:
 
-ملف `src/lib/paylink.functions.ts`:
+| اليوم نسبةً لـ `trial_end_at` | الحالة (`status`) | تجربة المستخدم |
+|---|---|---|
+| T-3 إلى T-1 | `trial` | بانر أصفر + إيميل: "تنتهي تجربتك خلال X أيام — فعّل اشتراكك" |
+| T+0 يوم الانتهاء | `trial_ended` | بانر أحمر + إيميل + إشعار داخل التطبيق |
+| T+1 إلى T+7 (Grace) | `grace` | **القراءة فقط** — يمكن تصفح كل البيانات، لا يمكن إنشاء/تعديل/تصدير. مودال اشتراك يظهر عند أي محاولة كتابة |
+| T+8 إلى T+30 (Restricted) | `restricted` | الدخول يُحوّل مباشرة إلى `/app/billing` فقط. بقية المسارات محجوبة. البيانات محفوظة |
+| T+31 وما بعد (Dormant) | `dormant` | الحساب موجود، البيانات محفوظة 90 يومًا إضافية، تسجيل الدخول يعرض شاشة "أعد التفعيل" |
+| بعد 120 يومًا من T+0 بدون اشتراك | حذف ناعم اختياري (يدوي من Admin) | — |
 
-### `createPaylinkInvoice`
-- middleware: `requireSupabaseAuth`
-- input (zod): `{ productKey, customerName, customerPhone, customerEmail?, amount, items: [{title, price, qty}] }`
-- منطق:
-  1. أنشئ صفًا في `orders` بحالة `pending` (يحصل على `id` = orderId)
-  2. `callBackUrl = ${APP_BASE_URL}/payment/paylink/callback?orderId=${orderId}`
-  3. `authenticate()` → `addInvoice(...)`
-  4. خزّن `paylink_transaction_no`, `paylink_invoice_id`, `paylink_payment_url`, `raw_create_response`
-  5. إذا لم يرجع `url` → throw مع رسالة واضحة
-- يعيد: `{ success, orderId, transactionNumber, paymentUrl }`
+عند إتمام الدفع (Paylink callback) في أي مرحلة: `status='active'`، تُستعاد كل الصلاحيات فورًا.
 
-### `verifyPaylinkPayment`
-- middleware: `requireSupabaseAuth`
-- input: `{ orderId }` (يحضر transactionNo من DB ليمنع spoofing)
-- منطق:
-  1. اقرأ الطلب من DB (يجب أن يكون ملك المستخدم)
-  2. `getInvoice(transactionNo)`
-  3. حدّث `status` (Paid ⇒ `paid`، غير ذلك ⇒ `failed`/`pending`)، `paid_amount`, `paid_at`, `raw_verify_response`
-- يعيد: `{ paymentStatus, paidAmount, orderStatus, invoice }`
+---
 
-## 5) صفحات الواجهة
+## 3) الواجهة داخل التطبيق
 
-### `src/routes/_authenticated/checkout.tsx`
-- يقرأ `?product=<key>&amount=<x>` من query
-- نموذج: اسم + جوال + (إيميل)
-- زر "ادفع الآن" يستدعي `createPaylinkInvoice` ثم `window.location.href = paymentUrl`
-- معالجة أخطاء واضحة + حالة تحميل
+- **مكوّن `TrialStatusBanner`** يظهر في أعلى `AppShell` طوال فترة التجربة وبعدها:
+  - تجربة نشطة: "تبقى X يومًا في تجربتك — [فعّل اشتراكك]"
+  - grace: "انتهت تجربتك. حسابك للقراءة فقط — [اشترك الآن]"
+  - restricted: لا يظهر بانر، فقط شاشة Paywall كاملة
+- **`useTrialStatus` hook** يحسب الحالة الفعلية من `trial_end_at` و `status` ويعيد `{ status, daysLeft, canWrite, canRead }`.
+- **حارس كتابة**: غلاف بسيط حول mutations المهمة (employees/structures/...) يرفع `toast` ويفتح مودال الاشتراك إذا `!canWrite`.
+- **حارس مسار**: في `src/routes/app.tsx` بعد فحص الـ session، إذا `status='restricted'` نُحوّل لـ `/app/billing` (باستثناء `/app/billing` و `/app/help`).
 
-### `src/routes/payment.paylink.callback.tsx` (عام، يدخله المستخدم بعد الرجوع)
-- يقرأ `orderId` من query
-- يستدعي `verifyPaylinkPayment({ orderId })` عبر `useServerFn` داخل `useQuery`
-- يعرض:
-  - paid → ✓ نجاح الدفع + رقم الطلب + المبلغ
-  - failed/cancelled → ✗ فشل + زر إعادة المحاولة → `/checkout`
-  - pending → "جارٍ التأكيد..." مع زر إعادة فحص
+---
 
-## 6) معالجة الأخطاء واللوجز
-- كل استدعاء HTTP داخل try/catch، يرمي Error بـ status + body مختصر
-- `console.error` بـ JSON منظم: `{ scope: 'paylink', step, orderId, transactionNo, status, message }`
-- لا تُطبع أبداً: `PAYLINK_SECRET_KEY`, `id_token`, full headers
+## 4) الأتمتة (Server-side)
 
-## 7) Flow B
-سيُترك كـ TODO معلّق في `paylink.server.ts` (تعليق فقط) — حسب اختيارك Flow A فقط الآن. سهل الإضافة لاحقاً بـ config flag بدون تغيير الـ API الخارجي.
+- **cron يومي** (pg_cron + pg_net يستدعي endpoint عام)، الساعة 02:00:
+  - يحدّث `subscriptions.status` بناءً على `trial_end_at` (trial → trial_ended → grace → restricted → dormant).
+  - يصدر إيميلات: T-3, T-1, T+0, T+7, T+14.
+- Endpoint: `src/routes/api/public/cron/trial-lifecycle.ts` محمي بـ `apikey` header.
+- قوالب الإيميل تُضاف إلى `email_templates` الموجودة.
 
-## ملفات سيتم إنشاؤها/تعديلها
-- migration: جدول `orders` + enum + RLS + grants + trigger
-- جديد: `src/lib/paylink.server.ts`
-- جديد: `src/lib/paylink.functions.ts`
-- جديد: `src/routes/_authenticated/checkout.tsx`
-- جديد: `src/routes/payment.paylink.callback.tsx`
-- تحديث: زر "اشترك/ادفع" في `src/routes/pricing.tsx` ليوجّه إلى `/checkout?product=...&amount=...`
+---
 
-## ملاحظات تقنية
-- `_authenticated/checkout` لأن إنشاء الفاتورة يتطلب مستخدم مسجل (لربط الطلب بـ user_id ومنع abuse)
-- صفحة الـ callback عامة (المستخدم قد يرجع في نافذة جديدة) لكن `verifyPaylinkPayment` نفسها محمية بـ `requireSupabaseAuth` ⇒ تُستدعى من component وليس loader
-- جميع قراءات `process.env.*` داخل `.handler()` فقط
-- لا توجد أي قيمة Paylink في الكود؛ كلها من env
+## 5) صفحة الفوترة `/app/billing`
 
-بعد موافقتك سأطلب إضافة الأسرار ثم أُنشئ الـ migration ثم بقية الملفات.
+- تُظهر بشكل بارز: الحالة الحالية، تاريخ الانتهاء، الباقة الحالية، زر **"فعّل الاشتراك الآن"** يفتح Paylink checkout بنفس الباقة والدورة.
+- خيار تغيير الباقة/الدورة قبل الدفع.
+
+---
+
+## 6) تغييرات قاعدة البيانات (migration واحدة)
+
+```sql
+-- توسيع حالات subscriptions
+ALTER TABLE public.subscriptions
+  ADD COLUMN IF NOT EXISTS grace_end_at timestamptz,
+  ADD COLUMN IF NOT EXISTS restricted_at timestamptz,
+  ADD COLUMN IF NOT EXISTS last_trial_email_at timestamptz;
+
+-- دالة للتحقق من صلاحية الكتابة
+CREATE OR REPLACE FUNCTION public.org_can_write(_org uuid)
+RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.subscriptions
+    WHERE organization_id = _org
+      AND status IN ('trial','active','grace_read_only'  -- grace = read only, لا تسمح بالكتابة
+                    ) AND status <> 'grace_read_only'
+  );
+$$;
+```
+(سنضيف فحص `org_can_write` داخل RLS policies الخاصة بـ INSERT/UPDATE/DELETE على الجداول التشغيلية لاحقًا — خارج نطاق هذه الجولة لتقليل المخاطر؛ نبدأ بحارس على مستوى الواجهة + server functions.)
+
+---
+
+## 7) خارج النطاق (لاحقًا)
+- محاولة دفع تلقائية متعددة عند فشل التجديد.
+- خصومات استرداد ("نسيتنا؟ خصم 20%").
+- A/B test لمدة التجربة.
+
+---
+
+## ملف العمل
+
+1. Migration: أعمدة جديدة + دالة `org_can_write`.
+2. `src/lib/trial.functions.ts` — `startTrial`, `getTrialStatus`.
+3. تعديل `src/routes/pricing.tsx` — زر "جرّبه مجانًا" + تمرير الباقة.
+4. تعديل `src/routes/auth.tsx` — استدعاء `startTrial` بعد التسجيل.
+5. `src/lib/use-trial-status.ts` + `src/components/trial-banner.tsx`.
+6. تعديل `src/components/app-shell.tsx` لإضافة البانر.
+7. تعديل `src/routes/app.tsx` لحارس `restricted`.
+8. تحديث `src/routes/app.billing.tsx` لإبراز التفعيل.
+9. `src/routes/api/public/cron/trial-lifecycle.ts` + جدولة pg_cron.
+10. قوالب إيميل التذكير + ترجمات ar/en.
