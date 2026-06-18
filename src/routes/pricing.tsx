@@ -88,9 +88,12 @@ function PricingPage() {
     }
     setCheckingOut(plan.id);
     try {
-      await startTrialFn({ data: { planSlug: plan.slug, cycle: billing } });
+      const { getPaddleEnvironment } = await import("@/lib/paddle");
+      await startTrialFn({
+        data: { planSlug: plan.slug, cycle: billing, environment: getPaddleEnvironment() },
+      });
       toast.success(t("trial_activate_cta"));
-      window.location.href = "/app";
+      window.location.href = "/app/billing";
     } catch (e: any) {
       toast.error(e?.message || "Couldn't start trial");
       setCheckingOut(null);

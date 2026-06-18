@@ -43,9 +43,10 @@ function AuthPage() {
     const cycle = (sp.get("cycle") as "monthly" | "annual") || "monthly";
     if (!planSlug) return;
     try {
-      // Give the handle_new_user trigger a beat to create org + user_roles.
-      await new Promise((r) => setTimeout(r, 600));
-      await startTrialFn({ data: { planSlug, cycle } });
+      const { getPaddleEnvironment } = await import("@/lib/paddle");
+      await startTrialFn({
+        data: { planSlug, cycle, environment: getPaddleEnvironment() },
+      });
     } catch (e) {
       // Non-fatal — user can pick a plan again from /app/billing.
       console.error("startTrial failed", e);
