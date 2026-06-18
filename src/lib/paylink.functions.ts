@@ -63,6 +63,8 @@ export const createPaylinkInvoice = createServerFn({ method: "POST" })
           orderNumber: orderId,
           products: data.items,
           currency: data.currency ?? "SAR",
+          supportedCardBrands: ["mada", "visaMastercard"],
+          displayPending: true,
         },
         token,
       );
