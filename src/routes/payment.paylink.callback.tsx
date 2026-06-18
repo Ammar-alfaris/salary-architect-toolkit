@@ -143,3 +143,25 @@ function CallbackPage() {
     </div>
   );
 }
+
+function DownloadInvoiceButton({ orderId }: { orderId: string }) {
+  const getDownload = useServerFn(getInvoiceDownloadUrl);
+  const [loading, setLoading] = useState(false);
+  async function download() {
+    try {
+      setLoading(true);
+      const { url } = await getDownload({ data: { orderId } });
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch {
+      // silent — user can still reach the invoice from /app/billing
+    } finally {
+      setLoading(false);
+    }
+  }
+  return (
+    <Button variant="outline" className="w-full" onClick={download} disabled={loading}>
+      <Download className="me-2 h-4 w-4" />
+      {loading ? "…" : "Download invoice (PDF)"}
+    </Button>
+  );
+}
