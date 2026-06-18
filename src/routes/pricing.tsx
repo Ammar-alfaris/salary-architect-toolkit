@@ -77,23 +77,19 @@ function PricingPage() {
 
   async function startCheckout(plan: Plan) {
     if (!user) { window.location.href = "/auth?next=/pricing"; return; }
-    if (!organizationId) { toast.error("No organization context"); return; }
-    const priceId = billing === "annual" ? plan.paddle_annual_price_id : plan.paddle_monthly_price_id;
-    if (!priceId) { toast.error("This plan isn't available for checkout yet."); return; }
-    try {
-      setCheckingOut(plan.id);
-      await openCheckout({
-        priceId,
-        customerEmail: user.email || undefined,
-        customData: { userId: user.id, organizationId },
-        successUrl: `${window.location.origin}/app/billing?checkout=success`,
-      });
-    } catch (e: any) {
-      toast.error(e?.message || "Checkout failed");
-    } finally {
-      setCheckingOut(null);
-    }
+    const amount = billing === "annual" ? plan.annual_price : plan.monthly_price;
+    if (!amount || amount <= 0) { toast.error("This plan isn't available for checkout yet."); return; }
+    const productKey = `${plan.slug}_${billing}`;
+    const title = `${plan.name} (${billing === "annual" ? "Annual" : "Monthly"})`;
+    setCheckingOut(plan.id);
+    const qs = new URLSearchParams({
+      product: productKey,
+      amount: String(amount),
+      title,
+    }).toString();
+    window.location.href = `/checkout?${qs}`;
   }
+
 
   const formatPrice = (plan: Plan) => {
     const price = billing === "annual" ? plan.annual_price : plan.monthly_price;
