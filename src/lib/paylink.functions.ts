@@ -280,7 +280,7 @@ async function activateOrderAsSubscription(args: {
     await sendPaymentReceiptEmail({
       orderId: args.orderId,
       invoiceNumber,
-      paidAmount,
+      paidAmount: args.paidAmount,
       currency: "SAR",
       customerEmail: args.customerEmail,
       customerName: args.customerName,
