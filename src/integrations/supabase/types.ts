@@ -1408,6 +1408,72 @@ export type Database = {
           },
         ]
       }
+      orders: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          customer_email: string | null
+          customer_name: string
+          customer_phone: string
+          id: string
+          items: Json
+          paid_amount: number | null
+          paid_at: string | null
+          paylink_invoice_id: string | null
+          paylink_payment_url: string | null
+          paylink_transaction_no: string | null
+          product_key: string | null
+          raw_create_response: Json | null
+          raw_verify_response: Json | null
+          status: Database["public"]["Enums"]["order_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string
+          customer_email?: string | null
+          customer_name: string
+          customer_phone: string
+          id?: string
+          items?: Json
+          paid_amount?: number | null
+          paid_at?: string | null
+          paylink_invoice_id?: string | null
+          paylink_payment_url?: string | null
+          paylink_transaction_no?: string | null
+          product_key?: string | null
+          raw_create_response?: Json | null
+          raw_verify_response?: Json | null
+          status?: Database["public"]["Enums"]["order_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          customer_email?: string | null
+          customer_name?: string
+          customer_phone?: string
+          id?: string
+          items?: Json
+          paid_amount?: number | null
+          paid_at?: string | null
+          paylink_invoice_id?: string | null
+          paylink_payment_url?: string | null
+          paylink_transaction_no?: string | null
+          product_key?: string | null
+          raw_create_response?: Json | null
+          raw_verify_response?: Json | null
+          status?: Database["public"]["Enums"]["order_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       org_custom_field_defs: {
         Row: {
           created_at: string
@@ -2186,6 +2252,7 @@ export type Database = {
       app_role: "admin" | "analyst" | "viewer" | "manager"
       cycle_status: "draft" | "in_review" | "approved" | "closed"
       employment_status: "active" | "on_leave" | "terminated"
+      order_status: "pending" | "paid" | "failed" | "cancelled"
       platform_role:
         | "super_admin"
         | "platform_admin"
@@ -2334,6 +2401,7 @@ export const Constants = {
       app_role: ["admin", "analyst", "viewer", "manager"],
       cycle_status: ["draft", "in_review", "approved", "closed"],
       employment_status: ["active", "on_leave", "terminated"],
+      order_status: ["pending", "paid", "failed", "cancelled"],
       platform_role: [
         "super_admin",
         "platform_admin",
