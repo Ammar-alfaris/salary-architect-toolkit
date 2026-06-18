@@ -1033,4 +1033,12 @@ export const en: Dict = {
   billing_activate_now: "Activate subscription now",
   write_blocked_title: "Read-only mode",
   write_blocked_desc: "Your free trial has ended. Activate your subscription to make changes.",
+  billing_status_active: "Active",
+  billing_card_on_file: "Card on file",
+  billing_invoice_history: "Invoice history",
+  billing_invoice_number: "Invoice",
+  billing_invoice_date: "Date",
+  billing_invoice_amount: "Amount",
+  billing_invoice_status: "Status",
+  billing_invoice_download: "Download",
 };
