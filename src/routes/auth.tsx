@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n";
 import { useServerFn } from "@tanstack/react-start";
 import { acceptInvitation } from "@/lib/invitations.functions";
+import { startTrial } from "@/lib/trial.functions";
 import { assertServerFnResult, getServerFnAuthHeaders } from "@/lib/server-fn-auth";
 import { useAuth } from "@/lib/auth";
 
@@ -31,7 +32,25 @@ function AuthPage() {
   const { t } = useI18n();
   const navigate = useNavigate();
   const acceptInviteFn = useServerFn(acceptInvitation);
+  const startTrialFn = useServerFn(startTrial);
   const { refreshOrg } = useAuth();
+
+  // Helper: kick off a trial if URL has ?plan=&cycle=
+  const maybeStartTrialFromUrl = async () => {
+    if (typeof window === "undefined") return;
+    const sp = new URLSearchParams(window.location.search);
+    const planSlug = sp.get("plan");
+    const cycle = (sp.get("cycle") as "monthly" | "annual") || "monthly";
+    if (!planSlug) return;
+    try {
+      // Give the handle_new_user trigger a beat to create org + user_roles.
+      await new Promise((r) => setTimeout(r, 600));
+      await startTrialFn({ data: { planSlug, cycle } });
+    } catch (e) {
+      // Non-fatal — user can pick a plan again from /app/billing.
+      console.error("startTrial failed", e);
+    }
+  };
 
   const getInviteState = () => {
     if (typeof window === "undefined") return { invited: false, emailParam: "" };
