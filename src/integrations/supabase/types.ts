@@ -1411,68 +1411,123 @@ export type Database = {
       orders: {
         Row: {
           amount: number
+          billing_cycle: string | null
           created_at: string
           currency: string
           customer_email: string | null
           customer_name: string
           customer_phone: string
           id: string
+          invoice_issued_at: string | null
+          invoice_number: string | null
           items: Json
+          organization_id: string | null
           paid_amount: number | null
           paid_at: string | null
+          paylink_card_brand: string | null
+          paylink_card_last4: string | null
+          paylink_card_token: string | null
           paylink_invoice_id: string | null
           paylink_payment_url: string | null
           paylink_transaction_no: string | null
+          plan_id: string | null
           product_key: string | null
           raw_create_response: Json | null
           raw_verify_response: Json | null
           status: Database["public"]["Enums"]["order_status"]
+          subscription_id: string | null
+          subtotal_amount: number | null
           updated_at: string
           user_id: string
+          vat_amount: number | null
         }
         Insert: {
           amount: number
+          billing_cycle?: string | null
           created_at?: string
           currency?: string
           customer_email?: string | null
           customer_name: string
           customer_phone: string
           id?: string
+          invoice_issued_at?: string | null
+          invoice_number?: string | null
           items?: Json
+          organization_id?: string | null
           paid_amount?: number | null
           paid_at?: string | null
+          paylink_card_brand?: string | null
+          paylink_card_last4?: string | null
+          paylink_card_token?: string | null
           paylink_invoice_id?: string | null
           paylink_payment_url?: string | null
           paylink_transaction_no?: string | null
+          plan_id?: string | null
           product_key?: string | null
           raw_create_response?: Json | null
           raw_verify_response?: Json | null
           status?: Database["public"]["Enums"]["order_status"]
+          subscription_id?: string | null
+          subtotal_amount?: number | null
           updated_at?: string
           user_id: string
+          vat_amount?: number | null
         }
         Update: {
           amount?: number
+          billing_cycle?: string | null
           created_at?: string
           currency?: string
           customer_email?: string | null
           customer_name?: string
           customer_phone?: string
           id?: string
+          invoice_issued_at?: string | null
+          invoice_number?: string | null
           items?: Json
+          organization_id?: string | null
           paid_amount?: number | null
           paid_at?: string | null
+          paylink_card_brand?: string | null
+          paylink_card_last4?: string | null
+          paylink_card_token?: string | null
           paylink_invoice_id?: string | null
           paylink_payment_url?: string | null
           paylink_transaction_no?: string | null
+          plan_id?: string | null
           product_key?: string | null
           raw_create_response?: Json | null
           raw_verify_response?: Json | null
           status?: Database["public"]["Enums"]["order_status"]
+          subscription_id?: string | null
+          subtotal_amount?: number | null
           updated_at?: string
           user_id?: string
+          vat_amount?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "orders_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       org_custom_field_defs: {
         Row: {
@@ -1544,6 +1599,59 @@ export type Database = {
           onboarding?: Json
         }
         Relationships: []
+      }
+      payment_methods: {
+        Row: {
+          brand: string | null
+          card_token: string | null
+          created_at: string
+          exp_month: number | null
+          exp_year: number | null
+          id: string
+          is_default: boolean
+          last4: string | null
+          organization_id: string
+          provider: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          brand?: string | null
+          card_token?: string | null
+          created_at?: string
+          exp_month?: number | null
+          exp_year?: number | null
+          id?: string
+          is_default?: boolean
+          last4?: string | null
+          organization_id: string
+          provider?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          brand?: string | null
+          card_token?: string | null
+          created_at?: string
+          exp_month?: number | null
+          exp_year?: number | null
+          id?: string
+          is_default?: boolean
+          last4?: string | null
+          organization_id?: string
+          provider?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_methods_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pending_invitations: {
         Row: {
@@ -2250,6 +2358,7 @@ export type Database = {
         }
         Returns: number
       }
+      next_invoice_number: { Args: never; Returns: string }
       org_can_write: { Args: { _org: string }; Returns: boolean }
       org_lifecycle_status: { Args: { _org: string }; Returns: string }
       read_email_batch: {
