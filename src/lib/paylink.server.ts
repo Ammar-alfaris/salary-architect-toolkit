@@ -36,6 +36,8 @@ export type PaylinkAddInvoiceRequest = {
   orderNumber: string;
   products: PaylinkProduct[];
   currency?: string;
+  supportedCardBrands?: string[];
+  displayPending?: boolean;
 };
 
 export type PaylinkAddInvoiceResponse = {
@@ -137,6 +139,8 @@ export async function addInvoice(
     clientEmail: input.clientEmail,
     orderNumber: input.orderNumber,
     currency: input.currency ?? "SAR",
+    supportedCardBrands: input.supportedCardBrands ?? ["mada", "visaMastercard"],
+    displayPending: input.displayPending ?? true,
     products: input.products.map((p) => ({
       title: p.title,
       price: p.price,
