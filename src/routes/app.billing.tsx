@@ -60,12 +60,17 @@ function BillingPage() {
   if (loading) return <div className="p-6 text-sm text-muted-foreground">Loading…</div>;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4 md:p-6">
       <PaymentTestModeBanner />
       <div>
         <h1 className="text-2xl font-semibold">{t("billing_title")}</h1>
         <p className="text-sm text-muted-foreground">{t("billing_sub")}</p>
       </div>
+
+      {/* Trial / lifecycle status card */}
+      {trial.status !== "active" && trial.status !== "none" && (
+        <TrialStatusCard trial={trial} />
+      )}
 
       <Card>
         <CardHeader>
