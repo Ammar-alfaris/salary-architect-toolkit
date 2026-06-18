@@ -62,7 +62,10 @@ function AuthPage() {
   };
 
   const [mode, setMode] = useState<Mode>("auth");
-  const [tab, setTab] = useState<"signin" | "signup">("signin");
+  const [tab, setTab] = useState<"signin" | "signup">(() => {
+    if (typeof window === "undefined") return "signin";
+    return new URLSearchParams(window.location.search).get("plan") ? "signup" : "signin";
+  });
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
