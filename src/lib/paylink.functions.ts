@@ -80,10 +80,12 @@ export const createPaylinkInvoice = createServerFn({ method: "POST" })
     const orderId = order.id as string;
 
     try {
-      const { authenticate, addInvoice } = await import("@/lib/paylink.server");
-      const token = await authenticate();
+      const { authenticate, addInvoice, getCurrentPaylinkMode } = await import("@/lib/paylink.server");
+      const mode = await getCurrentPaylinkMode();
+      const token = await authenticate(mode);
       const callBackUrl = `${appBaseUrl.replace(/\/$/, "")}/payment/paylink/callback?orderId=${orderId}`;
       const invoice = await addInvoice(
+        mode,
         {
           amount: data.amount,
           callBackUrl,
