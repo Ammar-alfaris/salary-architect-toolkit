@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminPageHeader } from "@/components/admin/admin-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,16 +9,23 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import { Save } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Save, AlertTriangle, FlaskConical, Rocket } from "lucide-react";
 import { toast } from "sonner";
+import { setPaymentMode, getPaymentMode } from "@/lib/payment-mode.functions";
 
 export const Route = createFileRoute("/admin/settings")({ component: SettingsPage });
 
 function SettingsPage() {
   const [s, setS] = useState<any>(null);
+  const [mode, setMode] = useState<"test" | "live">("test");
+  const [savingMode, setSavingMode] = useState(false);
+  const setModeFn = useServerFn(setPaymentMode);
+  const getModeFn = useServerFn(getPaymentMode);
 
   useEffect(() => {
     supabase.from("admin_settings").select("*").limit(1).maybeSingle().then(({ data }) => setS(data));
+    getModeFn().then((r) => setMode(r.mode));
   }, []);
 
   if (!s) return <div className="p-6 text-sm text-muted-foreground">Loading…</div>;
@@ -25,9 +33,28 @@ function SettingsPage() {
   const u = (k: string, v: any) => setS({ ...s, [k]: v });
 
   const save = async () => {
-    const { id, ...rest } = s;
+    const { id, payment_mode: _pm, ...rest } = s;
     await supabase.from("admin_settings").update(rest).eq("id", id);
     toast.success("Saved");
+  };
+
+  const savePaymentMode = async (next: "test" | "live") => {
+    if (next === "live") {
+      const ok = confirm(
+        "Switch to LIVE payments?\n\nReal money will be charged on all new Paylink invoices. Make sure your live API credentials (PAYLINK_LIVE_BASE_URL / PAYLINK_LIVE_API_ID / PAYLINK_LIVE_SECRET_KEY) are configured before continuing.",
+      );
+      if (!ok) return;
+    }
+    setSavingMode(true);
+    try {
+      await setModeFn({ data: { mode: next } });
+      setMode(next);
+      toast.success(next === "live" ? "Live payments enabled" : "Switched back to test mode");
+    } catch (e: any) {
+      toast.error(e?.message || "Couldn't update payment mode");
+    } finally {
+      setSavingMode(false);
+    }
   };
 
   return (
@@ -38,6 +65,7 @@ function SettingsPage() {
         <Tabs defaultValue="general">
           <TabsList className="flex-wrap h-auto">
             <TabsTrigger value="general">General</TabsTrigger>
+            <TabsTrigger value="payments">Payments</TabsTrigger>
             <TabsTrigger value="support">Support</TabsTrigger>
             <TabsTrigger value="blog">Blog</TabsTrigger>
             <TabsTrigger value="subscription">Subscription</TabsTrigger>
@@ -53,6 +81,63 @@ function SettingsPage() {
                 <Field label="Default locale"><Input value={s.default_locale} onChange={(e) => u("default_locale", e.target.value)} /></Field>
                 <Field label="Default currency"><Input value={s.default_currency} onChange={(e) => u("default_currency", e.target.value)} /></Field>
                 <Field label="Maintenance mode"><div className="pt-2"><Switch checked={s.maintenance_mode} onCheckedChange={(v) => u("maintenance_mode", v)} /></div></Field>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="payments">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm flex items-center gap-2">
+                  Payment environment (Paylink)
+                  {mode === "live" ? (
+                    <Badge variant="destructive" className="gap-1"><Rocket className="w-3 h-3" /> Live</Badge>
+                  ) : (
+                    <Badge variant="secondary" className="gap-1"><FlaskConical className="w-3 h-3" /> Test</Badge>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Switch the platform between Paylink's test sandbox and production. The change takes effect immediately for every new payment — no redeploy required.
+                </p>
+
+                {mode === "live" && (
+                  <div className="flex items-start gap-2 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200">
+                    <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+                    <div>
+                      <strong>Live mode is active.</strong> Customers are charged real money on every successful invoice.
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid sm:grid-cols-2 gap-3">
+                  <ModeCard
+                    active={mode === "test"}
+                    title="Test (sandbox)"
+                    description="Use Paylink test credentials. No real money is charged. Banner shown to all users."
+                    icon={<FlaskConical className="w-4 h-4" />}
+                    onClick={() => savePaymentMode("test")}
+                    disabled={savingMode || mode === "test"}
+                  />
+                  <ModeCard
+                    active={mode === "live"}
+                    title="Live (production)"
+                    description="Use Paylink live credentials. Real charges on every invoice. Banner is hidden."
+                    icon={<Rocket className="w-4 h-4" />}
+                    onClick={() => savePaymentMode("live")}
+                    disabled={savingMode || mode === "live"}
+                    danger
+                  />
+                </div>
+
+                <details className="text-xs text-muted-foreground">
+                  <summary className="cursor-pointer select-none">Required environment variables</summary>
+                  <ul className="list-disc ps-5 mt-2 space-y-1">
+                    <li><code>PAYLINK_TEST_BASE_URL</code>, <code>PAYLINK_TEST_API_ID</code>, <code>PAYLINK_TEST_SECRET_KEY</code> (legacy <code>PAYLINK_BASE_URL/API_ID/SECRET_KEY</code> still accepted)</li>
+                    <li><code>PAYLINK_LIVE_BASE_URL</code>, <code>PAYLINK_LIVE_API_ID</code>, <code>PAYLINK_LIVE_SECRET_KEY</code></li>
+                  </ul>
+                </details>
               </CardContent>
             </Card>
           </TabsContent>
@@ -91,6 +176,30 @@ function SettingsPage() {
         </Tabs>
       </div>
     </div>
+  );
+}
+
+function ModeCard({ active, title, description, icon, onClick, disabled, danger }: {
+  active: boolean; title: string; description: string; icon: React.ReactNode;
+  onClick: () => void; disabled?: boolean; danger?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={[
+        "text-start rounded-lg border p-4 transition-colors disabled:opacity-60 disabled:cursor-not-allowed",
+        active ? (danger ? "border-red-500 bg-red-50 dark:bg-red-950/40" : "border-primary bg-primary/5") : "hover:bg-muted/40",
+      ].join(" ")}
+    >
+      <div className="flex items-center gap-2 mb-1 font-medium text-sm">
+        {icon}
+        {title}
+        {active && <Badge variant={danger ? "destructive" : "default"} className="ms-auto">Active</Badge>}
+      </div>
+      <p className="text-xs text-muted-foreground">{description}</p>
+    </button>
   );
 }
 
