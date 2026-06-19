@@ -84,6 +84,7 @@ export const createPaylinkInvoice = createServerFn({ method: "POST" })
       const mode = await getCurrentPaylinkMode();
       const token = await authenticate(mode);
       const callBackUrl = `${appBaseUrl.replace(/\/$/, "")}/payment/paylink/callback?orderId=${orderId}`;
+      const paylinkOrderNumber = `${Date.now()}${Math.floor(Math.random() * 1000).toString().padStart(3, "0")}`;
       const invoice = await addInvoice(
         mode,
         {
@@ -92,10 +93,9 @@ export const createPaylinkInvoice = createServerFn({ method: "POST" })
           clientName: data.customerName,
           clientMobile: data.customerPhone,
           clientEmail: data.customerEmail,
-          orderNumber: orderId,
+          orderNumber: paylinkOrderNumber,
           products: data.items,
           currency: data.currency ?? "SAR",
-          supportedCardBrands: ["mada", "visaMastercard", "amex", "applePay"],
           displayPending: true,
         },
         token,
