@@ -148,12 +148,11 @@ export async function addInvoice(
   token: string,
 ): Promise<PaylinkAddInvoiceResponse> {
   const { baseUrl } = getConfig(mode);
-  const body = {
+  const body: Record<string, unknown> = {
     amount: input.amount,
     callBackUrl: input.callBackUrl,
     clientName: input.clientName,
     clientMobile: input.clientMobile,
-    clientEmail: input.clientEmail,
     orderNumber: input.orderNumber,
     currency: input.currency ?? "SAR",
     supportedCardBrands: input.supportedCardBrands ?? ["mada", "visaMastercard"],
@@ -165,6 +164,7 @@ export async function addInvoice(
       description: p.description,
     })),
   };
+  if (input.clientEmail) body.clientEmail = input.clientEmail;
   try {
     const res = await fetch(`${baseUrl}/api/addInvoice`, {
       method: "POST",
