@@ -150,9 +150,10 @@ export const verifyPaylinkPayment = createServerFn({ method: "POST" })
     const transactionNo = order.paylink_transaction_no as string | null;
     if (!transactionNo) throw new Error("Order has no Paylink transaction");
 
-    const { authenticate, getInvoice, mapPaylinkStatus } = await import("@/lib/paylink.server");
-    const token = await authenticate();
-    const invoice = await getInvoice(transactionNo, token);
+    const { authenticate, getInvoice, mapPaylinkStatus, getCurrentPaylinkMode } = await import("@/lib/paylink.server");
+    const mode = await getCurrentPaylinkMode();
+    const token = await authenticate(mode);
+    const invoice = await getInvoice(mode, transactionNo, token);
     const paymentStatus = mapPaylinkStatus(invoice.orderStatus);
     const paidAmount = typeof invoice.amount === "number" ? invoice.amount : Number(order.amount);
 
