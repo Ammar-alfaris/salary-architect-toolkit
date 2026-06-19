@@ -24,7 +24,7 @@ function BillingPage() {
   const { organizationId } = useAuth();
   const trial = useTrialStatus();
   const getSub = useServerFn(getCurrentSubscription);
-  const getPortal = useServerFn(getCustomerPortalUrl);
+  const cancelFn = useServerFn(cancelSubscriptionAtPeriodEnd);
   const listInvoices = useServerFn(listMyInvoices);
   const getMethod = useServerFn(getDefaultPaymentMethod);
   const getDownload = useServerFn(getInvoiceDownloadUrl);
@@ -39,9 +39,8 @@ function BillingPage() {
 
   useEffect(() => {
     if (!organizationId) return;
-    const env = getPaddleEnvironment();
     Promise.all([
-      getSub({ data: { organizationId, environment: env } }),
+      getSub({ data: { organizationId } }),
       getOrgUsage(organizationId),
       listInvoices(),
       getMethod(),
@@ -56,12 +55,14 @@ function BillingPage() {
 
   async function openPortal() {
     if (!sub?.id) return;
+    if (!confirm(t("billing_cancel_confirm") || "Cancel your subscription at the end of the current period?")) return;
     try {
       setOpening(true);
-      const { url } = await getPortal({ data: { subscriptionId: sub.id, environment: getPaddleEnvironment() } });
-      window.open(url, "_blank", "noopener,noreferrer");
+      await cancelFn({ data: { subscriptionId: sub.id } });
+      toast.success(t("billing_cancel_scheduled") || "Subscription will end at period close");
+      setSub({ ...sub, cancel_at_period_end: true });
     } catch (e: any) {
-      toast.error(e?.message || "Couldn't open portal");
+      toast.error(e?.message || "Couldn't cancel");
     } finally {
       setOpening(false);
     }
