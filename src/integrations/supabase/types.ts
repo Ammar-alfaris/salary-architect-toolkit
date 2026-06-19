@@ -28,6 +28,7 @@ export type Database = {
           id: string
           maintenance_mode: boolean
           notifications: Json
+          payment_mode: string
           platform_name: string
           security: Json
           support_email: string | null
@@ -47,6 +48,7 @@ export type Database = {
           id?: string
           maintenance_mode?: boolean
           notifications?: Json
+          payment_mode?: string
           platform_name?: string
           security?: Json
           support_email?: string | null
@@ -66,6 +68,7 @@ export type Database = {
           id?: string
           maintenance_mode?: boolean
           notifications?: Json
+          payment_mode?: string
           platform_name?: string
           security?: Json
           support_email?: string | null
@@ -2321,6 +2324,7 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      get_payment_mode: { Args: never; Returns: string }
       get_platform_role: {
         Args: { _uid: string }
         Returns: Database["public"]["Enums"]["platform_role"]

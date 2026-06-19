@@ -1,109 +1,141 @@
-
 ## الهدف
-بعد نجاح أي دفعة عبر Paylink (بطاقة أو Apple Pay) يجب أن تتحول صفحة `Billing` فورًا إلى وضع "اشتراك نشط"، يختفي بنر "الفترة التجريبية"، يحفظ التطبيق الفاتورة، يولّد PDF رسمي بهوية الموقع، يرسلها للعميل بالبريد مع رابط آمن للتحميل، ويسجّل تاريخ الدفع التالي للتجديد الشهري الآلي.
+1. إزالة Paddle بالكامل كبوابة دفع — Paylink هي البوابة الوحيدة.
+2. إضافة مفتاح تبديل في لوحة Super Admin بين بيئتي Paylink: **Test** و **Production**، حتى تختبر الدفع أولاً ثم تُطلق البيئة الحقيقية بضغطة زر دون أي تغيير في الكود.
 
-## ما المشكلة الحالية
-- `verifyPaylinkPayment` يحدّث جدول `orders` فقط ولا يلمس `subscriptions`، لذلك تبقى الباقة في حالة `trial` وتظهر كل عناصر التجربة.
-- لا يوجد ربط بين الطلب والمؤسسة، ولا توجد فاتورة، ولا بريد تأكيد، ولا صفحة فواتير، ولا منطق تجديد.
+---
 
-## نطاق العمل
+## 1) إزالة Paddle
 
-### 1) Migration (ترقية قاعدة البيانات)
-- إضافة أعمدة لـ `public.orders`:
-  - `organization_id uuid` (مرجع `organizations`)
-  - `subscription_id uuid` (مرجع `subscriptions`)
-  - `plan_id uuid`، `billing_cycle text`
-  - `invoice_number text UNIQUE` (نمط `INV-YYYY-00001`)
-  - `invoice_issued_at timestamptz`
-  - `vat_amount numeric(12,2) DEFAULT 0`، `subtotal_amount numeric(12,2)`
-- إنشاء `public.payment_methods` (لحفظ بطاقة العميل من Paylink: token, brand, last4, exp_month/year, organization_id, is_default) مع RLS للأعضاء قراءة فقط و service_role للكتابة.
-- دالة `next_invoice_number()` آمنة مع advisory lock.
-- منح GRANTs لـ authenticated/service_role.
-- منح `UPDATE` لـ service_role على `subscriptions` (موجود).
+### ملفات تُحذف
+- `src/lib/paddle.ts`
+- `src/lib/paddle.server.ts`
+- `src/lib/billing.functions.ts` (يعتمد بالكامل على Paddle API — سيُستبدل بدوال خفيفة تقرأ من `subscriptions`)
+- `src/lib/payments.functions.ts` (resolver لأسعار Paddle)
+- `src/routes/api/public/payments/webhook.ts` (webhook Paddle)
+- `src/components/PaymentTestModeBanner.tsx` ← يُعاد كتابته ليقرأ من إعداد Paylink الجديد بدل التوكن
 
-### 2) ربط الطلب بالاشتراك عند الإنشاء (`src/lib/paylink.functions.ts`)
-- داخل `createPaylinkInvoice` نقرأ `organization_id` للمستخدم من `user_roles` + أحدث `subscription_id`/`plan_id`/`billing_cycle` ونخزّنها في `orders` لحظة الإنشاء، حتى يعرف الـ verify بأي اشتراك يربط الدفعة.
-- نمرّر للـ Paylink الحقول التي تفعّل حفظ البطاقة لإعادة الخصم لاحقًا (`recurring: true` + علم لحفظ البطاقة) ضمن نفس طلب `addInvoice`.
+### ملفات تُعدَّل لإزالة استيرادات Paddle والـUI المرتبطة
+- `src/routes/pricing.tsx` — حذف زر/مسار Paddle Checkout، الإبقاء فقط على تدفّق Paylink (`/checkout`).
+- `src/routes/trust.tsx` — حذف ذكر Paddle.
+- `src/routes/auth.tsx` — إزالة أي تتبع Paddle.
+- `src/routes/app.billing.tsx`:
+  - استبدال `getCurrentSubscription` (Paddle) بدالة `getCurrentSubscription` جديدة تقرأ مباشرة من جدول `subscriptions` + `plans` عبر `requireSupabaseAuth`.
+  - حذف `getCustomerPortalUrl` وزر "Cancel via portal"، وإحلال زر إلغاء يحدّث `cancel_at_period_end=true` محليًا.
+  - حذف `getPaddleEnvironment` واستبداله بـ `usePaymentEnvironment()` (هوك جديد).
+- `.env.development` و `.env.production` — حذف `VITE_PAYMENTS_CLIENT_TOKEN*` (متعلقة بـ Paddle.js).
 
-### 3) تفعيل الاشتراك بعد التحقق (`verifyPaylinkPayment`)
-عند `paymentStatus === "paid"` وعدم وجود تفعيل سابق لنفس الطلب:
-1. توليد `invoice_number` وتحديث صف `orders` (issued_at، subtotal، VAT 15%، الإجمالي = paidAmount).
-2. تحديث `subscriptions` للمؤسسة عبر `supabaseAdmin`:
-   - `status='active'`، `payment_status='paid'`
-   - `start_at=now`، `renewal_at = now + (شهر/سنة حسب billing_cycle)`
-   - `trial_end_at` يبقى لكن `org_lifecycle_status` ستعيد `active` تلقائيًا (الدالة الموجودة).
-3. حفظ بطاقة الدفع في `payment_methods` من حقول الاستجابة (إن وُجد cardBrand/last4/cardToken في `raw_verify_response`).
-4. إدراج صف فاتورة في سجل `email_send_log` عبر استدعاء راوت إرسال البريد.
-5. السلوك idempotent عبر التحقق من `invoice_number IS NULL`.
+### تنظيف قاعدة البيانات
+- لن نُسقط الجدول `subscriptions` ولا الأعمدة (`paddle_subscription_id` ستبقى لأنها بالفعل تُستخدم لتخزين معرّف Paylink بشكل عام، أو نتركها فارغة).
+- لا migration حذف ضروري — فقط نوقف استخدام webhook Paddle.
 
-### 4) صفحة Billing (`src/routes/app.billing.tsx`)
-- بعد التفعيل: تختفي بطاقة TrialStatusCard لأن `useTrialStatus` ترجع `active` (موجودة). نضيف `refetch` تلقائي عند الفتح + بعد العودة من الكولباك.
-- بطاقة "Current plan" تعرض: اسم الباقة، الحالة (`active`)، دورة الفوترة، `renewal_at`، عدد المقاعد، **آخر بطاقة محفوظة** (Visa **** 4242) من `payment_methods`.
-- قسم جديد "سجل الفواتير" يعرض جدول من `orders` للمؤسسة: رقم الفاتورة، التاريخ، المبلغ، الحالة، زر **تنزيل PDF** يفتح `/api/public/invoices/[orderId]?token=...`.
-- زر "إلغاء الاشتراك" يضع `cancel_at_period_end=true` + يُبقي الوصول حتى `renewal_at`.
+---
 
-### 5) صفحة TrialBanner (`src/components/trial-banner.tsx`)
-- لا تعديل منطقي مطلوب — تختفي تلقائيًا حين تصبح الحالة `active`. سنضمن استدعاء `trial.refetch()` بعد عودة `payment.paylink.callback` بنجاح حتى يختفي البنر فورًا دون انتظار إعادة تحميل.
+## 2) مفتاح تبديل بيئة Paylink (Test ↔ Production)
 
-### 6) توليد PDF الفاتورة (Worker-safe)
-- مكتبة `pdf-lib` (متوافقة مع Cloudflare Worker — وفق `server-runtime`).
-- ملف `src/lib/invoice-pdf.server.ts` يبني فاتورة A4 ببيانات:
-  - **Total Reward App** — Riyadh, Saudi Arabia
-  - رقم الفاتورة، تاريخ الإصدار، اسم العميل، البريد، الجوال
-  - بنود الطلب، المجموع الفرعي، VAT 15%، الإجمالي بالـ SAR
-  - شعار التطبيق (يُضمّن من `src/assets/logo.png` إن وجد، وإلا نص فقط)
-  - تذييل: "شكراً لاستخدامك Total Reward".
-- راوت عام موقّع بالـ HMAC: `src/routes/api/public/invoices.$orderId.ts` يقبل `?token=...` ويرجع PDF (`Content-Type: application/pdf`). التوقيع مولّد عبر `INVOICE_DOWNLOAD_SECRET` (سيُطلب من المستخدم عبر add_secret).
-- داخل التطبيق نفسه (`/app/billing`) المستخدم المسجل يحمّل عبر serverFn `getInvoiceDownloadUrl({orderId})` التي تتحقق من ملكية الطلب ثم تُصدر رابطًا موقّتًا (HMAC + exp 10 دقائق).
+### مفهوم
+- Paylink يميّز البيئة عبر `apiId` + `secretKey` + `baseUrl` المختلفة بين Test و Live.
+- نخزّن **زوجَين** من المفاتيح كأسرار في الباك إند، وننشئ علم `payment_mode` في `admin_settings` يتحكم في أي زوج يُستخدم وقت التشغيل.
 
-### 7) بريد التأكيد (Lovable Emails)
-- توجد بنية البريد جاهزة (`enqueue_email`, `email_send_log`, queue) لكن لا توجد templates للتطبيق.
-- إنشاء قالب `src/lib/email-templates/payment-receipt.tsx` (React Email) بهوية Total Reward:
-  - عنوان: "تم استلام دفعتك — Total Reward"
-  - تفاصيل: اسم الباقة، الدورة، المبلغ، رقم الفاتورة، تاريخ الدفع، تاريخ التجديد القادم
-  - زر CTA: **تحميل الفاتورة (PDF)** → الرابط الموقّع الصالح 30 يومًا
-  - زر ثانوي: "إدارة الاشتراك" → `/app/billing`
-- استخدام راوت `lovable/email/transactional/send` (سيتم توليده بـ `email_domain--scaffold_transactional_email` لأنه غير موجود)، ثم استدعاؤه من `verifyPaylinkPayment` بعد التفعيل مع `idempotencyKey = orderId`.
+### Migration جديدة
+```sql
+ALTER TABLE public.admin_settings
+  ADD COLUMN payment_mode text NOT NULL DEFAULT 'test'
+    CHECK (payment_mode IN ('test','live'));
 
-### 8) التجديد الشهري الآلي
-- نسخدم Paylink Recurring Invoices: عند `paid` نخزّن `paylink_card_token` ضمن `payment_methods`.
-- Cron يومي عبر pg_cron يستدعي راوت `/api/public/cron/billing-renewals` (موجود نمط مماثل لـ trial-lifecycle):
-  - يبحث عن `subscriptions` بحالة `active` و `renewal_at <= now()` و `auto_renew=true`.
-  - يُنشئ Paylink invoice جديدة مع `cardToken` المخزّن (auto-debit) ويُسجّل order جديد بنفس آلية verify.
-  - عند الفشل: `payment_status='past_due'` + يرسل بريد تنبيه.
-- ملاحظة: التنفيذ الفعلي للـ recurring مع Paylink يتطلب وجود `cardToken` في استجابة Paylink — إن لم يدعمه الحساب الحالي سنرسل تذكير بالبريد قبل 3 أيام للدفع اليدوي بدل الخصم التلقائي.
+-- دالة عامة آمنة لقراءة الوضع (للهوك الأمامي + للسيرفر)
+CREATE OR REPLACE FUNCTION public.get_payment_mode()
+RETURNS text LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT COALESCE((SELECT payment_mode FROM public.admin_settings LIMIT 1), 'test');
+$$;
+GRANT EXECUTE ON FUNCTION public.get_payment_mode() TO anon, authenticated;
+```
 
-### 9) صفحة نتيجة الدفع (`src/routes/payment.paylink.callback.tsx`)
-- بعد نجاح verify: زر "تنزيل الفاتورة" + زر "العودة للوحة التحكم".
-- استدعاء `trial.refetch()` غير ممكن هنا — لكن سيتم تحديث الحالة بمجرد الانتقال إلى `/app/billing` لأننا نُجبر إعادة الجلب.
+### الأسرار المطلوبة (عبر `add_secret`)
+- `PAYLINK_TEST_BASE_URL`, `PAYLINK_TEST_API_ID`, `PAYLINK_TEST_SECRET_KEY`
+- `PAYLINK_LIVE_BASE_URL`, `PAYLINK_LIVE_API_ID`, `PAYLINK_LIVE_SECRET_KEY`
 
-### 10) الترجمة (i18n)
-- إضافة مفاتيح عربي/إنجليزي لكل النصوص الجديدة في `ar.ts` و `en.ts` (Billing الجديد، Invoice، Receipt email، Payment method on file).
+(القيم الحالية `PAYLINK_BASE_URL/…` ستُهجَّر إلى مفاتيح `_TEST_` ثم يُطلب من المستخدم إدخال مفاتيح `_LIVE_` عبر `add_secret` قبل التبديل إلى Production.)
 
-## الملفات المتأثرة
-- `supabase/migrations/<new>.sql` — جداول وأعمدة جديدة + دالة رقم الفاتورة.
-- `src/lib/paylink.functions.ts` — ربط الطلب بالاشتراك + تفعيل + توليد فاتورة + إرسال بريد.
-- `src/lib/paylink.server.ts` — تمرير حقول حفظ البطاقة.
-- `src/lib/invoice-pdf.server.ts` — توليد PDF (جديد).
-- `src/lib/invoice.functions.ts` — `getInvoiceDownloadUrl`, `listMyInvoices` (جديد).
-- `src/lib/email-templates/payment-receipt.tsx` + تحديث `registry.ts` (جديد).
-- `src/routes/lovable/email/transactional/*` — توليد عبر `scaffold_transactional_email`.
-- `src/routes/api/public/invoices.$orderId.ts` — تحميل PDF موقّع (جديد).
-- `src/routes/api/public/cron/billing-renewals.ts` — تجديد آلي (جديد).
-- `src/routes/app.billing.tsx` — سجل الفواتير + بطاقة الدفع.
-- `src/routes/payment.paylink.callback.tsx` — زر تحميل الفاتورة.
-- `src/components/trial-banner.tsx` — لا تغيير منطقي.
-- `src/lib/i18n/{ar,en}.ts` — نصوص جديدة.
-- `package.json` — إضافة `pdf-lib`.
+### تعديل `src/lib/paylink.server.ts`
+```ts
+function getConfig(mode: 'test' | 'live') {
+  const prefix = mode === 'live' ? 'PAYLINK_LIVE_' : 'PAYLINK_TEST_';
+  const baseUrl = process.env[`${prefix}BASE_URL`];
+  const apiId   = process.env[`${prefix}API_ID`];
+  const secret  = process.env[`${prefix}SECRET_KEY`];
+  if (!baseUrl || !apiId || !secret) throw new Error(`Paylink ${mode} not configured`);
+  return { baseUrl: baseUrl.replace(/\/$/, ''), apiId, secretKey: secret };
+}
+```
+- كل الدوال (`authenticate`, `addInvoice`, `getInvoice`) تأخذ `mode` كباراميتر أول.
 
-## أسرار جديدة مطلوبة
-- `INVOICE_DOWNLOAD_SECRET` (HMAC لتوقيع روابط الفاتورة) — سيُطلب عبر `add_secret`.
+### تعديل `src/lib/paylink.functions.ts`
+- في بداية كل serverFn يُقرأ الوضع من DB:
+  ```ts
+  const { data: mode } = await supabaseAdmin.rpc('get_payment_mode');
+  ```
+- يُمرَّر إلى `authenticate(mode)` و `addInvoice(mode, …)`.
+- يُخزَّن `environment` على صف `orders` (`'sandbox' | 'live'`) ليُربط الطلب ببيئته (مفيد للتقارير ولتجنّب الخلط بعد التحوّل).
 
-## افتراضات تأكيدها لاحقاً
-- ضريبة القيمة المضافة 15% تُحسب كجزء من المبلغ المُحصَّل (Inclusive) لأن أسعار الباقات السابقة معروضة كأرقام نهائية. إن أردت احتساب VAT منفصلًا أعلِمني.
-- البريد الإلكتروني الرسمي على الفاتورة سيكون `support@totalreward.app` (موجود ضمن إعدادات الاتصال).
+### serverFn جديد: `src/lib/payment-mode.functions.ts`
+```ts
+export const getPaymentMode = createServerFn({ method: 'GET' }).handler(async () => {
+  // public — يستخدم publishable client (rpc public.get_payment_mode)
+});
 
-## النتيجة المتوقعة بعد التطبيق
-- الضغط على Billing مباشرة بعد الدفع: لا بنر تجريبي، البطاقة "Starter — Active"، تاريخ التجديد القادم ظاهر، البطاقة المحفوظة معروضة، سجل فاتورة واحدة قابلة للتنزيل.
-- يصل بريد بهوية Total Reward خلال دقائق فيه ملخص الدفعة وزر تحميل PDF رسمي.
-- الشهر القادم يُخصم المبلغ تلقائيًا (أو يصل تذكير دفع إن لم يدعم الحساب الـ tokenization) ويُولَّد سجل/فاتورة جديدة.
+export const setPaymentMode = createServerFn({ method: 'POST' })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { mode: 'test'|'live' }) => d)
+  .handler(async ({ data, context }) => {
+    // تحقق أن المستخدم super_admin، ثم UPDATE admin_settings
+  });
+```
+
+### الهوك الأمامي
+`src/hooks/use-payment-mode.ts` — يستدعي `getPaymentMode` ويحفظه في React Query (staleTime: 5 د).
+
+### UI في لوحة Super Admin
+- في `src/routes/admin.settings.tsx` نضيف قسم **"Payment Environment"** يحتوي:
+  - Toggle/RadioGroup: `Test` ↔ `Live`.
+  - Badge أحمر تحذيري عند `Live`: "البيئة الحقيقية مفعّلة — سيتم خصم مبالغ فعلية".
+  - زر "Save" يستدعي `setPaymentMode`.
+  - شرط ظهور القسم: `is_super_admin` فقط.
+
+### `PaymentTestModeBanner` الجديد
+- يقرأ من `useQuery(getPaymentMode)`.
+- يظهر فقط عند `mode === 'test'` بنص: "وضع الدفع التجريبي مفعّل — استخدم بطاقات الاختبار من Paylink."
+- يظهر للمستخدمين النهائيين أيضًا في صفحة `/checkout` و `/app/billing` ليعرفوا أن العمليات تجريبية.
+
+---
+
+## 3) تبسيط Billing بعد إزالة Paddle
+
+ملف `src/lib/billing.functions.ts` (يُعاد إنشاؤه مختصرًا):
+- `getCurrentSubscription({ organizationId })`: SELECT من `subscriptions` JOIN `plans`.
+- `cancelSubscriptionAtPeriodEnd({ subscriptionId })`: UPDATE محلي.
+- لا حاجة لـ `getCustomerPortalUrl`.
+
+`app.billing.tsx`:
+- يحذف زر "Open portal" ويستبدله بزر "إلغاء عند نهاية الفترة" يعمل عبر RPC الداخلي.
+- يحذف `getPaddleEnvironment()` ويستخدم `usePaymentMode()`.
+
+---
+
+## 4) خطوات التنفيذ بالترتيب
+1. تشغيل Migration: إضافة `payment_mode` + دالة `get_payment_mode()`.
+2. طلب الأسرار الجديدة عبر `add_secret` لـ Test و Live.
+3. تعديل `paylink.server.ts` و `paylink.functions.ts` لقبول الوضع.
+4. إنشاء `payment-mode.functions.ts` + الهوك.
+5. تعديل `admin.settings.tsx` لإضافة Toggle البيئة.
+6. تعديل `PaymentTestModeBanner` ليعتمد على الوضع الجديد.
+7. إعادة كتابة `billing.functions.ts` بدون Paddle.
+8. تنظيف Paddle: حذف الملفات وإزالة الاستيرادات من `pricing.tsx` / `trust.tsx` / `auth.tsx` / `app.billing.tsx` / `payments/webhook.ts` / `.env.*`.
+9. تحديث ترجمات `ar.ts` / `en.ts` بالنصوص الجديدة (Banner، Toggle، تحذير Live).
+
+---
+
+## النتيجة النهائية
+- Paddle مُزال كليًا من الواجهة والكود وقاعدة البيانات.
+- Super Admin يجد في `/admin/settings` قسم "Payment Environment" بمفتاح Test/Live.
+- التبديل لـ Live يأخذ تأثيره فورًا على كل طلبات Paylink الجديدة دون إعادة نشر.
+- بانر "وضع تجريبي" يظهر للجميع طوال فترة الاختبار، ويختفي تلقائيًا عند التحويل لـ Production.
