@@ -114,7 +114,7 @@ function TrustPage() {
             </p>
             <ul className="list-disc ms-5 space-y-1">
               <li>Lovable Cloud — application hosting, database, authentication, storage.</li>
-              <li>Paylink / Paddle — payment processing for subscriptions (only when you subscribe).</li>
+              <li>Paylink — payment processing for subscriptions (only when you subscribe).</li>
               <li>Transactional email provider — for system emails (auth, invitations, notifications).</li>
             </ul>
             <p>
