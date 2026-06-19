@@ -1,4 +1,6 @@
 // Onboarding state: goal + tour progress, persisted in organizations.onboarding (jsonb).
+// Uses localStorage as a resilient cache so flaky mobile networks don't trap users
+// in the onboarding loop when a PATCH fails ("Load failed" TypeError on iOS Safari).
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
@@ -26,6 +28,30 @@ interface Ctx {
 
 const OnboardingContext = createContext<Ctx | null>(null);
 
+const cacheKey = (orgId: string) => `onboarding:${orgId}`;
+
+function readCache(orgId: string): OnboardingState | null {
+  try {
+    const raw = typeof window !== "undefined" ? localStorage.getItem(cacheKey(orgId)) : null;
+    return raw ? (JSON.parse(raw) as OnboardingState) : null;
+  } catch { return null; }
+}
+
+function writeCache(orgId: string, s: OnboardingState) {
+  try { if (typeof window !== "undefined") localStorage.setItem(cacheKey(orgId), JSON.stringify(s)); } catch {}
+}
+
+async function tryPersist(orgId: string, next: OnboardingState, attempts = 3) {
+  for (let i = 0; i < attempts; i++) {
+    try {
+      const { error } = await supabase.from("organizations").update({ onboarding: next as any }).eq("id", orgId);
+      if (!error) return true;
+    } catch {}
+    await new Promise((r) => setTimeout(r, 400 * (i + 1)));
+  }
+  return false;
+}
+
 export function OnboardingProvider({ children }: { children: ReactNode }) {
   const { organizationId } = useAuth();
   const [state, setState] = useState<OnboardingState>({});
@@ -33,10 +59,24 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!organizationId) { setLoaded(false); return; }
+    // Seed from cache immediately so we don't bounce on network failure.
+    const cached = readCache(organizationId);
+    if (cached) { setState(cached); setLoaded(true); }
     (async () => {
-      const { data } = await supabase.from("organizations").select("onboarding").eq("id", organizationId).maybeSingle();
-      setState((data?.onboarding as OnboardingState) ?? {});
-      setLoaded(true);
+      try {
+        const { data } = await supabase.from("organizations").select("onboarding").eq("id", organizationId).maybeSingle();
+        const remote = (data?.onboarding as OnboardingState) ?? {};
+        // Prefer remote unless cache has a goal and remote doesn't (failed write recovery).
+        const merged: OnboardingState = cached?.goal && !remote.goal ? cached : remote;
+        setState(merged);
+        writeCache(organizationId, merged);
+        // If we recovered from cache, try to re-sync the failed write.
+        if (cached?.goal && !remote.goal) { tryPersist(organizationId, merged); }
+      } catch {
+        if (cached) setState(cached);
+      } finally {
+        setLoaded(true);
+      }
     })();
   }, [organizationId]);
 
@@ -44,7 +84,10 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     if (!organizationId) return;
     const next = { ...state, ...patch };
     setState(next);
-    await supabase.from("organizations").update({ onboarding: next as any }).eq("id", organizationId);
+    writeCache(organizationId, next);
+    // Fire-and-forget with retry; never throw to the caller so UI flows continue
+    // even on flaky mobile networks.
+    tryPersist(organizationId, next);
   }, [organizationId, state]);
 
   const value: Ctx = {
