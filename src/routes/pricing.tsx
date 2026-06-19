@@ -88,9 +88,11 @@ function PricingPage() {
     }
     setCheckingOut(plan.id);
     try {
-      const { getPaddleEnvironment } = await import("@/lib/paddle");
+      const { getPaymentMode } = await import("@/lib/payment-mode.functions");
+      const { mode } = await getPaymentMode();
+      const env = mode === "live" ? "live" : "sandbox";
       await startTrialFn({
-        data: { planSlug: plan.slug, cycle: billing, environment: getPaddleEnvironment() },
+        data: { planSlug: plan.slug, cycle: billing, environment: env },
       });
       toast.success(t("trial_activate_cta"));
       window.location.href = "/app/billing";

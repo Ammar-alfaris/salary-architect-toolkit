@@ -1,52 +1,45 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { getPaddleClient, type PaddleEnv } from "@/lib/paddle.server";
+import { z } from "zod";
 
-// Get current subscription for the user's organization. Prefers a row for
-// the current environment, but falls back to the most recent row regardless
-// of env so a trial saved before publish still shows up after publish (and
-// vice-versa during preview testing).
+/**
+ * Get the current subscription for an organization. Returns the most
+ * recent row regardless of environment so trials created in either mode
+ * still show up correctly while the super admin tests Paylink.
+ */
 export const getCurrentSubscription = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { organizationId: string; environment: PaddleEnv }) => data)
+  .inputValidator((data: { organizationId: string }) => data)
   .handler(async ({ data, context }) => {
     const { supabase } = context;
-    const { data: scoped } = await supabase
-      .from("subscriptions")
-      .select("*, plan:plans(*)")
-      .eq("organization_id", data.organizationId)
-      .eq("environment", data.environment)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    if (scoped) return { subscription: scoped };
-
-    const { data: any_env } = await supabase
+    const { data: sub } = await supabase
       .from("subscriptions")
       .select("*, plan:plans(*)")
       .eq("organization_id", data.organizationId)
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
-    return { subscription: any_env };
+    return { subscription: sub };
   });
 
-// Get a Paddle customer portal URL for managing/canceling subscription.
-export const getCustomerPortalUrl = createServerFn({ method: "POST" })
+const CancelSchema = z.object({ subscriptionId: z.string().uuid() });
+
+/**
+ * Cancel a subscription at the end of the current paid period. Keeps
+ * access intact until renewal_at; no immediate revocation.
+ */
+export const cancelSubscriptionAtPeriodEnd = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { subscriptionId: string; environment: PaddleEnv }) => data)
+  .inputValidator((data: unknown) => CancelSchema.parse(data))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { data: sub } = await supabase
       .from("subscriptions")
-      .select("paddle_subscription_id, paddle_customer_id, organization_id")
+      .select("id, organization_id")
       .eq("id", data.subscriptionId)
-      .eq("environment", data.environment)
       .maybeSingle();
-    if (!sub?.paddle_customer_id || !sub?.paddle_subscription_id) {
-      throw new Error("No active Paddle subscription");
-    }
-    // Authorization: user must be a member of the org
+    if (!sub) throw new Error("Subscription not found");
+
     const { data: member } = await supabase
       .from("user_roles")
       .select("user_id")
@@ -55,10 +48,11 @@ export const getCustomerPortalUrl = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!member) throw new Error("Forbidden");
 
-    const paddle = getPaddleClient(data.environment);
-    const portal = await paddle.customerPortalSessions.create(
-      sub.paddle_customer_id as string,
-      [sub.paddle_subscription_id as string]
-    );
-    return { url: portal.urls.general.overview as string };
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("subscriptions")
+      .update({ cancel_at_period_end: true, auto_renew: false } as never)
+      .eq("id", sub.id);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
   });

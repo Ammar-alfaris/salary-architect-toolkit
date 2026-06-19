@@ -43,9 +43,11 @@ function AuthPage() {
     const cycle = (sp.get("cycle") as "monthly" | "annual") || "monthly";
     if (!planSlug) return;
     try {
-      const { getPaddleEnvironment } = await import("@/lib/paddle");
+      const { getPaymentMode } = await import("@/lib/payment-mode.functions");
+      const { mode } = await getPaymentMode();
+      const env = mode === "live" ? "live" : "sandbox";
       await startTrialFn({
-        data: { planSlug, cycle, environment: getPaddleEnvironment() },
+        data: { planSlug, cycle, environment: env },
       });
     } catch (e) {
       // Non-fatal — user can pick a plan again from /app/billing.

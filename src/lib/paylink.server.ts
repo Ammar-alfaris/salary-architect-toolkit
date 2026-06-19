@@ -1,24 +1,24 @@
 /**
  * Paylink service layer (server-only).
  *
+ * Two-environment aware: every public function accepts a `mode`
+ * ("test" | "live") and reads the matching credential set from
+ * environment variables. The mode is controlled platform-wide from
+ * Admin → Settings → Payments (stored in admin_settings.payment_mode).
+ *
+ * Credentials:
+ *   test  → PAYLINK_TEST_BASE_URL / PAYLINK_TEST_API_ID / PAYLINK_TEST_SECRET_KEY
+ *           (falls back to legacy PAYLINK_BASE_URL / PAYLINK_API_ID / PAYLINK_SECRET_KEY)
+ *   live  → PAYLINK_LIVE_BASE_URL / PAYLINK_LIVE_API_ID / PAYLINK_LIVE_SECRET_KEY
+ *
  * SECURITY: Never trust the user's return-from-Paylink redirect for payment
- * confirmation. ALWAYS call `getInvoice()` (Flow A) from the server and base
- * the order's `paid` status only on the response from Paylink.
- *
- * Currently implements Flow A from the official getting-started guide:
- *   1) POST /api/auth        -> id_token
- *   2) POST /api/addInvoice  -> { transactionNo, url }
- *   3) GET  /api/getInvoice/{transactionNo} -> invoice with orderStatus
- *
- * Flow B (REST with X-API-KEY, POST /api/merchants/{merchantId}/invoices)
- * is intentionally NOT implemented yet. To add it, introduce a
- * PAYLINK_FLOW env flag and branch inside each public function below
- * without changing their signatures.
+ * confirmation. ALWAYS call `getInvoice()` from the server and base the
+ * order's `paid` status only on the response from Paylink.
  */
 
-export type PaylinkAuthResponse = {
-  id_token: string;
-};
+export type PaylinkMode = "test" | "live";
+
+export type PaylinkAuthResponse = { id_token: string };
 
 export type PaylinkProduct = {
   title: string;
@@ -51,7 +51,7 @@ export type PaylinkAddInvoiceResponse = {
 
 export type PaylinkGetInvoiceResponse = {
   transactionNo: string;
-  orderStatus: string; // "Paid" | "Pending" | "Failed" | "Canceled" | ...
+  orderStatus: string;
   amount: number;
   paymentReceipt?: string;
   invoiceId?: string | number;
@@ -64,13 +64,32 @@ export type PaylinkVerifyResult = {
   invoice: PaylinkGetInvoiceResponse;
 };
 
-function getConfig() {
-  const baseUrl = process.env.PAYLINK_BASE_URL;
-  const apiId = process.env.PAYLINK_API_ID;
-  const secretKey = process.env.PAYLINK_SECRET_KEY;
+function pick(...keys: string[]): string | undefined {
+  for (const k of keys) {
+    const v = process.env[k];
+    if (v && v.trim()) return v.trim();
+  }
+  return undefined;
+}
+
+function getConfig(mode: PaylinkMode) {
+  const baseUrl =
+    mode === "live"
+      ? pick("PAYLINK_LIVE_BASE_URL")
+      : pick("PAYLINK_TEST_BASE_URL", "PAYLINK_BASE_URL");
+  const apiId =
+    mode === "live"
+      ? pick("PAYLINK_LIVE_API_ID")
+      : pick("PAYLINK_TEST_API_ID", "PAYLINK_API_ID");
+  const secretKey =
+    mode === "live"
+      ? pick("PAYLINK_LIVE_SECRET_KEY")
+      : pick("PAYLINK_TEST_SECRET_KEY", "PAYLINK_SECRET_KEY");
+
   if (!baseUrl || !apiId || !secretKey) {
+    const prefix = mode === "live" ? "PAYLINK_LIVE_" : "PAYLINK_TEST_";
     throw new Error(
-      "Paylink not configured: missing PAYLINK_BASE_URL / PAYLINK_API_ID / PAYLINK_SECRET_KEY",
+      `Paylink ${mode} not configured: missing ${prefix}BASE_URL / ${prefix}API_ID / ${prefix}SECRET_KEY`,
     );
   }
   return { baseUrl: baseUrl.replace(/\/$/, ""), apiId, secretKey };
@@ -81,7 +100,6 @@ function logPaylink(
   step: string,
   data: Record<string, unknown>,
 ) {
-  // Never log secretKey / id_token / Authorization headers.
   const payload = JSON.stringify({ scope: "paylink", step, ...data });
   if (level === "error") console.error(payload);
   else console.log(payload);
@@ -97,8 +115,8 @@ async function readErr(res: Response): Promise<string> {
 }
 
 /** Step 1: authenticate against Paylink and get a short-lived bearer token. */
-export async function authenticate(): Promise<string> {
-  const { baseUrl, apiId, secretKey } = getConfig();
+export async function authenticate(mode: PaylinkMode): Promise<string> {
+  const { baseUrl, apiId, secretKey } = getConfig(mode);
   try {
     const res = await fetch(`${baseUrl}/api/auth`, {
       method: "POST",
@@ -107,30 +125,29 @@ export async function authenticate(): Promise<string> {
     });
     if (!res.ok) {
       const body = await readErr(res);
-      logPaylink("error", "authenticate", { httpStatus: res.status, body });
+      logPaylink("error", "authenticate", { mode, httpStatus: res.status, body });
       throw new Error(`Paylink auth failed (${res.status})`);
     }
     const json = (await res.json()) as PaylinkAuthResponse;
     if (!json?.id_token) {
-      logPaylink("error", "authenticate", { reason: "missing id_token" });
+      logPaylink("error", "authenticate", { mode, reason: "missing id_token" });
       throw new Error("Paylink auth: missing id_token in response");
     }
-    logPaylink("info", "authenticate", { ok: true });
+    logPaylink("info", "authenticate", { mode, ok: true });
     return json.id_token;
   } catch (err) {
-    logPaylink("error", "authenticate.exception", {
-      message: (err as Error).message,
-    });
+    logPaylink("error", "authenticate.exception", { mode, message: (err as Error).message });
     throw err;
   }
 }
 
 /** Step 2: create an invoice and return its transactionNo + payment URL. */
 export async function addInvoice(
+  mode: PaylinkMode,
   input: PaylinkAddInvoiceRequest,
   token: string,
 ): Promise<PaylinkAddInvoiceResponse> {
-  const { baseUrl } = getConfig();
+  const { baseUrl } = getConfig(mode);
   const body = {
     amount: input.amount,
     callBackUrl: input.callBackUrl,
@@ -161,6 +178,7 @@ export async function addInvoice(
     if (!res.ok) {
       const errBody = await readErr(res);
       logPaylink("error", "addInvoice", {
+        mode,
         orderNumber: input.orderNumber,
         httpStatus: res.status,
         body: errBody,
@@ -172,26 +190,27 @@ export async function addInvoice(
         if (parsed.errorCode) detail = `[${parsed.errorCode}] ${detail}`;
       } catch { /* ignore */ }
       throw new Error(
-        detail
-          ? `Paylink: ${detail}`
-          : `Paylink addInvoice failed (${res.status})`,
+        detail ? `Paylink: ${detail}` : `Paylink addInvoice failed (${res.status})`,
       );
     }
     const json = (await res.json()) as PaylinkAddInvoiceResponse;
     if (!json?.url || !json?.transactionNo) {
       logPaylink("error", "addInvoice", {
+        mode,
         orderNumber: input.orderNumber,
         reason: "missing url or transactionNo",
       });
       throw new Error("Paylink addInvoice: missing payment URL");
     }
     logPaylink("info", "addInvoice", {
+      mode,
       orderNumber: input.orderNumber,
       transactionNo: json.transactionNo,
     });
     return json;
   } catch (err) {
     logPaylink("error", "addInvoice.exception", {
+      mode,
       orderNumber: input.orderNumber,
       message: (err as Error).message,
     });
@@ -201,10 +220,11 @@ export async function addInvoice(
 
 /** Step 3: fetch invoice details to confirm true payment status. */
 export async function getInvoice(
+  mode: PaylinkMode,
   transactionNo: string,
   token: string,
 ): Promise<PaylinkGetInvoiceResponse> {
-  const { baseUrl } = getConfig();
+  const { baseUrl } = getConfig(mode);
   try {
     const res = await fetch(
       `${baseUrl}/api/getInvoice/${encodeURIComponent(transactionNo)}`,
@@ -218,24 +238,14 @@ export async function getInvoice(
     );
     if (!res.ok) {
       const errBody = await readErr(res);
-      logPaylink("error", "getInvoice", {
-        transactionNo,
-        httpStatus: res.status,
-        body: errBody,
-      });
+      logPaylink("error", "getInvoice", { mode, transactionNo, httpStatus: res.status, body: errBody });
       throw new Error(`Paylink getInvoice failed (${res.status})`);
     }
     const json = (await res.json()) as PaylinkGetInvoiceResponse;
-    logPaylink("info", "getInvoice", {
-      transactionNo,
-      orderStatus: json?.orderStatus,
-    });
+    logPaylink("info", "getInvoice", { mode, transactionNo, orderStatus: json?.orderStatus });
     return json;
   } catch (err) {
-    logPaylink("error", "getInvoice.exception", {
-      transactionNo,
-      message: (err as Error).message,
-    });
+    logPaylink("error", "getInvoice.exception", { mode, transactionNo, message: (err as Error).message });
     throw err;
   }
 }
@@ -249,4 +259,15 @@ export function mapPaylinkStatus(
   if (s === "canceled" || s === "cancelled") return "cancelled";
   if (s === "failed" || s === "declined" || s === "expired") return "failed";
   return "pending";
+}
+
+/** Read the current platform-wide Paylink mode from admin_settings. */
+export async function getCurrentPaylinkMode(): Promise<PaylinkMode> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data, error } = await supabaseAdmin.rpc("get_payment_mode");
+  if (error) {
+    console.error(JSON.stringify({ scope: "paylink", step: "getMode.failed", message: error.message }));
+    return "test";
+  }
+  return (data as unknown as string) === "live" ? "live" : "test";
 }
