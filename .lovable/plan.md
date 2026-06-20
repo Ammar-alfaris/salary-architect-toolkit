@@ -1,141 +1,176 @@
-## الهدف
-1. إزالة Paddle بالكامل كبوابة دفع — Paylink هي البوابة الوحيدة.
-2. إضافة مفتاح تبديل في لوحة Super Admin بين بيئتي Paylink: **Test** و **Production**، حتى تختبر الدفع أولاً ثم تُطلق البيئة الحقيقية بضغطة زر دون أي تغيير في الكود.
+راجعت الخطة ابدء بالمهم اولاً خطوة أ
+
+ونعم اريد استهداف السوق السعودي والخليجي او العربي اولاً
+
+&nbsp;
+
+# خطة جاهزية الإطلاق — Total Reward
+
+تشخيص شامل قبل الإطلاق، مرتّب حسب الأولوية: **حواجز إطلاق (Blockers) → مهم جداً → تحسينات تجربة → تلميع**.
 
 ---
 
-## 1) إزالة Paddle
+## 1) حواجز إطلاق (Blockers) — يجب معالجتها قبل النشر
 
-### ملفات تُحذف
-- `src/lib/paddle.ts`
-- `src/lib/paddle.server.ts`
-- `src/lib/billing.functions.ts` (يعتمد بالكامل على Paddle API — سيُستبدل بدوال خفيفة تقرأ من `subscriptions`)
-- `src/lib/payments.functions.ts` (resolver لأسعار Paddle)
-- `src/routes/api/public/payments/webhook.ts` (webhook Paddle)
-- `src/components/PaymentTestModeBanner.tsx` ← يُعاد كتابته ليقرأ من إعداد Paylink الجديد بدل التوكن
+### 1.1 الدفع عبر Paylink لا يعمل بشكل موثوق
 
-### ملفات تُعدَّل لإزالة استيرادات Paddle والـUI المرتبطة
-- `src/routes/pricing.tsx` — حذف زر/مسار Paddle Checkout، الإبقاء فقط على تدفّق Paylink (`/checkout`).
-- `src/routes/trust.tsx` — حذف ذكر Paddle.
-- `src/routes/auth.tsx` — إزالة أي تتبع Paddle.
-- `src/routes/app.billing.tsx`:
-  - استبدال `getCurrentSubscription` (Paddle) بدالة `getCurrentSubscription` جديدة تقرأ مباشرة من جدول `subscriptions` + `plans` عبر `requireSupabaseAuth`.
-  - حذف `getCustomerPortalUrl` وزر "Cancel via portal"، وإحلال زر إلغاء يحدّث `cancel_at_period_end=true` محليًا.
-  - حذف `getPaddleEnvironment` واستبداله بـ `usePaymentEnvironment()` (هوك جديد).
-- `.env.development` و `.env.production` — حذف `VITE_PAYMENTS_CLIENT_TOKEN*` (متعلقة بـ Paddle.js).
+- **البيئة التجريبية**: `restpilot.paylink.sa` يرجع Cloudflare 1016 (DNS غير صالح). لا يمكن اختبار الـ sandbox من السيرفر الحالي.
+- **البيئة الحية**: `addInvoice` كان يفشل بسبب `applePay` وصيغة رقم الطلب — تم إصلاحه لكن لم يُتحقق منه بدفعة نهائية حية (1 ر.س + استرجاع).
+- **المعالجة**:
+  1. التواصل مع Paylink لتأكيد المضيف الصحيح للـ sandbox (قد يكون `restpilot.paylink.biz`)، ثم تحديث `PAYLINK_TEST_BASE_URL`.
+  2. تنفيذ معاملة حية بـ 1 ر.س بمادا/فيزا، التأكد من callback، استرجاع.
+  3. التأكد من أن `payment.paylink.callback.tsx` يستدعي `getInvoice` للتحقق ثم يحدّث `orders` و `subscriptions` ذرّياً (idempotent).
 
-### تنظيف قاعدة البيانات
-- لن نُسقط الجدول `subscriptions` ولا الأعمدة (`paddle_subscription_id` ستبقى لأنها بالفعل تُستخدم لتخزين معرّف Paylink بشكل عام، أو نتركها فارغة).
-- لا migration حذف ضروري — فقط نوقف استخدام webhook Paddle.
+### 1.2 لا يوجد webhook فعلي لـ Paylink
+
+- الاعتماد فقط على صفحة callback في المتصفح خطر: إن أغلق المستخدم الصفحة بعد الدفع، لن تُحدَّث الاشتراك.
+- **المعالجة**: مسار عام `src/routes/api/public/paylink/webhook.ts` يتحقق من الفاتورة عبر `getInvoice` (لا يثق بالـpayload)، يحدّث `orders` + `subscriptions`، ويتعامل مع التكرار (idempotency على `transactionNo`).
+
+### 1.3 حلقة الـ Onboarding على الجوال (مُعالَجة جزئياً)
+
+- تم إضافة retry + localStorage cache، لكن يحتاج اختبار فعلي على iOS Safari + Android Chrome مع شبكة بطيئة (Throttle 3G) لتأكيد عدم تكرار الحلقة.
+
+### 1.4 رسائل البريد (Auth + Transactional)
+
+- التحقق من أن قوالب التحقق وإعادة تعيين كلمة المرور تُرسل فعلياً عبر المزود المُهيأ، وأن روابط `redirectTo` تشير إلى `https://totalreward.app` وليس preview.
+- تفعيل **Leaked Password Protection (HIBP)**.
+
+### 1.5 سياسات RLS وصلاحيات GRANT
+
+- مراجعة كل الجداول الـ44 للتأكد من:
+  - وجود `GRANT` صريح لكل جدول جديد (خاصة الجداول الإدارية).
+  - عدم وجود سياسات `USING (true)` لجداول حساسة.
+- تشغيل `security--run_security_scan` قبل النشر ومعالجة كل النتائج الحرجة.
+
+### 1.6 محتوى الصفحات القانونية والـSEO
+
+- صفحة `trust.tsx` — مراجعة ذكر بوّابات الدفع (إزالة Paddle، إضافة Paylink + شارة PCI الخاصة بهم).
+- التأكد من وجود: Privacy Policy, Terms of Service, Refund Policy (مطلوبة لبوّابة الدفع السعودية).
+- `sitemap.xml` + `robots.txt` يشيران للدومين الصحيح `totalreward.app`.
+- meta tags + `og:image` لكل صفحة عامة (الحالية تفتقد `og:image`).
 
 ---
 
-## 2) مفتاح تبديل بيئة Paylink (Test ↔ Production)
+## 2) مهم جداً — معالجة قبل أو في الأسبوع الأول
 
-### مفهوم
-- Paylink يميّز البيئة عبر `apiId` + `secretKey` + `baseUrl` المختلفة بين Test و Live.
-- نخزّن **زوجَين** من المفاتيح كأسرار في الباك إند، وننشئ علم `payment_mode` في `admin_settings` يتحكم في أي زوج يُستخدم وقت التشغيل.
+### 2.1 الموثوقية والأخطاء
 
-### Migration جديدة
-```sql
-ALTER TABLE public.admin_settings
-  ADD COLUMN payment_mode text NOT NULL DEFAULT 'test'
-    CHECK (payment_mode IN ('test','live'));
+- **Error Boundaries**: التحقق من أن كل route فيها `errorComponent` و`notFoundComponent` (مطلوب بحسب قواعد TanStack).
+- **Sentry أو مرصد أخطاء**: إضافة تتبع أخطاء أمامية + خلفية (server function logs غير كافية للمستخدم النهائي).
+- **Toast errors**: توحيد رسائل الخطأ بالعربية (حالياً بعضها يعرض رسائل تقنية من Supabase/Paylink مباشرة).
 
--- دالة عامة آمنة لقراءة الوضع (للهوك الأمامي + للسيرفر)
-CREATE OR REPLACE FUNCTION public.get_payment_mode()
-RETURNS text LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
-  SELECT COALESCE((SELECT payment_mode FROM public.admin_settings LIMIT 1), 'test');
-$$;
-GRANT EXECUTE ON FUNCTION public.get_payment_mode() TO anon, authenticated;
+### 2.2 الترجمة (i18n)
+
+- ملفا `ar.ts` و `en.ts` بنفس الحجم (1044 سطر) — مراجعة سريعة للمفاتيح الناقصة وللركاكة في العربية، خاصة في:
+  - رسائل الفواتير والدفع
+  - رسائل الـ onboarding
+  - رسائل صلاحيات RBAC
+- التأكد من اتجاه RTL في كل صفحة (خصوصاً الجداول والـ charts).
+
+### 2.3 الأداء
+
+- صفحة الهبوط `index.tsx` تستورد كل ملفات الترجمة (2088 سطر) مرة واحدة — code-split عبر dynamic import للـ locale غير النشط.
+- صور الـ landing/blog: lazy loading + `aspect-*` + WebP.
+- فحص `Largest Contentful Paint` على الجوال (الـviewport الحالي 390×702).
+
+### 2.4 الـAuth والـAccess
+
+- **Google OAuth**: التأكد من تهيئته (مذكور في الذاكرة كافتراضي).
+- **Session timeout**: ماذا يحدث عند انتهاء الجلسة أثناء عمل حساس (مثل تشغيل bonus cycle)؟
+- **Onboarding bypass**: التأكد من عدم إمكانية تجاوز الـ subscription gate يدوياً عبر URL.
+
+### 2.5 الفوترة (Billing)
+
+- اختبار سيناريوهات: trial → trial_ending → grace → restricted → dormant.
+- اختبار `cancelSubscriptionAtPeriodEnd` + إعادة الاشتراك.
+- إيصالات/فواتير PDF (`invoice-pdf.server.ts`) — التحقق من توافقها مع متطلبات ضريبة القيمة المضافة السعودية (ZATCA) إذا كان السوق المستهدف السعودية.
+
+### 2.6 الـCron Jobs
+
+- `cron/trial-lifecycle` — التحقق من جدولته الفعلية (pg_cron) واستقرار التنفيذ.
+
+---
+
+## 3) تحسينات تجربة المستخدم (UX)
+
+### 3.1 الـ Onboarding
+
+- إضافة شاشة "أمثلة بيانات" (Sample data) لتعبئة الحساب بموظفين تجريبيين بضغطة، حتى يستكشف المستخدم الميزات قبل إدخال بياناته.
+- مؤشّر تقدّم واضح في كل خطوة من الجولة الإرشادية.
+
+### 3.2 لوحة التحكم الأولى (`app.index.tsx`)
+
+- مراجعة العناصر الفارغة (empty states) — يجب أن تُرشد للخطوة التالية بدلاً من عرض "0".
+
+### 3.3 الجداول الرئيسية (employees, structures, matrix)
+
+- بحث/فلترة/ترتيب موحّد.
+- استيراد/تصدير Excel مع رسائل أخطاء واضحة للصفوف الفاشلة.
+- Bulk actions مع تأكيد.
+
+### 3.4 الجوال
+
+- viewport الحالي 390px — مراجعة جميع شاشات `app.*` على الجوال (الجداول الكبيرة، شاشات الموافقات، شاشة Paylink callback).
+- تأكيد 44×44 minimum tap targets (خاصة icon-only buttons).
+
+### 3.5 التنبيهات والإشعارات
+
+- مركز إشعارات داخل التطبيق (الموافقات المعلّقة، التذاكر، انتهاء التجربة).
+- بريد إلكتروني للأحداث الحرجة فقط (لا spam).
+
+### 3.6 المساعدة والدعم
+
+- صفحة `app.help.tsx` — التأكد من وجود FAQ + روابط لفيديوهات قصيرة.
+- زر دعم سريع (chat widget أو نموذج تذكرة) في الـ shell.
+
+---
+
+## 4) تلميع نهائي
+
+- إزالة ملفات tmp (`tmp-check-auth-email*.mjs`) من الجذر.
+- مراجعة `console.log` المتبقية في الكود.
+- التحقق من favicon وأيقونات PWA (192/512) + manifest.
+- شاشة maintenance mode (الـ admin_settings فيها `maintenance_mode` لكن لا يُستخدم في الـ shell).
+- مراجعة الـ analytics (PostHog/GA) — هل مُهيأة؟
+- نسخ احتياطية للقاعدة (Supabase backups مفعّلة افتراضياً، لكن يجب التحقق).
+
+---
+
+## ترتيب التنفيذ المقترح (Sprints)
+
+```text
+Sprint 0 — اليوم (Blockers)
+  1. تأكيد مضيف Paylink sandbox + اختبار end-to-end
+  2. إنشاء Paylink webhook (idempotent)
+  3. إكمال صفحات Privacy/Terms/Refund
+  4. تشغيل security scan + معالجة الحرج
+
+Sprint 1 — هذا الأسبوع
+  5. مراجعة RLS كاملة
+  6. توحيد رسائل الخطأ بالعربية
+  7. اختبار Onboarding على iOS/Android فعليّاً
+  8. تفعيل HIBP + مراجعة قوالب البريد
+
+Sprint 2 — قبل النشر العام
+  9. Error tracking (Sentry)
+ 10. تحسين أداء صفحة الهبوط (code-split i18n, og:image)
+ 11. مراجعة UX للجوال
+ 12. اختبار سيناريوهات Billing الكاملة
 ```
 
-### الأسرار المطلوبة (عبر `add_secret`)
-- `PAYLINK_TEST_BASE_URL`, `PAYLINK_TEST_API_ID`, `PAYLINK_TEST_SECRET_KEY`
-- `PAYLINK_LIVE_BASE_URL`, `PAYLINK_LIVE_API_ID`, `PAYLINK_LIVE_SECRET_KEY`
-
-(القيم الحالية `PAYLINK_BASE_URL/…` ستُهجَّر إلى مفاتيح `_TEST_` ثم يُطلب من المستخدم إدخال مفاتيح `_LIVE_` عبر `add_secret` قبل التبديل إلى Production.)
-
-### تعديل `src/lib/paylink.server.ts`
-```ts
-function getConfig(mode: 'test' | 'live') {
-  const prefix = mode === 'live' ? 'PAYLINK_LIVE_' : 'PAYLINK_TEST_';
-  const baseUrl = process.env[`${prefix}BASE_URL`];
-  const apiId   = process.env[`${prefix}API_ID`];
-  const secret  = process.env[`${prefix}SECRET_KEY`];
-  if (!baseUrl || !apiId || !secret) throw new Error(`Paylink ${mode} not configured`);
-  return { baseUrl: baseUrl.replace(/\/$/, ''), apiId, secretKey: secret };
-}
-```
-- كل الدوال (`authenticate`, `addInvoice`, `getInvoice`) تأخذ `mode` كباراميتر أول.
-
-### تعديل `src/lib/paylink.functions.ts`
-- في بداية كل serverFn يُقرأ الوضع من DB:
-  ```ts
-  const { data: mode } = await supabaseAdmin.rpc('get_payment_mode');
-  ```
-- يُمرَّر إلى `authenticate(mode)` و `addInvoice(mode, …)`.
-- يُخزَّن `environment` على صف `orders` (`'sandbox' | 'live'`) ليُربط الطلب ببيئته (مفيد للتقارير ولتجنّب الخلط بعد التحوّل).
-
-### serverFn جديد: `src/lib/payment-mode.functions.ts`
-```ts
-export const getPaymentMode = createServerFn({ method: 'GET' }).handler(async () => {
-  // public — يستخدم publishable client (rpc public.get_payment_mode)
-});
-
-export const setPaymentMode = createServerFn({ method: 'POST' })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((d: { mode: 'test'|'live' }) => d)
-  .handler(async ({ data, context }) => {
-    // تحقق أن المستخدم super_admin، ثم UPDATE admin_settings
-  });
-```
-
-### الهوك الأمامي
-`src/hooks/use-payment-mode.ts` — يستدعي `getPaymentMode` ويحفظه في React Query (staleTime: 5 د).
-
-### UI في لوحة Super Admin
-- في `src/routes/admin.settings.tsx` نضيف قسم **"Payment Environment"** يحتوي:
-  - Toggle/RadioGroup: `Test` ↔ `Live`.
-  - Badge أحمر تحذيري عند `Live`: "البيئة الحقيقية مفعّلة — سيتم خصم مبالغ فعلية".
-  - زر "Save" يستدعي `setPaymentMode`.
-  - شرط ظهور القسم: `is_super_admin` فقط.
-
-### `PaymentTestModeBanner` الجديد
-- يقرأ من `useQuery(getPaymentMode)`.
-- يظهر فقط عند `mode === 'test'` بنص: "وضع الدفع التجريبي مفعّل — استخدم بطاقات الاختبار من Paylink."
-- يظهر للمستخدمين النهائيين أيضًا في صفحة `/checkout` و `/app/billing` ليعرفوا أن العمليات تجريبية.
-
 ---
 
-## 3) تبسيط Billing بعد إزالة Paddle
+## ماذا أحتاج منك للبدء؟
 
-ملف `src/lib/billing.functions.ts` (يُعاد إنشاؤه مختصرًا):
-- `getCurrentSubscription({ organizationId })`: SELECT من `subscriptions` JOIN `plans`.
-- `cancelSubscriptionAtPeriodEnd({ subscriptionId })`: UPDATE محلي.
-- لا حاجة لـ `getCustomerPortalUrl`.
+اختر من أين تريد أن أبدأ التنفيذ الفعلي:
 
-`app.billing.tsx`:
-- يحذف زر "Open portal" ويستبدله بزر "إلغاء عند نهاية الفترة" يعمل عبر RPC الداخلي.
-- يحذف `getPaddleEnvironment()` ويستخدم `usePaymentMode()`.
+- **(أ)** Sprint 0 بالكامل (الـBlockers) — الأولوية القصوى.
+- **(ب)** فقط Paylink webhook + اختبار الدفع.
+- **(ج)** تشغيل الـ security scan أولاً ثم نقرر بناءً على النتائج.
+- **(د)** شيء آخر تحدّده.
 
----
+أيضاً أحتاج تأكيد:
 
-## 4) خطوات التنفيذ بالترتيب
-1. تشغيل Migration: إضافة `payment_mode` + دالة `get_payment_mode()`.
-2. طلب الأسرار الجديدة عبر `add_secret` لـ Test و Live.
-3. تعديل `paylink.server.ts` و `paylink.functions.ts` لقبول الوضع.
-4. إنشاء `payment-mode.functions.ts` + الهوك.
-5. تعديل `admin.settings.tsx` لإضافة Toggle البيئة.
-6. تعديل `PaymentTestModeBanner` ليعتمد على الوضع الجديد.
-7. إعادة كتابة `billing.functions.ts` بدون Paddle.
-8. تنظيف Paddle: حذف الملفات وإزالة الاستيرادات من `pricing.tsx` / `trust.tsx` / `auth.tsx` / `app.billing.tsx` / `payments/webhook.ts` / `.env.*`.
-9. تحديث ترجمات `ar.ts` / `en.ts` بالنصوص الجديدة (Banner، Toggle، تحذير Live).
-
----
-
-## النتيجة النهائية
-- Paddle مُزال كليًا من الواجهة والكود وقاعدة البيانات.
-- Super Admin يجد في `/admin/settings` قسم "Payment Environment" بمفتاح Test/Live.
-- التبديل لـ Live يأخذ تأثيره فورًا على كل طلبات Paylink الجديدة دون إعادة نشر.
-- بانر "وضع تجريبي" يظهر للجميع طوال فترة الاختبار، ويختفي تلقائيًا عند التحويل لـ Production.
+- هل السوق المستهدف السعودية حصراً (لتفعيل ZATCA + اللغة العربية كأساسية)؟
+- هل لديك حساب Sentry / PostHog أو تريدني أن أقترح بديلاً مجانياً؟
+- هل تم تأكيد مضيف Paylink sandbox الصحيح مع دعمهم؟

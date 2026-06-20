@@ -10,7 +10,10 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TrustRouteImport } from './routes/trust'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as RefundRouteImport } from './routes/refund'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CheckoutRouteImport } from './routes/checkout'
@@ -66,6 +69,7 @@ import { Route as AdminBlogIdRouteImport } from './routes/admin.blog.$id'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
+import { Route as ApiPublicPaylinkWebhookRouteImport } from './routes/api/public/paylink/webhook'
 import { Route as ApiPublicInvoicesOrderIdRouteImport } from './routes/api/public/invoices.$orderId'
 import { Route as ApiPublicCronTrialLifecycleRouteImport } from './routes/api/public/cron/trial-lifecycle'
 
@@ -74,9 +78,24 @@ const TrustRoute = TrustRouteImport.update({
   path: '/trust',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RefundRoute = RefundRouteImport.update({
+  id: '/refund',
+  path: '/refund',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PricingRoute = PricingRouteImport.update({
@@ -355,6 +374,11 @@ const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
   path: '/lovable/email/auth/preview',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicPaylinkWebhookRoute = ApiPublicPaylinkWebhookRouteImport.update({
+  id: '/api/public/paylink/webhook',
+  path: '/api/public/paylink/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicInvoicesOrderIdRoute =
   ApiPublicInvoicesOrderIdRouteImport.update({
     id: '/api/public/invoices/$orderId',
@@ -376,7 +400,10 @@ export interface FileRoutesByFullPath {
   '/checkout': typeof CheckoutRoute
   '/contact': typeof ContactRoute
   '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
+  '/refund': typeof RefundRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
   '/trust': typeof TrustRoute
   '/admin/announcements': typeof AdminAnnouncementsRoute
   '/admin/audit': typeof AdminAuditRoute
@@ -425,6 +452,7 @@ export interface FileRoutesByFullPath {
   '/admin/tickets/': typeof AdminTicketsIndexRoute
   '/api/public/cron/trial-lifecycle': typeof ApiPublicCronTrialLifecycleRoute
   '/api/public/invoices/$orderId': typeof ApiPublicInvoicesOrderIdRoute
+  '/api/public/paylink/webhook': typeof ApiPublicPaylinkWebhookRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -435,7 +463,10 @@ export interface FileRoutesByTo {
   '/checkout': typeof CheckoutRoute
   '/contact': typeof ContactRoute
   '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
+  '/refund': typeof RefundRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
   '/trust': typeof TrustRoute
   '/admin/announcements': typeof AdminAnnouncementsRoute
   '/admin/audit': typeof AdminAuditRoute
@@ -481,6 +512,7 @@ export interface FileRoutesByTo {
   '/admin/tickets': typeof AdminTicketsIndexRoute
   '/api/public/cron/trial-lifecycle': typeof ApiPublicCronTrialLifecycleRoute
   '/api/public/invoices/$orderId': typeof ApiPublicInvoicesOrderIdRoute
+  '/api/public/paylink/webhook': typeof ApiPublicPaylinkWebhookRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -494,7 +526,10 @@ export interface FileRoutesById {
   '/checkout': typeof CheckoutRoute
   '/contact': typeof ContactRoute
   '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
+  '/refund': typeof RefundRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
   '/trust': typeof TrustRoute
   '/admin/announcements': typeof AdminAnnouncementsRoute
   '/admin/audit': typeof AdminAuditRoute
@@ -543,6 +578,7 @@ export interface FileRoutesById {
   '/admin/tickets/': typeof AdminTicketsIndexRoute
   '/api/public/cron/trial-lifecycle': typeof ApiPublicCronTrialLifecycleRoute
   '/api/public/invoices/$orderId': typeof ApiPublicInvoicesOrderIdRoute
+  '/api/public/paylink/webhook': typeof ApiPublicPaylinkWebhookRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -557,7 +593,10 @@ export interface FileRouteTypes {
     | '/checkout'
     | '/contact'
     | '/pricing'
+    | '/privacy'
+    | '/refund'
     | '/sitemap.xml'
+    | '/terms'
     | '/trust'
     | '/admin/announcements'
     | '/admin/audit'
@@ -606,6 +645,7 @@ export interface FileRouteTypes {
     | '/admin/tickets/'
     | '/api/public/cron/trial-lifecycle'
     | '/api/public/invoices/$orderId'
+    | '/api/public/paylink/webhook'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
@@ -616,7 +656,10 @@ export interface FileRouteTypes {
     | '/checkout'
     | '/contact'
     | '/pricing'
+    | '/privacy'
+    | '/refund'
     | '/sitemap.xml'
+    | '/terms'
     | '/trust'
     | '/admin/announcements'
     | '/admin/audit'
@@ -662,6 +705,7 @@ export interface FileRouteTypes {
     | '/admin/tickets'
     | '/api/public/cron/trial-lifecycle'
     | '/api/public/invoices/$orderId'
+    | '/api/public/paylink/webhook'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
@@ -674,7 +718,10 @@ export interface FileRouteTypes {
     | '/checkout'
     | '/contact'
     | '/pricing'
+    | '/privacy'
+    | '/refund'
     | '/sitemap.xml'
+    | '/terms'
     | '/trust'
     | '/admin/announcements'
     | '/admin/audit'
@@ -723,6 +770,7 @@ export interface FileRouteTypes {
     | '/admin/tickets/'
     | '/api/public/cron/trial-lifecycle'
     | '/api/public/invoices/$orderId'
+    | '/api/public/paylink/webhook'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
@@ -736,7 +784,10 @@ export interface RootRouteChildren {
   CheckoutRoute: typeof CheckoutRoute
   ContactRoute: typeof ContactRoute
   PricingRoute: typeof PricingRoute
+  PrivacyRoute: typeof PrivacyRoute
+  RefundRoute: typeof RefundRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  TermsRoute: typeof TermsRoute
   TrustRoute: typeof TrustRoute
   BlogSlugRoute: typeof BlogSlugRoute
   BlogIndexRoute: typeof BlogIndexRoute
@@ -744,6 +795,7 @@ export interface RootRouteChildren {
   PaymentPaylinkCallbackRoute: typeof PaymentPaylinkCallbackRoute
   ApiPublicCronTrialLifecycleRoute: typeof ApiPublicCronTrialLifecycleRoute
   ApiPublicInvoicesOrderIdRoute: typeof ApiPublicInvoicesOrderIdRoute
+  ApiPublicPaylinkWebhookRoute: typeof ApiPublicPaylinkWebhookRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
@@ -758,11 +810,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TrustRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sitemap.xml': {
       id: '/sitemap.xml'
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/refund': {
+      id: '/refund'
+      path: '/refund'
+      fullPath: '/refund'
+      preLoaderRoute: typeof RefundRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pricing': {
@@ -1150,6 +1223,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/paylink/webhook': {
+      id: '/api/public/paylink/webhook'
+      path: '/api/public/paylink/webhook'
+      fullPath: '/api/public/paylink/webhook'
+      preLoaderRoute: typeof ApiPublicPaylinkWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/invoices/$orderId': {
       id: '/api/public/invoices/$orderId'
       path: '/api/public/invoices/$orderId'
@@ -1322,7 +1402,10 @@ const rootRouteChildren: RootRouteChildren = {
   CheckoutRoute: CheckoutRoute,
   ContactRoute: ContactRoute,
   PricingRoute: PricingRoute,
+  PrivacyRoute: PrivacyRoute,
+  RefundRoute: RefundRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  TermsRoute: TermsRoute,
   TrustRoute: TrustRoute,
   BlogSlugRoute: BlogSlugRoute,
   BlogIndexRoute: BlogIndexRoute,
@@ -1330,6 +1413,7 @@ const rootRouteChildren: RootRouteChildren = {
   PaymentPaylinkCallbackRoute: PaymentPaylinkCallbackRoute,
   ApiPublicCronTrialLifecycleRoute: ApiPublicCronTrialLifecycleRoute,
   ApiPublicInvoicesOrderIdRoute: ApiPublicInvoicesOrderIdRoute,
+  ApiPublicPaylinkWebhookRoute: ApiPublicPaylinkWebhookRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
@@ -1337,13 +1421,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

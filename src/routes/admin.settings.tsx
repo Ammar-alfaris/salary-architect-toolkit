@@ -132,11 +132,23 @@ function SettingsPage() {
                 </div>
 
                 <details className="text-xs text-muted-foreground">
-                  <summary className="cursor-pointer select-none">Required environment variables</summary>
-                  <ul className="list-disc ps-5 mt-2 space-y-1">
-                    <li><code>PAYLINK_TEST_BASE_URL</code>, <code>PAYLINK_TEST_API_ID</code>, <code>PAYLINK_TEST_SECRET_KEY</code> (legacy <code>PAYLINK_BASE_URL/API_ID/SECRET_KEY</code> still accepted)</li>
-                    <li><code>PAYLINK_LIVE_BASE_URL</code>, <code>PAYLINK_LIVE_API_ID</code>, <code>PAYLINK_LIVE_SECRET_KEY</code></li>
-                  </ul>
+                  <summary className="cursor-pointer select-none">Webhook &amp; environment variables</summary>
+                  <div className="mt-2 space-y-2">
+                    <div>
+                      <strong>Webhook URL</strong> (configure inside the Paylink merchant dashboard so subscription activation works even if the customer closes the browser):
+                      <code className="block mt-1 p-2 bg-muted rounded text-[11px] break-all">https://totalreward.app/api/public/paylink/webhook</code>
+                    </div>
+                    <div>
+                      <strong>Required secrets</strong>:
+                      <ul className="list-disc ps-5 mt-1 space-y-1">
+                        <li><code>PAYLINK_TEST_BASE_URL</code>, <code>PAYLINK_TEST_API_ID</code>, <code>PAYLINK_TEST_SECRET_KEY</code></li>
+                        <li><code>PAYLINK_LIVE_BASE_URL</code>, <code>PAYLINK_LIVE_API_ID</code>, <code>PAYLINK_LIVE_SECRET_KEY</code></li>
+                      </ul>
+                    </div>
+                    <div className="rounded border border-amber-300 bg-amber-50 dark:bg-amber-950/30 p-2">
+                      <strong>Sandbox note:</strong> <code>restpilot.paylink.sa</code> is currently unreachable (DNS error). Confirm the correct sandbox host with Paylink support and update <code>PAYLINK_TEST_BASE_URL</code> accordingly. Until then, test with a 1 SAR live charge and refund.
+                    </div>
+                  </div>
                 </details>
               </CardContent>
             </Card>
