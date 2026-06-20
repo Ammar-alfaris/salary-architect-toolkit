@@ -165,6 +165,5 @@ export const verifyPaylinkPayment = createServerFn({ method: "POST" })
       paymentStatus: result.paymentStatus,
       paidAmount: result.paidAmount,
       orderStatus: result.paymentStatus,
-      invoice: null as unknown,
     };
   });
