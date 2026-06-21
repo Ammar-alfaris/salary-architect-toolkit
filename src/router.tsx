@@ -1,8 +1,49 @@
 import { createRouter, useRouter } from "@tanstack/react-router";
+import { useEffect, useRef } from "react";
 import { routeTree } from "./routeTree.gen";
+
+function isChunkLoadError(error: Error): boolean {
+  const msg = (error?.message || "").toLowerCase();
+  const name = (error?.name || "").toLowerCase();
+  return (
+    msg.includes("importing a module script failed") ||
+    msg.includes("failed to fetch dynamically imported module") ||
+    msg.includes("failed to import") ||
+    msg.includes("error loading dynamically imported module") ||
+    msg.includes("unable to preload css") ||
+    name === "chunkloaderror"
+  );
+}
 
 function DefaultErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   const router = useRouter();
+  const reloadedRef = useRef(false);
+
+  // Stale chunk after a redeploy: silently reload once instead of showing the error UI.
+  useEffect(() => {
+    if (!isChunkLoadError(error) || reloadedRef.current) return;
+    reloadedRef.current = true;
+    try {
+      const key = "__chunk_reload_at";
+      const last = Number(sessionStorage.getItem(key) || "0");
+      const now = Date.now();
+      // Avoid infinite reload loops (max 1 auto-reload per 10s).
+      if (now - last > 10_000) {
+        sessionStorage.setItem(key, String(now));
+        window.location.reload();
+      }
+    } catch {
+      window.location.reload();
+    }
+  }, [error]);
+
+  if (isChunkLoadError(error)) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background px-4">
+        <div className="text-sm text-muted-foreground">Updating…</div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
