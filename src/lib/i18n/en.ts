@@ -195,6 +195,8 @@ export const en: Dict = {
   notifications: "Notifications",
   view_all: "View all",
   no_notifications: "You're all caught up",
+  dashboard_empty_title: "Let's get you started",
+  dashboard_empty_subtitle: "Create your first salary structure or import employees to start seeing insights.",
   open_menu: "Open menu",
   language: "Language",
   theme: "Theme",
