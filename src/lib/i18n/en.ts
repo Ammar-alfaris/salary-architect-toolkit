@@ -193,6 +193,8 @@ export const en: Dict = {
   settings: "Settings",
   search_placeholder: "Search…",
   notifications: "Notifications",
+  view_all: "View all",
+  no_notifications: "You're all caught up",
   open_menu: "Open menu",
   language: "Language",
   theme: "Theme",
