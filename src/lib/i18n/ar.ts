@@ -193,6 +193,8 @@ export const ar: Dict = {
   settings: "الإعدادات",
   search_placeholder: "ابحث…",
   notifications: "الإشعارات",
+  view_all: "عرض الكل",
+  no_notifications: "لا توجد إشعارات جديدة",
   open_menu: "فتح القائمة",
   language: "اللغة",
   theme: "المظهر",
