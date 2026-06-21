@@ -77,13 +77,15 @@ function SettingsPage() {
       <PageHeader title={t("settings")} subtitle={t("settings_subtitle")} />
       <div className="p-4 md:p-6" dir={locale === "ar" ? "rtl" : "ltr"}>
         <Tabs value={tab} onValueChange={(v) => navigate({ search: { tab: v as SettingsTab }, replace: true })} className="max-w-3xl">
-          <TabsList className="justify-start">
-            <TabsTrigger value="org">{t("organization")}</TabsTrigger>
-            <TabsTrigger value="defaults">{t("defaults")}</TabsTrigger>
-            <TabsTrigger value="approvals">{t("approvals")}</TabsTrigger>
-            <TabsTrigger value="locale">{t("localization")}</TabsTrigger>
-            <TabsTrigger value="fields">{t("employee_fields_tab")}</TabsTrigger>
-          </TabsList>
+          <div className="-mx-4 px-4 overflow-x-auto sm:mx-0 sm:px-0 sm:overflow-visible [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <TabsList className="justify-start w-max">
+              <TabsTrigger value="org">{t("organization")}</TabsTrigger>
+              <TabsTrigger value="defaults">{t("defaults")}</TabsTrigger>
+              <TabsTrigger value="approvals">{t("approvals")}</TabsTrigger>
+              <TabsTrigger value="locale">{t("localization")}</TabsTrigger>
+              <TabsTrigger value="fields">{t("employee_fields_tab")}</TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="org" className="mt-4">
             <div className="border rounded-lg bg-card p-5 space-y-4">
