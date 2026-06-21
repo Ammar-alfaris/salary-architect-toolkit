@@ -101,6 +101,19 @@ function Dashboard() {
       <div className="p-4 md:p-6 space-y-4">
         {loading ? (
           <div className="text-sm text-muted-foreground">{t("loading")}</div>
+        ) : employees.length === 0 && structures.length === 0 ? (
+          <div className="border rounded-xl bg-card p-8 md:p-12 text-center">
+            <div className="w-14 h-14 mx-auto rounded-full bg-primary/10 text-primary flex items-center justify-center mb-4">
+              <Users className="w-7 h-7" />
+            </div>
+            <h2 className="text-lg md:text-xl font-semibold mb-2">{t("dashboard_empty_title") || "Let's get you started"}</h2>
+            <p className="text-sm text-muted-foreground mb-5 max-w-md mx-auto">{t("dashboard_empty_subtitle") || "Create your first salary structure or import employees to see insights here."}</p>
+            <div className="flex flex-wrap gap-2 justify-center">
+              <Button asChild><Link to="/app/structures"><Plus className="w-4 h-4 me-1" />{t("create_structure")}</Link></Button>
+              <Button asChild variant="outline"><Link to="/app/employees">{t("add_employee")}</Link></Button>
+              <Button asChild variant="ghost"><Link to="/app/help">{t("help_support")}</Link></Button>
+            </div>
+          </div>
         ) : (
           <>
             <ApprovalNotifications />

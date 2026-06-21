@@ -1,7 +1,7 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
   LayoutDashboard, Layers, Grid3x3, Gift, TrendingUp, Wallet, Users, FileBarChart,
-  Settings as SettingsIcon, ShieldCheck, LogOut, Moon, Sun, Languages, Search, Bell,
+  Settings as SettingsIcon, ShieldCheck, LogOut, Moon, Sun, Languages, Search,
   Menu, BarChart3, Activity, Scale, CheckSquare, UsersRound, LifeBuoy, ChevronDown, Sparkles, CreditCard,
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
@@ -20,6 +20,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { Logo } from "@/components/logo";
 import { TrialBanner } from "@/components/trial-banner";
+import { NotificationBell } from "@/components/notification-bell";
 
 type NavItem = { to: string; icon: any; key: string };
 type NavGroup = { id: string; key: string; icon: any; items: NavItem[] };
@@ -208,25 +209,33 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
           <div className="flex-1 sm:hidden" />
 
-          <Button variant="ghost" size="icon" className="shrink-0" onClick={() => setLocale(locale === "en" ? "ar" : "en")} aria-label={t("language")}>
+          <Button variant="ghost" size="icon" className="shrink-0 min-h-11 min-w-11" onClick={() => setLocale(locale === "en" ? "ar" : "en")} aria-label={t("language")}>
             <Languages className="w-4 h-4" />
           </Button>
-          <Button variant="ghost" size="icon" className="shrink-0" onClick={toggle} aria-label={t("theme")}>
+          <Button variant="ghost" size="icon" className="shrink-0 min-h-11 min-w-11" onClick={toggle} aria-label={t("theme")}>
             {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </Button>
-          <Button variant="ghost" size="icon" className="hidden sm:inline-flex shrink-0" aria-label={t("notifications")}>
-            <Bell className="w-4 h-4" />
-          </Button>
+          <NotificationBell />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="ms-1">
+              <button className="ms-1 inline-flex items-center justify-center min-h-11 min-w-11 rounded-full" aria-label={t("profile")}>
                 <Avatar className="w-8 h-8">
                   <AvatarFallback className="text-xs bg-primary text-primary-foreground">{initials}</AvatarFallback>
                 </Avatar>
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">{user?.email}</DropdownMenuLabel>
+            <DropdownMenuContent align="end" className="w-52">
+              <DropdownMenuLabel className="text-xs font-normal text-muted-foreground truncate">{user?.email}</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={() => navigate({ to: "/app/settings" })}>
+                <SettingsIcon className="w-4 h-4 me-2" /> {t("settings")}
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => navigate({ to: "/app/billing" })}>
+                <CreditCard className="w-4 h-4 me-2" /> {t("billing_title")}
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => navigate({ to: "/app/help" })}>
+                <LifeBuoy className="w-4 h-4 me-2" /> {t("help_support")}
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onSelect={handleSignOut}>
                 <LogOut className="w-4 h-4 me-2" /> {t("logout")}
