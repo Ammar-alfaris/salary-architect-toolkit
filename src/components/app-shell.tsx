@@ -1,7 +1,7 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
   LayoutDashboard, Layers, Grid3x3, Gift, TrendingUp, Wallet, Users, FileBarChart,
-  Settings as SettingsIcon, ShieldCheck, LogOut, Moon, Sun, Languages, Search, Bell,
+  Settings as SettingsIcon, ShieldCheck, LogOut, Moon, Sun, Languages, Search,
   Menu, BarChart3, Activity, Scale, CheckSquare, UsersRound, LifeBuoy, ChevronDown, Sparkles, CreditCard,
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
@@ -20,6 +20,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { Logo } from "@/components/logo";
 import { TrialBanner } from "@/components/trial-banner";
+import { NotificationBell } from "@/components/notification-bell";
 
 type NavItem = { to: string; icon: any; key: string };
 type NavGroup = { id: string; key: string; icon: any; items: NavItem[] };
