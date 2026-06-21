@@ -195,6 +195,8 @@ export const ar: Dict = {
   notifications: "الإشعارات",
   view_all: "عرض الكل",
   no_notifications: "لا توجد إشعارات جديدة",
+  dashboard_empty_title: "لنبدأ الإعداد",
+  dashboard_empty_subtitle: "أنشئ أول هيكل رواتب أو استورد الموظفين لتبدأ في رؤية التحليلات هنا.",
   open_menu: "فتح القائمة",
   language: "اللغة",
   theme: "المظهر",
