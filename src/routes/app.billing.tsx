@@ -7,20 +7,21 @@ import { getCurrentSubscription, cancelSubscriptionAtPeriodEnd } from "@/lib/bil
 import { getOrgUsage, type OrgUsage } from "@/lib/quota";
 import { useTrialStatus } from "@/lib/use-trial-status";
 import { getInvoiceDownloadUrl, listMyInvoices, getDefaultPaymentMethod } from "@/lib/invoice.functions";
+import { fmtDate } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { toast } from "sonner";
-import { ExternalLink, Sparkles, Clock, AlertTriangle, Download, CreditCard } from "lucide-react";
+import { ExternalLink, Download, CreditCard, ArrowUpRight } from "lucide-react";
 
 export const Route = createFileRoute("/app/billing")({
   component: BillingPage,
 });
 
 function BillingPage() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { organizationId } = useAuth();
   const trial = useTrialStatus();
   const getSub = useServerFn(getCurrentSubscription);
@@ -92,9 +93,11 @@ function BillingPage() {
         <p className="text-sm text-muted-foreground">{t("billing_sub")}</p>
       </div>
 
-      {trial.status !== "active" && trial.status !== "none" && (
-        <TrialStatusCard trial={trial} />
-      )}
+      {/* NOTE: trial banner intentionally removed from this page — the
+          primary "Pay now & activate" CTA below already covers it, and the
+          old TrialStatusCard duplicated the same action with a different
+          (wrong) destination. The global TrialBanner still shows on all
+          other app pages. */}
 
       <Card>
         <CardHeader>
@@ -118,7 +121,7 @@ function BillingPage() {
               <dl className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
                 <Stat label={t("billing_cycle")} value={sub.billing_cycle === "annual" ? t("billing_annual") : t("billing_monthly")} />
                 <Stat label={t("billing_trial_amount")} value={`${sub.plan?.currency ?? ""} ${Number(sub.amount ?? 0).toLocaleString()}`} />
-                {sub.trial_end_at && <Stat label={t("billing_trial_ends_on")} value={new Date(sub.trial_end_at).toLocaleDateString()} />}
+                {sub.trial_end_at && <Stat label={t("billing_trial_ends_on")} value={fmtDate(sub.trial_end_at, locale)} ltr />}
                 {usage && <Stat label={t("billing_seats_used")} value={`${usage.usersCount} / ${usage.maxUsers}`} progress={usage.usersCount/Math.max(usage.maxUsers,1)*100} />}
               </dl>
 
@@ -136,7 +139,10 @@ function BillingPage() {
                   </Link>
                 </Button>
                 <Button asChild variant="outline">
-                  <Link to="/pricing">{t("billing_change_plan_link")}</Link>
+                  <Link to="/app/billing/upgrade">
+                    <ArrowUpRight className="w-4 h-4 me-1" />
+                    {t("billing_upgrade_plan")}
+                  </Link>
                 </Button>
               </div>
             </div>
@@ -145,12 +151,12 @@ function BillingPage() {
               <div className="flex items-center gap-3 flex-wrap">
                 <div className="text-xl font-semibold">{sub.plan?.name ?? "—"}</div>
                 <Badge variant="default">{t("billing_status_active")}</Badge>
-                {sub.cancel_at_period_end && <Badge variant="outline">{t("billing_cancels_on")} {sub.end_at ? new Date(sub.end_at).toLocaleDateString() : "—"}</Badge>}
+                {sub.cancel_at_period_end && <Badge variant="outline">{t("billing_cancels_on")} <span dir="ltr">{fmtDate(sub.end_at, locale)}</span></Badge>}
               </div>
 
               <dl className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
                 <Stat label={t("billing_cycle")} value={sub.billing_cycle === "annual" ? t("billing_annual") : t("billing_monthly")} />
-                <Stat label={t("billing_renews_on")} value={sub.renewal_at ? new Date(sub.renewal_at).toLocaleDateString() : "—"} />
+                <Stat label={t("billing_renews_on")} value={fmtDate(sub.renewal_at, locale)} ltr />
                 {usage && <Stat label={t("billing_seats_used")} value={`${usage.usersCount} / ${usage.maxUsers}`} progress={usage.usersCount/Math.max(usage.maxUsers,1)*100} />}
                 {usage && <Stat label={t("billing_employees_used")} value={`${usage.employeesCount} / ${usage.maxEmployees}`} progress={usage.employeesCount/Math.max(usage.maxEmployees,1)*100} />}
               </dl>
@@ -160,7 +166,7 @@ function BillingPage() {
                   <CreditCard className="w-4 h-4 text-muted-foreground" />
                   <div className="flex-1">
                     <div className="font-medium">{t("billing_card_on_file")}</div>
-                    <div className="text-muted-foreground text-xs">
+                    <div className="text-muted-foreground text-xs" dir="ltr">
                       {(method.brand || "Card").toUpperCase()} •••• {method.last4 ?? "----"}
                       {method.exp_month && method.exp_year ? `  ·  ${String(method.exp_month).padStart(2, "0")}/${method.exp_year}` : ""}
                     </div>
@@ -169,8 +175,11 @@ function BillingPage() {
               )}
 
               <div className="flex flex-wrap gap-2 pt-2">
-                <Button asChild variant="outline">
-                  <Link to="/pricing">{t("billing_change_plan")}</Link>
+                <Button asChild>
+                  <Link to="/app/billing/upgrade">
+                    <ArrowUpRight className="w-4 h-4 me-1" />
+                    {t("billing_upgrade_plan")}
+                  </Link>
                 </Button>
                 <Button variant="ghost" onClick={openPortal} disabled={opening}>
                   {opening ? "…" : t("billing_cancel")} <ExternalLink className="w-3.5 h-3.5 ms-1" />
@@ -201,9 +210,9 @@ function BillingPage() {
                 <tbody>
                   {invoices.map((inv) => (
                     <tr key={inv.id} className="border-b last:border-0">
-                      <td className="py-3 font-mono text-xs">{inv.invoice_number}</td>
-                      <td className="py-3">{inv.invoice_issued_at ? new Date(inv.invoice_issued_at).toLocaleDateString() : "—"}</td>
-                      <td className="py-3 font-medium">{(inv.currency ?? "SAR")} {Number(inv.paid_amount ?? inv.amount ?? 0).toFixed(2)}</td>
+                      <td className="py-3 font-mono text-xs" dir="ltr">{inv.invoice_number}</td>
+                      <td className="py-3"><span dir="ltr" className="tabular-nums">{fmtDate(inv.invoice_issued_at, locale)}</span></td>
+                      <td className="py-3 font-medium tabular-nums" dir="ltr">{(inv.currency ?? "SAR")} {Number(inv.paid_amount ?? inv.amount ?? 0).toFixed(2)}</td>
                       <td className="py-3">
                         <Badge variant={inv.status === "paid" ? "default" : "secondary"} className="capitalize">{inv.status}</Badge>
                       </td>
@@ -225,49 +234,12 @@ function BillingPage() {
   );
 }
 
-function Stat({ label, value, progress }: { label: string; value: string; progress?: number }) {
+function Stat({ label, value, progress, ltr }: { label: string; value: string; progress?: number; ltr?: boolean }) {
   return (
     <div>
       <dt className="text-xs text-muted-foreground">{label}</dt>
-      <dd className="font-medium mt-0.5">{value}</dd>
+      <dd className="font-medium mt-0.5" {...(ltr ? { dir: "ltr" as const, style: { unicodeBidi: "isolate" } } : {})}>{value}</dd>
       {typeof progress === "number" && <Progress value={Math.min(progress, 100)} className="h-1 mt-2" />}
     </div>
-  );
-}
-
-function TrialStatusCard({ trial }: { trial: ReturnType<typeof useTrialStatus> }) {
-  const { t } = useI18n();
-  const isWarning = trial.status === "trial_ending" || trial.status === "grace";
-  const isBlocked = trial.status === "restricted" || trial.status === "dormant" || trial.status === "canceled";
-  const Icon = isBlocked ? AlertTriangle : isWarning ? Clock : Sparkles;
-  const tone = isBlocked ? "border-red-500/40 bg-red-500/5" : isWarning ? "border-amber-500/40 bg-amber-500/5" : "border-primary/30 bg-primary/5";
-  const label =
-    trial.status === "trial" ? t("billing_trial_active") :
-    trial.status === "trial_ending" ? t("trial_ending_soon").replace("{n}", String(Math.max(trial.daysLeft, 0))) :
-    trial.status === "grace" ? t("trial_grace_msg") :
-    trial.status === "restricted" ? t("trial_restricted_msg") :
-    trial.status === "dormant" ? t("trial_dormant_msg") :
-    t("trial_canceled_msg");
-
-  return (
-    <Card className={tone}>
-      <CardContent className="p-4 sm:p-6 flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-        <div className="flex items-center gap-3 flex-1">
-          <Icon className="w-5 h-5 shrink-0" />
-          <div>
-            <div className="text-sm font-medium">{label}</div>
-            {trial.trialEndAt && (
-              <div className="text-xs text-muted-foreground mt-0.5">
-                {t("billing_trial_ends_on")}: {new Date(trial.trialEndAt).toLocaleDateString()}
-                {trial.planName ? ` · ${trial.planName}` : ""}
-              </div>
-            )}
-          </div>
-        </div>
-        <Button asChild size="lg" className="shrink-0">
-          <Link to="/pricing">{t("billing_activate_now")}</Link>
-        </Button>
-      </CardContent>
-    </Card>
   );
 }
