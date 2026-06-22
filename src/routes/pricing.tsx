@@ -71,15 +71,53 @@ function PricingPage() {
   const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [checkingOut, setCheckingOut] = useState<string | null>(null);
+  const [currentPlanId, setCurrentPlanId] = useState<string | null>(null);
+  const [currentPlanOrder, setCurrentPlanOrder] = useState<number>(-1);
+  const [hasActiveSub, setHasActiveSub] = useState<boolean>(false);
 
   const startTrialFn = useServerFn(startTrial);
 
   useEffect(() => {
     supabase.from("plans").select("*").eq("is_visible", true).eq("status", "active").order("sort_order")
-      .then(({ data }) => { setPlans((data as unknown as Plan[]) || []); setLoading(false); });
-  }, []);
+      .then(({ data }) => {
+        const list = (data as unknown as Plan[]) || [];
+        setPlans(list);
+        setLoading(false);
+        // After plans load, look up the user's current subscription so we
+        // can swap "Try free" CTAs to "Current plan" / "Upgrade".
+        if (organizationId) {
+          supabase.from("subscriptions").select("plan_id,status")
+            .eq("organization_id", organizationId)
+            .order("created_at", { ascending: false })
+            .limit(1).maybeSingle()
+            .then(({ data: sub }) => {
+              if (sub?.plan_id) {
+                setCurrentPlanId(sub.plan_id);
+                setCurrentPlanOrder(list.find((p) => p.id === sub.plan_id)?.sort_order ?? -1);
+                setHasActiveSub(sub.status === "active" || sub.status === "trial" || sub.status === "trial_ending");
+              }
+            });
+        }
+      });
+  }, [organizationId]);
 
   async function handleTrialClick(plan: Plan) {
+    // Already subscribed → don't restart a trial. Route to checkout or
+    // upgrade page depending on direction.
+    if (hasActiveSub && currentPlanId) {
+      if (plan.id === currentPlanId) {
+        window.location.href = "/app/billing";
+        return;
+      }
+      const price = billing === "annual" ? plan.annual_price : plan.monthly_price;
+      const qs = new URLSearchParams({
+        product: plan.slug,
+        amount: String(price),
+        title: `${plan.name} — ${billing === "annual" ? t("billing_annual") : t("billing_monthly")}`,
+      }).toString();
+      window.location.href = `/checkout?${qs}`;
+      return;
+    }
     // Not signed in → take to signup with the chosen plan, then start trial after auth.
     if (!user) {
       const qs = new URLSearchParams({ plan: plan.slug, cycle: billing }).toString();
@@ -100,6 +138,15 @@ function PricingPage() {
       toast.error(e?.message || "Couldn't start trial");
       setCheckingOut(null);
     }
+  }
+
+  function ctaLabelFor(plan: Plan): string {
+    if (hasActiveSub && currentPlanId) {
+      if (plan.id === currentPlanId) return t("upgrade_current_label");
+      if (plan.sort_order > currentPlanOrder) return t("upgrade_to_plan").replace("{plan}", plan.name);
+      return t("downgrade_to_plan").replace("{plan}", plan.name);
+    }
+    return t("try_free_for_days").replace("{n}", String(plan.trial_days || 14));
   }
 
 
@@ -273,10 +320,10 @@ function PricingPage() {
                       size="lg"
                       className="mt-6 w-full"
                       variant={plan.is_recommended ? "default" : "outline"}
-                      disabled={checkingOut === plan.id}
+                      disabled={checkingOut === plan.id || (hasActiveSub && plan.id === currentPlanId)}
                       onClick={() => handleTrialClick(plan)}
                     >
-                      {checkingOut === plan.id ? "…" : t("try_free_for_days").replace("{n}", String(plan.trial_days || 14))}
+                      {checkingOut === plan.id ? "…" : ctaLabelFor(plan)}
                     </Button>
                   )}
                 </div>

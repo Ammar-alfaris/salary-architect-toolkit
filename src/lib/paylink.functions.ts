@@ -94,6 +94,12 @@ export const createPaylinkInvoice = createServerFn({ method: "POST" })
           products: data.items,
           currency: data.currency ?? "SAR",
           displayPending: true,
+          // IMPORTANT: do NOT pass supportedCardBrands. Restricting brands
+          // here triggers Paylink's "local banks only" rejection on cards
+          // that Apple Pay tokenises successfully. Leaving it unset lets
+          // Paylink fall back to every brand enabled on the merchant
+          // account (mada + visa + master + amex when configured).
+          supportedCardBrands: undefined,
         },
         token,
       );

@@ -125,6 +125,8 @@ export const ar: Dict = {
   billing_seats_used: "المستخدمون",
   billing_employees_used: "الموظفون",
   billing_change_plan: "تغيير الباقة",
+  billing_upgrade_plan: "ترقية الباقة",
+  billing_back_to_billing: "العودة إلى الفوترة",
   billing_cancel: "إلغاء الاشتراك",
   billing_cancel_confirm: "هل تريد إلغاء اشتراكك؟ سيستمر وصولك حتى نهاية الفترة الحالية.",
   billing_canceling: "جاري الإلغاء…",
@@ -132,6 +134,13 @@ export const ar: Dict = {
   billing_pay_now_activate: "ادفع الآن وفعّل الاشتراك",
   billing_trial_amount: "المبلغ المستحق",
   billing_change_plan_link: "تغيير الباقة",
+  upgrade_page_title: "ترقية باقتك",
+  upgrade_page_sub: "اختر الباقة التي تناسب احتياجاتك. الترقية تسري فوراً، والتخفيض في نهاية الدورة الحالية.",
+  upgrade_current_label: "باقتك الحالية",
+  upgrade_current_badge: "الحالية",
+  upgrade_to_plan: "الترقية إلى {plan}",
+  downgrade_to_plan: "التخفيض إلى {plan}",
+  downgrade_label: "تخفيض",
 
   // Quota
   quota_users_full: "وصلت إلى الحد الأقصى للمستخدمين ({n}). قم بالترقية لإضافة المزيد.",

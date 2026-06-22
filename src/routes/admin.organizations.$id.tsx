@@ -61,7 +61,7 @@ function OrgDetail() {
                 <Row label="Status" value={<StatusBadge value={sub.status} />} />
                 <Row label="Cycle" value={sub.billing_cycle} />
                 <Row label="Amount" value={`${sub.plans?.currency || ""} ${sub.amount}`} />
-                <Row label="Renewal" value={sub.renewal_at ? new Date(sub.renewal_at).toLocaleDateString() : "—"} />
+                <Row label="Renewal" value={sub.renewal_at ? <span dir="ltr">{new Date(sub.renewal_at).toLocaleDateString("en-GB")}</span> : "—"} />
               </>
             ) : <p className="text-muted-foreground text-xs">No active subscription</p>}
             <div className="pt-2 flex gap-2">

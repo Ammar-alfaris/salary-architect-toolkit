@@ -89,7 +89,7 @@ function UsersPage() {
     { key: "email", header: "Email", sortable: true, cell: (r) => <span className="font-mono text-xs">{r.email}</span> },
     { key: "org_name", header: "Organization", cell: (r) => r.org_name || "—" },
     { key: "role", header: "Role", cell: (r) => r.role ? <StatusBadge value={r.role} /> : "—" },
-    { key: "created_at", header: "Joined", sortable: true, cell: (r) => <span className="text-xs text-muted-foreground tabular-nums">{new Date(r.created_at).toLocaleDateString()}</span> },
+    { key: "created_at", header: "Joined", sortable: true, cell: (r) => <span className="text-xs text-muted-foreground tabular-nums" dir="ltr">{new Date(r.created_at).toLocaleDateString("en-GB")}</span> },
     { key: "actions", header: "", cell: (r) => <Button variant="ghost" size="icon" onClick={() => setActive(r)}><Eye className="w-4 h-4" /></Button> },
   ];
 

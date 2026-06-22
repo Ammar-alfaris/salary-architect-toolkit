@@ -43,7 +43,7 @@ function OrgsPage() {
     { key: "status", header: "Status", cell: (r) => <StatusBadge value={r.status} /> },
     { key: "user_count", header: "Users", sortable: true, cell: (r) => <span className="tabular-nums">{r.user_count}</span> },
     { key: "default_currency", header: "Currency", cell: (r) => <span className="font-mono text-xs">{r.default_currency}</span> },
-    { key: "created_at", header: "Created", sortable: true, cell: (r) => <span className="text-xs tabular-nums">{new Date(r.created_at).toLocaleDateString()}</span> },
+    { key: "created_at", header: "Created", sortable: true, cell: (r) => <span className="text-xs tabular-nums" dir="ltr">{new Date(r.created_at).toLocaleDateString("en-GB")}</span> },
     { key: "a", header: "", cell: (r) => <Button asChild variant="ghost" size="icon"><Link to="/admin/organizations/$id" params={{ id: r.id }}><Eye className="w-4 h-4" /></Link></Button> },
   ];
 

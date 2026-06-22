@@ -57,6 +57,7 @@ import { Route as AdminEmailsIndexRouteImport } from './routes/admin.emails.inde
 import { Route as AdminBlogIndexRouteImport } from './routes/admin.blog.index'
 import { Route as PaymentPaylinkCallbackRouteImport } from './routes/payment.paylink.callback'
 import { Route as AppEmployeesIdRouteImport } from './routes/app.employees.$id'
+import { Route as AppBillingUpgradeRouteImport } from './routes/app.billing.upgrade'
 import { Route as AppAnalyticsPenetrationRouteImport } from './routes/app.analytics.penetration'
 import { Route as AppAnalyticsEquityRouteImport } from './routes/app.analytics.equity'
 import { Route as AppAnalyticsCompaRouteImport } from './routes/app.analytics.compa'
@@ -313,6 +314,11 @@ const AppEmployeesIdRoute = AppEmployeesIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AppEmployeesRoute,
 } as any)
+const AppBillingUpgradeRoute = AppBillingUpgradeRouteImport.update({
+  id: '/upgrade',
+  path: '/upgrade',
+  getParentRoute: () => AppBillingRoute,
+} as any)
 const AppAnalyticsPenetrationRoute = AppAnalyticsPenetrationRouteImport.update({
   id: '/analytics/penetration',
   path: '/analytics/penetration',
@@ -420,7 +426,7 @@ export interface FileRoutesByFullPath {
   '/app/allowances': typeof AppAllowancesRoute
   '/app/approvals': typeof AppApprovalsRoute
   '/app/audit': typeof AppAuditRoute
-  '/app/billing': typeof AppBillingRoute
+  '/app/billing': typeof AppBillingRouteWithChildren
   '/app/bonus': typeof AppBonusRoute
   '/app/employees': typeof AppEmployeesRouteWithChildren
   '/app/help': typeof AppHelpRoute
@@ -445,6 +451,7 @@ export interface FileRoutesByFullPath {
   '/app/analytics/compa': typeof AppAnalyticsCompaRoute
   '/app/analytics/equity': typeof AppAnalyticsEquityRoute
   '/app/analytics/penetration': typeof AppAnalyticsPenetrationRoute
+  '/app/billing/upgrade': typeof AppBillingUpgradeRoute
   '/app/employees/$id': typeof AppEmployeesIdRoute
   '/payment/paylink/callback': typeof PaymentPaylinkCallbackRoute
   '/admin/blog/': typeof AdminBlogIndexRoute
@@ -480,7 +487,7 @@ export interface FileRoutesByTo {
   '/app/allowances': typeof AppAllowancesRoute
   '/app/approvals': typeof AppApprovalsRoute
   '/app/audit': typeof AppAuditRoute
-  '/app/billing': typeof AppBillingRoute
+  '/app/billing': typeof AppBillingRouteWithChildren
   '/app/bonus': typeof AppBonusRoute
   '/app/employees': typeof AppEmployeesRouteWithChildren
   '/app/help': typeof AppHelpRoute
@@ -505,6 +512,7 @@ export interface FileRoutesByTo {
   '/app/analytics/compa': typeof AppAnalyticsCompaRoute
   '/app/analytics/equity': typeof AppAnalyticsEquityRoute
   '/app/analytics/penetration': typeof AppAnalyticsPenetrationRoute
+  '/app/billing/upgrade': typeof AppBillingUpgradeRoute
   '/app/employees/$id': typeof AppEmployeesIdRoute
   '/payment/paylink/callback': typeof PaymentPaylinkCallbackRoute
   '/admin/blog': typeof AdminBlogIndexRoute
@@ -546,7 +554,7 @@ export interface FileRoutesById {
   '/app/allowances': typeof AppAllowancesRoute
   '/app/approvals': typeof AppApprovalsRoute
   '/app/audit': typeof AppAuditRoute
-  '/app/billing': typeof AppBillingRoute
+  '/app/billing': typeof AppBillingRouteWithChildren
   '/app/bonus': typeof AppBonusRoute
   '/app/employees': typeof AppEmployeesRouteWithChildren
   '/app/help': typeof AppHelpRoute
@@ -571,6 +579,7 @@ export interface FileRoutesById {
   '/app/analytics/compa': typeof AppAnalyticsCompaRoute
   '/app/analytics/equity': typeof AppAnalyticsEquityRoute
   '/app/analytics/penetration': typeof AppAnalyticsPenetrationRoute
+  '/app/billing/upgrade': typeof AppBillingUpgradeRoute
   '/app/employees/$id': typeof AppEmployeesIdRoute
   '/payment/paylink/callback': typeof PaymentPaylinkCallbackRoute
   '/admin/blog/': typeof AdminBlogIndexRoute
@@ -638,6 +647,7 @@ export interface FileRouteTypes {
     | '/app/analytics/compa'
     | '/app/analytics/equity'
     | '/app/analytics/penetration'
+    | '/app/billing/upgrade'
     | '/app/employees/$id'
     | '/payment/paylink/callback'
     | '/admin/blog/'
@@ -698,6 +708,7 @@ export interface FileRouteTypes {
     | '/app/analytics/compa'
     | '/app/analytics/equity'
     | '/app/analytics/penetration'
+    | '/app/billing/upgrade'
     | '/app/employees/$id'
     | '/payment/paylink/callback'
     | '/admin/blog'
@@ -763,6 +774,7 @@ export interface FileRouteTypes {
     | '/app/analytics/compa'
     | '/app/analytics/equity'
     | '/app/analytics/penetration'
+    | '/app/billing/upgrade'
     | '/app/employees/$id'
     | '/payment/paylink/callback'
     | '/admin/blog/'
@@ -1139,6 +1151,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppEmployeesIdRouteImport
       parentRoute: typeof AppEmployeesRoute
     }
+    '/app/billing/upgrade': {
+      id: '/app/billing/upgrade'
+      path: '/upgrade'
+      fullPath: '/app/billing/upgrade'
+      preLoaderRoute: typeof AppBillingUpgradeRouteImport
+      parentRoute: typeof AppBillingRoute
+    }
     '/app/analytics/penetration': {
       id: '/app/analytics/penetration'
       path: '/analytics/penetration'
@@ -1336,6 +1355,18 @@ const AdminRouteChildren: AdminRouteChildren = {
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
+interface AppBillingRouteChildren {
+  AppBillingUpgradeRoute: typeof AppBillingUpgradeRoute
+}
+
+const AppBillingRouteChildren: AppBillingRouteChildren = {
+  AppBillingUpgradeRoute: AppBillingUpgradeRoute,
+}
+
+const AppBillingRouteWithChildren = AppBillingRoute._addFileChildren(
+  AppBillingRouteChildren,
+)
+
 interface AppEmployeesRouteChildren {
   AppEmployeesIdRoute: typeof AppEmployeesIdRoute
 }
@@ -1352,7 +1383,7 @@ interface AppRouteChildren {
   AppAllowancesRoute: typeof AppAllowancesRoute
   AppApprovalsRoute: typeof AppApprovalsRoute
   AppAuditRoute: typeof AppAuditRoute
-  AppBillingRoute: typeof AppBillingRoute
+  AppBillingRoute: typeof AppBillingRouteWithChildren
   AppBonusRoute: typeof AppBonusRoute
   AppEmployeesRoute: typeof AppEmployeesRouteWithChildren
   AppHelpRoute: typeof AppHelpRoute
@@ -1374,7 +1405,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAllowancesRoute: AppAllowancesRoute,
   AppApprovalsRoute: AppApprovalsRoute,
   AppAuditRoute: AppAuditRoute,
-  AppBillingRoute: AppBillingRoute,
+  AppBillingRoute: AppBillingRouteWithChildren,
   AppBonusRoute: AppBonusRoute,
   AppEmployeesRoute: AppEmployeesRouteWithChildren,
   AppHelpRoute: AppHelpRoute,
@@ -1421,13 +1452,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

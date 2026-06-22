@@ -34,7 +34,7 @@ function TicketsPage() {
     { key: "requester_name", header: "Requester", cell: (r) => <div><div className="text-sm">{r.requester_name}</div><div className="text-xs text-muted-foreground">{r.requester_email}</div></div> },
     { key: "priority", header: "Priority", cell: (r) => <StatusBadge value={r.priority} /> },
     { key: "status", header: "Status", cell: (r) => <StatusBadge value={r.status} /> },
-    { key: "created_at", header: "Created", sortable: true, cell: (r) => <span className="text-xs tabular-nums">{new Date(r.created_at).toLocaleDateString()}</span> },
+    { key: "created_at", header: "Created", sortable: true, cell: (r) => <span className="text-xs tabular-nums" dir="ltr">{new Date(r.created_at).toLocaleDateString("en-GB")}</span> },
     { key: "a", header: "", cell: (r) => <Button asChild variant="ghost" size="sm"><Link to="/admin/tickets/$id" params={{ id: r.id }}>Open</Link></Button> },
   ];
 
