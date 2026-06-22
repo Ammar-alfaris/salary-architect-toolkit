@@ -133,7 +133,7 @@ function BlogList() {
     { key: "slug", header: "Slug", cell: (r) => <code className="text-xs">{r.slug}</code> },
     { key: "status", header: "Status", cell: (r) => <StatusBadge value={r.status} /> },
     { key: "publish_at", header: "Publish", cell: (r) => r.publish_at ? <span className="text-xs tabular-nums">{new Date(r.publish_at).toLocaleString()}</span> : "—" },
-    { key: "updated_at", header: "Updated", sortable: true, cell: (r) => <span className="text-xs tabular-nums">{new Date(r.updated_at).toLocaleDateString()}</span> },
+    { key: "updated_at", header: "Updated", sortable: true, cell: (r) => <span className="text-xs tabular-nums" dir="ltr">{new Date(r.updated_at).toLocaleDateString("en-GB")}</span> },
     { key: "a", header: "", cell: (r) => (
       <div className="flex gap-1">
         <Button asChild variant="ghost" size="icon"><Link to="/admin/blog/$id" params={{ id: r.id }}><Pencil className="w-4 h-4" /></Link></Button>
