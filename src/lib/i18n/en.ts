@@ -126,6 +126,8 @@ export const en: Dict = {
   billing_seats_used: "Seats used",
   billing_employees_used: "Employees",
   billing_change_plan: "Change plan",
+  billing_upgrade_plan: "Upgrade plan",
+  billing_back_to_billing: "Back to billing",
   billing_cancel: "Cancel subscription",
   billing_cancel_confirm: "Cancel your subscription? You'll keep access until the end of the current period.",
   billing_canceling: "Canceling…",
@@ -133,6 +135,13 @@ export const en: Dict = {
   billing_pay_now_activate: "Pay now & activate",
   billing_trial_amount: "Amount due",
   billing_change_plan_link: "Change plan",
+  upgrade_page_title: "Upgrade your plan",
+  upgrade_page_sub: "Pick the plan that fits. Upgrades apply immediately, downgrades take effect at the end of your billing period.",
+  upgrade_current_label: "Your current plan",
+  upgrade_current_badge: "Current",
+  upgrade_to_plan: "Upgrade to {plan}",
+  downgrade_to_plan: "Downgrade to {plan}",
+  downgrade_label: "downgrade",
 
   // Quota
   quota_users_full: "You've reached your user limit ({n}). Upgrade to add more.",
