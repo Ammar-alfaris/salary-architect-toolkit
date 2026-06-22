@@ -190,7 +190,7 @@ function UpgradePage() {
                     </Button>
                   ) : (
                     <Button
-                      onClick={() => onChoose(plan, action.intent)}
+                      onClick={() => onChoose(plan, action.intent as "upgrade" | "downgrade")}
                       className="w-full"
                       variant={action.intent === "upgrade" ? "default" : "outline"}
                     >
