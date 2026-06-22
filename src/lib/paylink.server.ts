@@ -155,7 +155,6 @@ export async function addInvoice(
     clientMobile: input.clientMobile,
     orderNumber: input.orderNumber,
     currency: input.currency ?? "SAR",
-    supportedCardBrands: input.supportedCardBrands ?? ["mada", "visaMastercard"],
     displayPending: input.displayPending ?? true,
     products: input.products.map((p) => ({
       title: p.title,
@@ -164,6 +163,11 @@ export async function addInvoice(
       description: p.description,
     })),
   };
+  // Only forward supportedCardBrands when explicitly provided; otherwise let
+  // Paylink use the full brand list enabled on the merchant account.
+  if (input.supportedCardBrands && input.supportedCardBrands.length > 0) {
+    body.supportedCardBrands = input.supportedCardBrands;
+  }
   if (input.clientEmail) body.clientEmail = input.clientEmail;
   try {
     const res = await fetch(`${baseUrl}/api/addInvoice`, {
