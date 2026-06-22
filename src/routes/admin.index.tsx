@@ -18,7 +18,11 @@ export const Route = createFileRoute("/admin/")({ component: Dashboard });
 const CHART_COLORS = ["hsl(var(--primary))", "hsl(var(--accent))", "#10b981", "#f59e0b", "#ef4444"];
 
 function Dashboard() {
-  const [k, setK] = useState({ users: 0, orgs: 0, activeSubs: 0, trials: 0, mrr: 0, openTickets: 0, unreadMsgs: 0, posts: 0 });
+  const [k, setK] = useState({
+    users: 0, orgs: 0, activeSubs: 0, trials: 0,
+    mrr: 0, revenueMonth: 0, revenueYear: 0, paymentsMonth: 0,
+    openTickets: 0, unreadMsgs: 0, posts: 0,
+  });
   const [signups, setSignups] = useState<any[]>([]);
   const [tickets, setTickets] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
@@ -27,14 +31,18 @@ function Dashboard() {
 
   useEffect(() => {
     (async () => {
+      const startOfMonth = new Date(); startOfMonth.setDate(1); startOfMonth.setHours(0, 0, 0, 0);
+      const startOfYear = new Date(); startOfYear.setMonth(0, 1); startOfYear.setHours(0, 0, 0, 0);
+
       const [
         { count: users }, { count: orgs },
         { data: subs }, { count: openTickets }, { count: unreadMsgs },
         { count: posts }, { data: recent }, { data: tk }, { data: msg }, { data: plans },
+        { data: paidOrders },
       ] = await Promise.all([
         supabase.from("profiles").select("*", { count: "exact", head: true }),
         supabase.from("organizations").select("*", { count: "exact", head: true }),
-        supabase.from("subscriptions").select("status, amount, plan_id"),
+        supabase.from("subscriptions").select("status, amount, plan_id, billing_cycle, payment_status"),
         supabase.from("support_tickets").select("*", { count: "exact", head: true }).in("status", ["new", "open", "in_progress"]),
         supabase.from("contact_messages").select("*", { count: "exact", head: true }).eq("status", "new"),
         supabase.from("blog_posts").select("*", { count: "exact", head: true }).eq("status", "published"),
@@ -42,16 +50,38 @@ function Dashboard() {
         supabase.from("support_tickets").select("id,subject,priority,status,created_at").order("created_at", { ascending: false }).limit(5),
         supabase.from("contact_messages").select("id,name,subject,status,created_at").order("created_at", { ascending: false }).limit(5),
         supabase.from("plans").select("id,name"),
+        supabase.from("orders").select("paid_amount, amount, currency, paid_at, created_at, plan_id, status")
+          .eq("status", "paid")
+          .gte("paid_at", startOfYear.toISOString()),
       ]);
 
       const subList = subs || [];
-      const active = subList.filter((s) => s.status === "active");
-      const trial = subList.filter((s) => s.status === "trial");
-      const mrr = active.reduce((acc, s: any) => acc + (Number(s.amount) || 0), 0);
+      // Revenue-recognised subs: active OR trial whose payment cleared.
+      const recognised = subList.filter((s: any) =>
+        s.status === "active" ||
+        ((s.status === "trial" || s.status === "trial_ending") && s.payment_status === "paid"),
+      );
+      // MRR: monthly amount + annual/12, summed across recognised subs.
+      const mrr = recognised.reduce((acc, s: any) => {
+        const amt = Number(s.amount) || 0;
+        return acc + (s.billing_cycle === "annual" ? amt / 12 : amt);
+      }, 0);
+      const trial = subList.filter((s: any) => s.status === "trial" || s.status === "trial_ending");
+
+      const orders = paidOrders || [];
+      const revenueYear = orders.reduce((a, o: any) => a + Number(o.paid_amount ?? o.amount ?? 0), 0);
+      const monthOrders = orders.filter((o: any) =>
+        new Date(o.paid_at ?? o.created_at).getTime() >= startOfMonth.getTime(),
+      );
+      const revenueMonth = monthOrders.reduce((a, o: any) => a + Number(o.paid_amount ?? o.amount ?? 0), 0);
 
       setK({
         users: users ?? 0, orgs: orgs ?? 0,
-        activeSubs: active.length, trials: trial.length, mrr,
+        activeSubs: recognised.length, trials: trial.length,
+        mrr: Math.round(mrr),
+        revenueMonth: Math.round(revenueMonth),
+        revenueYear: Math.round(revenueYear),
+        paymentsMonth: monthOrders.length,
         openTickets: openTickets ?? 0, unreadMsgs: unreadMsgs ?? 0, posts: posts ?? 0,
       });
 
@@ -84,12 +114,12 @@ function Dashboard() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <KpiCard label="Total users" value={k.users} icon={Users} />
           <KpiCard label="Organizations" value={k.orgs} icon={Building2} />
-          <KpiCard label="Active subscriptions" value={k.activeSubs} icon={CreditCard} accent="success" />
+          <KpiCard label="Paid subscriptions" value={k.activeSubs} icon={CreditCard} accent="success" />
           <KpiCard label="Trials" value={k.trials} icon={Sparkles} accent="info" />
-          <KpiCard label="MRR (est.)" value={`$${k.mrr.toLocaleString()}`} icon={DollarSign} accent="success" hint="Sum of active subscription amounts" />
+          <KpiCard label="MRR" value={`SAR ${k.mrr.toLocaleString()}`} icon={DollarSign} accent="success" hint="Monthly recurring (active + paid trials)" />
+          <KpiCard label="Revenue this month" value={`SAR ${k.revenueMonth.toLocaleString()}`} icon={DollarSign} accent="success" hint={`${k.paymentsMonth} successful payments`} />
+          <KpiCard label="Revenue YTD" value={`SAR ${k.revenueYear.toLocaleString()}`} icon={DollarSign} accent="info" />
           <KpiCard label="Open tickets" value={k.openTickets} icon={LifeBuoy} accent="warning" />
-          <KpiCard label="Unread messages" value={k.unreadMsgs} icon={Inbox} accent="info" />
-          <KpiCard label="Published posts" value={k.posts} icon={FileText} />
         </div>
 
         <div className="grid lg:grid-cols-2 gap-4">
