@@ -96,6 +96,21 @@ export async function processPaylinkTransaction(args: {
       customerEmail: receiptEmail,
       customerName: receiptName,
     });
+    // Audit successful payment.
+    if (order.organization_id) {
+      try {
+        const { logAuditServer } = await import("@/lib/audit.server");
+        await logAuditServer({
+          organizationId: order.organization_id as string,
+          actorId: order.user_id as string | null,
+          action: "payment.succeeded",
+          entityType: "order",
+          entityId: order.id as string,
+          entityLabel: (order.invoice_number as string | null) ?? null,
+          metadata: { amount: paidAmount, transaction_no: args.transactionNo },
+        });
+      } catch {}
+    }
   } else if (
     (paymentStatus === "failed" || paymentStatus === "cancelled") &&
     !alreadyProcessed &&
@@ -123,7 +138,20 @@ export async function processPaylinkTransaction(args: {
         orderId: order.id, message: (e as Error).message,
       }));
     }
+    // Audit failed/cancelled payment.
+    try {
+      const { logAuditServer } = await import("@/lib/audit.server");
+      await logAuditServer({
+        organizationId: order.organization_id as string,
+        actorId: order.user_id as string | null,
+        action: paymentStatus === "cancelled" ? "payment.cancelled" : "payment.failed",
+        entityType: "order",
+        entityId: order.id as string,
+        metadata: { amount: paidAmount, transaction_no: args.transactionNo },
+      });
+    } catch {}
   }
+
 
   return {
     orderId: order.id as string,
