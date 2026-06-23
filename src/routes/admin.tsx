@@ -1,33 +1,32 @@
-import { Outlet, createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { Outlet, createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { verifyPlatformAdmin } from "@/lib/platform-admin.functions";
+import { isRedirect } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/admin")({ component: AdminLayout });
+export const Route = createFileRoute("/admin")({
+  ssr: false,
+  beforeLoad: async () => {
+    try {
+      await verifyPlatformAdmin();
+    } catch (err) {
+      if (isRedirect(err)) throw err;
+      // 401 = not signed in → /auth, 403 = signed in but not admin → show denial UI
+      if (err instanceof Response && err.status === 401) {
+        throw redirect({ to: "/auth" });
+      }
+      return { adminDenied: true as const };
+    }
+    return { adminDenied: false as const };
+  },
+  component: AdminLayout,
+});
 
 function AdminLayout() {
-  const [state, setState] = useState<"checking" | "ok" | "noauth" | "noaccess">("checking");
+  const { adminDenied } = Route.useRouteContext();
 
-  useEffect(() => {
-    (async () => {
-      const { data: s } = await supabase.auth.getSession();
-      if (!s.session) { window.location.href = "/auth"; return; }
-      const { data } = await supabase
-        .from("platform_admins")
-        .select("role")
-        .eq("user_id", s.session.user.id)
-        .eq("status", "active")
-        .maybeSingle();
-      setState(data ? "ok" : "noaccess");
-    })();
-  }, []);
-
-  if (state === "checking")
-    return <div className="min-h-screen flex items-center justify-center text-sm text-muted-foreground">Loading admin console…</div>;
-
-  if (state === "noaccess")
+  if (adminDenied) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
         <div className="max-w-md text-center space-y-4">
@@ -45,6 +44,7 @@ function AdminLayout() {
         </div>
       </div>
     );
+  }
 
   return <AdminShell><Outlet /></AdminShell>;
 }
