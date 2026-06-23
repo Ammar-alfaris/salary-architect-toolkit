@@ -74,6 +74,15 @@ async function enqueue(args: {
   messageId: string;
   label: string;
   metadata?: Record<string, unknown>;
+}): Promise<void> { return enqueueRawTransactionalEmail(args); }
+
+export async function enqueueRawTransactionalEmail(args: {
+  to: string;
+  subject: string;
+  html: string;
+  messageId: string;
+  label: string;
+  metadata?: Record<string, unknown>;
 }) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const unsubscribeToken = await getOrCreateUnsubscribeToken(args.to);
