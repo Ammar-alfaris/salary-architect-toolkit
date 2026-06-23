@@ -21,10 +21,10 @@ interface EmailLog {
   created_at: string;
 }
 interface CronJob {
-  jobid: number; jobname: string; schedule: string; active: boolean; command: string;
+  id: string; jobid: number; jobname: string; schedule: string; active: boolean; command: string;
 }
 interface CronRun {
-  jobid: number; jobname: string | null; runid: number;
+  id: string; jobid: number; jobname: string | null; runid: number;
   status: string; return_message: string | null;
   start_time: string; end_time: string | null;
 }
@@ -50,8 +50,8 @@ function MonitoringPage() {
       (supabase.rpc as any)("admin_list_cron_runs", { _limit: 100 }),
     ]);
     setEmails((e as any) || []);
-    setJobs((j as any) || []);
-    setRuns((r as any) || []);
+    setJobs(((j as any[]) || []).map((x) => ({ ...x, id: String(x.jobid) })));
+    setRuns(((r as any[]) || []).map((x) => ({ ...x, id: String(x.runid) })));
     setLoading(false);
   };
 
