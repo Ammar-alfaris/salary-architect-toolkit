@@ -1,5 +1,4 @@
 import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
-import { useEffect } from "react";
 import "../styles.css";
 import { I18nProvider } from "@/lib/i18n";
 import { ThemeProvider } from "@/lib/theme";
@@ -7,8 +6,6 @@ import { AuthProvider } from "@/lib/auth";
 import { QueryProvider } from "@/lib/query";
 import { Toaster } from "@/components/ui/sonner";
 import { ScrollToTop } from "@/components/scroll-to-top";
-import { CookieConsentBanner } from "@/components/cookie-consent";
-import { installErrorTracking } from "@/lib/error-tracking";
 
 function NotFoundComponent() {
   return (
@@ -36,7 +33,12 @@ export const Route = createRootRoute({
       { property: "og:site_name", content: "Total Reward" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "google-site-verification", content: "SHzpadfotJNj8WX3cUOIalDXRKe4450zH2xo4g0lhKA" },
+      { property: "og:title", content: "Total Reward — Compensation Platform" },
+      { name: "twitter:title", content: "Total Reward — Compensation Platform" },
+      { property: "og:description", content: "Design salary structures, plan bonuses, run merit cycles, and manage allowances — built for Total Rewards teams." },
+      { name: "twitter:description", content: "Design salary structures, plan bonuses, run merit cycles, and manage allowances — built for Total Rewards teams." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/b0ab2409-6b57-439e-8616-2a3d25e196ff/id-preview-bed418b3--2acbe2f2-b7be-4735-8fa4-d80fac74d23c.lovable.app-1782236165254.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/b0ab2409-6b57-439e-8616-2a3d25e196ff/id-preview-bed418b3--2acbe2f2-b7be-4735-8fa4-d80fac74d23c.lovable.app-1782236165254.png" },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -85,7 +87,6 @@ function RootShell({ children }: { children: React.ReactNode }) {
 }
 
 function RootComponent() {
-  useEffect(() => { installErrorTracking(); }, []);
   return (
     <ThemeProvider>
       <I18nProvider>
@@ -94,7 +95,6 @@ function RootComponent() {
             <ScrollToTop />
             <Outlet />
             <Toaster />
-            <CookieConsentBanner />
           </AuthProvider>
         </QueryProvider>
       </I18nProvider>
