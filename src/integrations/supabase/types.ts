@@ -396,8 +396,10 @@ export type Database = {
           entity_label: string | null
           entity_type: string
           id: string
+          ip_address: unknown
           metadata: Json | null
           organization_id: string
+          user_agent: string | null
         }
         Insert: {
           action: string
@@ -410,8 +412,10 @@ export type Database = {
           entity_label?: string | null
           entity_type: string
           id?: string
+          ip_address?: unknown
           metadata?: Json | null
           organization_id: string
+          user_agent?: string | null
         }
         Update: {
           action?: string
@@ -424,8 +428,10 @@ export type Database = {
           entity_label?: string | null
           entity_type?: string
           id?: string
+          ip_address?: unknown
           metadata?: Json | null
           organization_id?: string
+          user_agent?: string | null
         }
         Relationships: []
       }
@@ -2019,6 +2025,13 @@ export type Database = {
           cancel_at_period_end: boolean
           created_at: string
           dormant_at: string | null
+          dunning_attempts: number
+          dunning_last_attempt_at: string | null
+          dunning_last_error: string | null
+          dunning_next_retry_at: string | null
+          dunning_recovered_at: string | null
+          dunning_started_at: string | null
+          dunning_status: string
           end_at: string | null
           environment: string
           grace_end_at: string | null
@@ -2049,6 +2062,13 @@ export type Database = {
           cancel_at_period_end?: boolean
           created_at?: string
           dormant_at?: string | null
+          dunning_attempts?: number
+          dunning_last_attempt_at?: string | null
+          dunning_last_error?: string | null
+          dunning_next_retry_at?: string | null
+          dunning_recovered_at?: string | null
+          dunning_started_at?: string | null
+          dunning_status?: string
           end_at?: string | null
           environment?: string
           grace_end_at?: string | null
@@ -2079,6 +2099,13 @@ export type Database = {
           cancel_at_period_end?: boolean
           created_at?: string
           dormant_at?: string | null
+          dunning_attempts?: number
+          dunning_last_attempt_at?: string | null
+          dunning_last_error?: string | null
+          dunning_next_retry_at?: string | null
+          dunning_recovered_at?: string | null
+          dunning_started_at?: string | null
+          dunning_status?: string
           end_at?: string | null
           environment?: string
           grace_end_at?: string | null

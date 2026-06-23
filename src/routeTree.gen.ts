@@ -74,6 +74,7 @@ import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/em
 import { Route as ApiPublicPaylinkWebhookRouteImport } from './routes/api/public/paylink/webhook'
 import { Route as ApiPublicInvoicesOrderIdRouteImport } from './routes/api/public/invoices.$orderId'
 import { Route as ApiPublicCronLifecycleNoticesRouteImport } from './routes/api/public/cron/lifecycle-notices'
+import { Route as ApiPublicCronBillingEngineRouteImport } from './routes/api/public/cron/billing-engine'
 
 const TrustRoute = TrustRouteImport.update({
   id: '/trust',
@@ -403,6 +404,12 @@ const ApiPublicCronLifecycleNoticesRoute =
     path: '/api/public/cron/lifecycle-notices',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicCronBillingEngineRoute =
+  ApiPublicCronBillingEngineRouteImport.update({
+    id: '/api/public/cron/billing-engine',
+    path: '/api/public/cron/billing-engine',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -464,6 +471,7 @@ export interface FileRoutesByFullPath {
   '/admin/emails/': typeof AdminEmailsIndexRoute
   '/admin/tickets/': typeof AdminTicketsIndexRoute
   '/app/billing/': typeof AppBillingIndexRoute
+  '/api/public/cron/billing-engine': typeof ApiPublicCronBillingEngineRoute
   '/api/public/cron/lifecycle-notices': typeof ApiPublicCronLifecycleNoticesRoute
   '/api/public/invoices/$orderId': typeof ApiPublicInvoicesOrderIdRoute
   '/api/public/paylink/webhook': typeof ApiPublicPaylinkWebhookRoute
@@ -526,6 +534,7 @@ export interface FileRoutesByTo {
   '/admin/emails': typeof AdminEmailsIndexRoute
   '/admin/tickets': typeof AdminTicketsIndexRoute
   '/app/billing': typeof AppBillingIndexRoute
+  '/api/public/cron/billing-engine': typeof ApiPublicCronBillingEngineRoute
   '/api/public/cron/lifecycle-notices': typeof ApiPublicCronLifecycleNoticesRoute
   '/api/public/invoices/$orderId': typeof ApiPublicInvoicesOrderIdRoute
   '/api/public/paylink/webhook': typeof ApiPublicPaylinkWebhookRoute
@@ -594,6 +603,7 @@ export interface FileRoutesById {
   '/admin/emails/': typeof AdminEmailsIndexRoute
   '/admin/tickets/': typeof AdminTicketsIndexRoute
   '/app/billing/': typeof AppBillingIndexRoute
+  '/api/public/cron/billing-engine': typeof ApiPublicCronBillingEngineRoute
   '/api/public/cron/lifecycle-notices': typeof ApiPublicCronLifecycleNoticesRoute
   '/api/public/invoices/$orderId': typeof ApiPublicInvoicesOrderIdRoute
   '/api/public/paylink/webhook': typeof ApiPublicPaylinkWebhookRoute
@@ -663,6 +673,7 @@ export interface FileRouteTypes {
     | '/admin/emails/'
     | '/admin/tickets/'
     | '/app/billing/'
+    | '/api/public/cron/billing-engine'
     | '/api/public/cron/lifecycle-notices'
     | '/api/public/invoices/$orderId'
     | '/api/public/paylink/webhook'
@@ -725,6 +736,7 @@ export interface FileRouteTypes {
     | '/admin/emails'
     | '/admin/tickets'
     | '/app/billing'
+    | '/api/public/cron/billing-engine'
     | '/api/public/cron/lifecycle-notices'
     | '/api/public/invoices/$orderId'
     | '/api/public/paylink/webhook'
@@ -792,6 +804,7 @@ export interface FileRouteTypes {
     | '/admin/emails/'
     | '/admin/tickets/'
     | '/app/billing/'
+    | '/api/public/cron/billing-engine'
     | '/api/public/cron/lifecycle-notices'
     | '/api/public/invoices/$orderId'
     | '/api/public/paylink/webhook'
@@ -818,6 +831,7 @@ export interface RootRouteChildren {
   BlogIndexRoute: typeof BlogIndexRoute
   ApiPublicBlogWebhookRoute: typeof ApiPublicBlogWebhookRoute
   PaymentPaylinkCallbackRoute: typeof PaymentPaylinkCallbackRoute
+  ApiPublicCronBillingEngineRoute: typeof ApiPublicCronBillingEngineRoute
   ApiPublicCronLifecycleNoticesRoute: typeof ApiPublicCronLifecycleNoticesRoute
   ApiPublicInvoicesOrderIdRoute: typeof ApiPublicInvoicesOrderIdRoute
   ApiPublicPaylinkWebhookRoute: typeof ApiPublicPaylinkWebhookRoute
@@ -1283,6 +1297,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCronLifecycleNoticesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/cron/billing-engine': {
+      id: '/api/public/cron/billing-engine'
+      path: '/api/public/cron/billing-engine'
+      fullPath: '/api/public/cron/billing-engine'
+      preLoaderRoute: typeof ApiPublicCronBillingEngineRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -1453,6 +1474,7 @@ const rootRouteChildren: RootRouteChildren = {
   BlogIndexRoute: BlogIndexRoute,
   ApiPublicBlogWebhookRoute: ApiPublicBlogWebhookRoute,
   PaymentPaylinkCallbackRoute: PaymentPaylinkCallbackRoute,
+  ApiPublicCronBillingEngineRoute: ApiPublicCronBillingEngineRoute,
   ApiPublicCronLifecycleNoticesRoute: ApiPublicCronLifecycleNoticesRoute,
   ApiPublicInvoicesOrderIdRoute: ApiPublicInvoicesOrderIdRoute,
   ApiPublicPaylinkWebhookRoute: ApiPublicPaylinkWebhookRoute,
@@ -1463,13 +1485,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

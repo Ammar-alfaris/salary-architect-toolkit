@@ -1,85 +1,88 @@
-# خطة جاهزية الإطلاق — Total Reward
+# الأولوية #2 — نظام Dunning + توسيع سجل التدقيق
 
-&nbsp;
-
-ابدء بحسب الاولوية والاهمية من التالي الذي لم احذفه
-
-بعد التحقق من الدفع والإشعارات، إليك الفجوات الأساسية المتبقية قبل الإطلاق العام، مرتبة حسب الأولوية.
-
-## 1) أساسيات قانونية وامتثال (حرجة)
-
-- **اتفاقية معالجة البيانات (DPA)** ووصف واضح لمكان تخزين البيانات (السعودية/الاتحاد الأوروبي).
-- **سياسة الاحتفاظ بالبيانات والحذف**: مدد الاحتفاظ لكل جدول + زر "حذف حسابي" يحذف فعلياً (لا soft-delete فقط).
-- **سجل الموافقة على ملفات تعريف الارتباط (Cookie Consent)** متوافق مع PDPL السعودي/GDPR، مع تصنيف Strictly necessary / Analytics / Marketing.
-  &nbsp;
-- &nbsp;
-
-## 2) الأمان والحوكمة (حرجة)
-
-- **مسح أمني نهائي** + إصلاح كل النتائج الحرجة قبل الإطلاق.
-- **تفعيل HIBP** (حماية كلمات المرور المسربة) في Auth.
-- **سياسة كلمات مرور** قوية (≥10 أحرف، تعقيد).
-- **MFA اختياري** للحسابات الإدارية على الأقل.
-- **Rate limiting** على نقاط حساسة: /auth، /checkout، /api/public/*.
-- **مراجعة RLS** لجميع الجداول العامة + اختبار اختراق بسيط (محاولة قراءة بيانات منظمة أخرى).
-- **سجل تدقيق (Audit log)** للعمليات الحساسة: تغيير الباقة، إلغاء الاشتراك، حذف موظف، تغيير صلاحية.
-
-## 3) موثوقية وعمليات (حرجة)
-
-- **مراقبة الأخطاء**: ربط Sentry أو ما يكافئه للواجهة والـ server functions.
-- **مراقبة قائمة البريد**: لوحة لمتابعة `email_send_log` والـ DLQ، وتنبيه إذا تراكمت رسائل فاشلة.
-- **مراقبة Cron jobs**: تأكيد عمل `lifecycle-notices-daily` و`paylink-renew` يومياً، مع تنبيه عند الفشل.
-- **نسخ احتياطي**: التأكد من تفعيل النسخ الاحتياطي اليومي + اختبار استعادة فعلية مرة واحدة.
-- **خطة استجابة للحوادث**: من يُتصل به، كيف نعلن downtime، صفحة status.
-
-## 4) فجوات وظيفية مرتبطة بالاشتراك
-
-- **التعامل مع فشل الدفع التلقائي عند التجديد**: dunning (3 محاولات على مدى 7 أيام) ثم تحويل الاشتراك إلى `grace` ثم `restricted`. حالياً يوجد `sendPaymentFailedEmail` لكن المنطق التلقائي غير مفعّل.
-- **تغيير الباقة (Upgrade/Downgrade)** مع احتساب proration واضح.
-- **استرداد فعلي عبر Paylink** (refund API) مع توليد إشعار دائن.
-- **حد المقاعد/الموظفين** لكل باقة + رسالة واضحة عند التجاوز.
-
-## 5) المحتوى والتسويق
-
-- **محتوى الصفحة الرئيسية**: مراجعة نهائية للنصوص، إزالة أي placeholder.
-- **SEO**: title/description/OG لكل صفحة عامة، sitemap.xml محدّث، robots.txt، JSON-LD للمنظمة والـ Pricing.
-- &nbsp;
-- &nbsp;
-  &nbsp;
-
-## 6) تجربة المستخدم
-
-- **Onboarding موجَّه** للمستخدم الجديد: استيراد أول موظفين، إنشاء أول هيكل رواتب.
-- **استيراد Excel/CSV** للموظفين مع تحقق وأخطاء واضحة.
-- **دعم اللغتين كاملاً**: مراجعة كل سلاسل i18n، اتجاه RTL في كل المكونات، تنسيق التواريخ والأرقام بالعربية.
-- **الوصولية (a11y)**: تباين الألوان، تنقل لوحة المفاتيح، aria-labels، اختبار قارئ شاشة سريع.
-- **استجابة الموبايل**: مراجعة كل صفحات /app على شاشة 390px.
-
-## 7) الدعم والتوثيق
-
-- **مركز مساعدة** بأسئلة شائعة (FAQ) ومقالات "كيف تبدأ".
-- **قناة دعم**: بريد + نموذج تذاكر داخل التطبيق (موجود — يحتاج SLA معلن).
-- &nbsp;
-
-## 8) قبل الضغط على Launch (Checklist يوم الإطلاق)
-
-- &nbsp;
-- التأكد من DNS للبريد (`notify.totalreward.app`) في حالة active وليس awaiting_dns.
-- التأكد من ربط النطاق المخصص totalreward.app + SSL فعّال.
-- إزالة أي حسابات/منظمات تجريبية من قاعدة البيانات.
-- التأكد من أن `VITE_PAYMENTS_CLIENT_TOKEN` في .env.production يطابق حساب Paylink الحي.
-- مسح أمني أخير = صفر نتائج حرجة.
+## الهدف
+1. **Dunning**: عند فشل خصم التجديد التلقائي، نُجري محاولات ذكية متعددة مع إشعارات تصاعدية بدلاً من إيقاف الاشتراك فوراً.
+2. **Audit Log موسّع**: تسجيل أحداث الفوترة والأمان والصلاحيات (وليس فقط أحداث المنتج) مع IP و user-agent.
 
 ---
 
-## ماذا أقترح أن نبدأ به الآن؟
+## 1) نظام Dunning للمدفوعات الفاشلة
 
-أوصي بالترتيب التالي للجولات القادمة:
+### السلوك (دورة 14 يوماً)
+- **يوم 0**: فشل أول محاولة خصم → بريد `payment_failed` + حالة `past_due`.
+- **يوم +1**: محاولة تلقائية #2 + بريد تذكير ودّي.
+- **يوم +3**: محاولة تلقائية #3 + تحذير "بطاقتك بحاجة للتحديث".
+- **يوم +7**: محاولة أخيرة + بريد عاجل "آخر إنذار".
+- **يوم +14**: إذا لم تنجح → الاشتراك → `restricted` (قراءة فقط) + بريد إشعار بالإيقاف.
+- **نجاح أي محاولة** → إلغاء سلسلة Dunning، تفعيل، بريد "تم الاستئناف".
 
-1.  **DPA + Cookie consent** (قانوني — يعطّل الإطلاق إن غاب).
-2. **Dunning للدفع التلقائي الفاشل + Audit log موسّع** (حوكمة مالية).
-3. **مراقبة Sentry + لوحة email/cron health** (موثوقية).
-4. **Onboarding + استيراد Excel** (تجربة أول استخدام).
-5. **محتوى المدونة + SEO النهائي + OG images** (تسويق).
+### التغييرات على قاعدة البيانات (migration)
+على جدول `subscriptions`:
+- `dunning_status` text: `none | past_due | recovering | suspended`
+- `dunning_started_at`, `dunning_next_retry_at`, `dunning_recovered_at` (timestamptz)
+- `dunning_attempts` int default 0
+- `dunning_last_error` text
 
-أخبرني بأي بند تريد البدء به وسأعدّ خطة تنفيذ تفصيلية له.
+على جدول `audit_logs` (لدعم تتبع الأمان):
+- `ip_address` inet
+- `user_agent` text
+- توسيع نوع `action` و `entity_type` (نص حر — لا CHECK).
+
+### الكود
+- **`src/lib/dunning.server.ts`** (جديد): دوال `attemptRenewalCharge()` / `scheduleNextRetry()` / `markRecovered()` / `markSuspended()`. تستخدم Paylink recurring charge API بـ `card_token` المخزّن في `payment_methods`.
+- **`src/routes/api/public/cron/billing-engine.ts`** (جديد): يومياً 02:00 UTC — يفحص:
+  1. اشتراكات `active` + `renewal_at <= now()` + `auto_renew=true` + `cancel_at_period_end=false` → يحاول الخصم.
+  2. اشتراكات `dunning_status='past_due'` + `dunning_next_retry_at <= now()` → يعيد المحاولة.
+  3. اشتراكات `dunning_status='past_due'` + بدأت قبل 14+ يوماً → تعليق.
+- **`src/lib/notify.server.ts`**: إضافة `sendDunningRetryEmail()` (3 مراحل) + `sendSubscriptionSuspendedEmail()` + `sendPaymentRecoveredEmail()`.
+- **`src/lib/billing.functions.ts`**: إضافة `retryFailedPaymentNow()` (زر يدوي في صفحة الفوترة).
+
+### واجهة المستخدم
+- **`src/routes/app.billing.index.tsx`**: لافتة حمراء عند `dunning_status='past_due'` تعرض المحاولات السابقة + زر "حدّث البطاقة" + زر "إعادة المحاولة الآن".
+- **`src/routes/admin.subscriptions.tsx`**: عمود `Dunning` يبيّن للمشرف الاشتراكات المتعثّرة.
+
+---
+
+## 2) توسيع Audit Log
+
+### أحداث جديدة تُسجَّل
+- **فوترة**: `subscription.created`, `subscription.activated`, `subscription.cancelled`, `subscription.renewed`, `payment.succeeded`, `payment.failed`, `dunning.started`, `dunning.retry`, `dunning.recovered`, `dunning.suspended`.
+- **أمان/صلاحيات**: `auth.login`, `auth.logout`, `auth.password_changed`, `role.granted`, `role.revoked`, `invitation.sent`, `invitation.accepted`.
+
+### الكود
+- **`src/lib/audit.server.ts`** (جديد): `logAuditServer({ orgId, actorId, action, entityType, ..., ip, userAgent })`. يستخدم `supabaseAdmin` ويُستدعى من server functions و cron.
+- **`src/lib/audit.ts`** (الحالي): توسيع أنواع `AuditAction` و `AuditEntity`.
+- ربط النداءات في:
+  - `paylink-process.server.ts` (نجاح/فشل دفع).
+  - `dunning.server.ts` (كل تحوّل حالة).
+  - `billing.functions.ts` (إلغاء).
+  - `src/lib/auth.tsx` (تسجيل الدخول/الخروج).
+  - `invitations.functions.ts` (دعوات).
+
+### واجهة المستخدم
+- **`src/routes/app.audit.tsx`**: 
+  - إضافة فلاتر للأنواع الجديدة (billing, security).
+  - إظهار IP في صف موسّع عند الضغط.
+  - تلوين خاص لأحداث Dunning والأمان.
+- **`src/routes/admin.audit.tsx`**: نفس التحسينات على المستوى الإداري.
+
+---
+
+## ملاحظات تقنية
+
+- **Paylink recurring charging**: يستخدم `card_token` المحفوظ في `payment_methods`. سنطلب الـ token الموجود حالياً عبر API نفسه (`/api/v2/payInvoice` بـ `cardToken`). إن لم يتوفر token، نُعلّم الاشتراك مباشرة `past_due` ونرسل بريد "حدّث بطاقتك" دون محاولات.
+- **التزامن (Idempotency)**: كل محاولة خصم تنشئ سجل order مستقل بـ `idempotency_key = sub_id-attempt_n` لتجنّب الخصم المزدوج عند إعادة تشغيل الـ cron.
+- **حماية الـ cron**: نفس نمط `lifecycle-notices.ts` (`apikey` header = `SUPABASE_PUBLISHABLE_KEY`).
+- **i18n**: مفاتيح جديدة عربي/إنجليزي لكل البانرات والأزرار.
+
+---
+
+## ترتيب التنفيذ
+1. Migration (أعمدة Dunning + Audit).
+2. `dunning.server.ts` + إضافات `notify.server.ts`.
+3. cron `billing-engine.ts` + جدولته (pg_cron, 02:00 UTC).
+4. `audit.server.ts` + ربط النداءات.
+5. تحديثات UI (فوترة، تدقيق، إدارة).
+6. مفاتيح i18n.
+
+هل تريد البدء بتنفيذ الخطة كاملة، أم نبدأ بـ Dunning أولاً ثم Audit في خطوة لاحقة؟

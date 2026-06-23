@@ -383,3 +383,138 @@ export async function sendWelcomeEmail(args: {
     metadata: { user_id: args.userId },
   });
 }
+
+/* ───────────────────────── 6. Dunning retry ───────────────────────── */
+
+export async function sendDunningRetryEmail(args: {
+  to: string;
+  name: string | null;
+  locale: Locale;
+  amount: number;
+  stage: 1 | 2 | 3; // 1 = friendly, 2 = warning, 3 = final
+  nextRetryAt: string | null;
+  subscriptionId: string;
+}) {
+  const nice = fmtAmount(args.amount, "SAR");
+  const nextStr = args.nextRetryAt ? fmtDate(args.nextRetryAt, args.locale) : "—";
+  const titles = {
+    ar: {
+      1: "تذكير ودّي بشأن الدفع",
+      2: "تنبيه: حدّث بطاقتك قبل توقّف الخدمة",
+      3: "آخر إنذار قبل تعليق الاشتراك",
+    },
+    en: {
+      1: "A friendly payment reminder",
+      2: "Action required: update your card",
+      3: "Final notice before suspension",
+    },
+  } as const;
+  const subject = titles[args.locale][args.stage];
+  const body =
+    args.locale === "ar"
+      ? `
+    <p style="font-size:18px;font-weight:600;margin:0 0 8px 0">${subject}</p>
+    <p>${greet(args.locale, args.name)} لم نتمكن من تحصيل ${nice} من بطاقتك المحفوظة.</p>
+    <p>سنحاول مجدداً تلقائياً في <b>${nextStr}</b>. لتجنّب أي انقطاع، الرجاء التأكد من توفّر الرصيد أو تحديث بطاقتك الآن.</p>
+    <p style="margin:18px 0 22px 0">
+      <a href="${BASE_URL}/app/billing" style="display:inline-block;background:#0f172a;color:#fff;text-decoration:none;padding:12px 22px;border-radius:8px;font-weight:600">تحديث البطاقة</a>
+    </p>
+    ${args.stage === 3 ? '<p style="color:#b91c1c"><b>هذه آخر محاولة.</b> إن لم تنجح، سيتم تعليق الاشتراك تلقائياً.</p>' : ""}`
+      : `
+    <p style="font-size:18px;font-weight:600;margin:0 0 8px 0">${subject}</p>
+    <p>${greet(args.locale, args.name)} we couldn't charge ${nice} to your card on file.</p>
+    <p>We'll automatically retry on <b>${nextStr}</b>. To avoid any interruption, please make sure funds are available or update your card now.</p>
+    <p style="margin:18px 0 22px 0">
+      <a href="${BASE_URL}/app/billing" style="display:inline-block;background:#0f172a;color:#fff;text-decoration:none;padding:12px 22px;border-radius:8px;font-weight:600">Update card</a>
+    </p>
+    ${args.stage === 3 ? '<p style="color:#b91c1c"><b>This is the last retry.</b> If it fails, your subscription will be suspended automatically.</p>' : ""}`;
+  await enqueue({
+    to: args.to,
+    subject,
+    html: brandedWrap({ subject, bodyHtml: body, locale: args.locale }),
+    messageId: `dunning-${args.subscriptionId}-stage${args.stage}`,
+    label: "dunning_retry",
+    metadata: { subscription_id: args.subscriptionId, stage: args.stage, next_retry_at: args.nextRetryAt },
+  });
+}
+
+/* ───────────────────────── 7. Payment recovered ───────────────────────── */
+
+export async function sendPaymentRecoveredEmail(args: {
+  to: string;
+  name: string | null;
+  locale: Locale;
+  amount: number;
+  renewalAt: string;
+  subscriptionId: string;
+}) {
+  const nice = fmtAmount(args.amount, "SAR");
+  const dateStr = fmtDate(args.renewalAt, args.locale);
+  const subject =
+    args.locale === "ar"
+      ? "تم تحصيل الدفعة — اشتراكك نشط مجدداً"
+      : "Payment successful — your subscription is active again";
+  const body =
+    args.locale === "ar"
+      ? `
+    <p style="font-size:18px;font-weight:600;margin:0 0 8px 0">شكراً لك 🎉</p>
+    <p>${greet(args.locale, args.name)} تم تحصيل ${nice} بنجاح، واشتراكك نشط الآن.</p>
+    <p>التجديد القادم: <b>${dateStr}</b></p>
+    <p style="margin:18px 0 22px 0"><a href="${BASE_URL}/app/billing" style="color:#1f4fd9">عرض الفوترة</a></p>`
+      : `
+    <p style="font-size:18px;font-weight:600;margin:0 0 8px 0">Thank you 🎉</p>
+    <p>${greet(args.locale, args.name)} we successfully charged ${nice}, and your subscription is active again.</p>
+    <p>Next renewal: <b>${dateStr}</b></p>
+    <p style="margin:18px 0 22px 0"><a href="${BASE_URL}/app/billing" style="color:#1f4fd9">View billing</a></p>`;
+  // One success email per recovery — bucket by the renewal date so a future
+  // recovery can still send.
+  const dayKey = args.renewalAt.slice(0, 10);
+  await enqueue({
+    to: args.to,
+    subject,
+    html: brandedWrap({ subject, bodyHtml: body, locale: args.locale }),
+    messageId: `recovered-${args.subscriptionId}-${dayKey}`,
+    label: "payment_recovered",
+    metadata: { subscription_id: args.subscriptionId, amount: args.amount },
+  });
+}
+
+/* ───────────────────────── 8. Subscription suspended ───────────────────────── */
+
+export async function sendSubscriptionSuspendedEmail(args: {
+  to: string;
+  name: string | null;
+  locale: Locale;
+  amount: number;
+  subscriptionId: string;
+}) {
+  const nice = fmtAmount(args.amount, "SAR");
+  const subject =
+    args.locale === "ar"
+      ? "تم تعليق اشتراكك"
+      : "Your subscription has been suspended";
+  const body =
+    args.locale === "ar"
+      ? `
+    <p style="font-size:18px;font-weight:600;margin:0 0 8px 0">تم تعليق الاشتراك</p>
+    <p>${greet(args.locale, args.name)} بعد عدة محاولات لم ننجح في تحصيل ${nice}، تم تحويل حسابك إلى وضع القراءة فقط.</p>
+    <p>بياناتك محفوظة بالكامل. لإعادة تفعيل الاشتراك، حدّث بطاقتك من صفحة الفوترة.</p>
+    <p style="margin:18px 0 22px 0">
+      <a href="${BASE_URL}/app/billing" style="display:inline-block;background:#0f172a;color:#fff;text-decoration:none;padding:12px 22px;border-radius:8px;font-weight:600">إعادة التفعيل</a>
+    </p>`
+      : `
+    <p style="font-size:18px;font-weight:600;margin:0 0 8px 0">Subscription suspended</p>
+    <p>${greet(args.locale, args.name)} after several attempts we couldn't charge ${nice}, so your account has moved to read-only mode.</p>
+    <p>Your data is fully preserved. To re-activate, update your card from the billing page.</p>
+    <p style="margin:18px 0 22px 0">
+      <a href="${BASE_URL}/app/billing" style="display:inline-block;background:#0f172a;color:#fff;text-decoration:none;padding:12px 22px;border-radius:8px;font-weight:600">Re-activate</a>
+    </p>`;
+  await enqueue({
+    to: args.to,
+    subject,
+    html: brandedWrap({ subject, bodyHtml: body, locale: args.locale }),
+    messageId: `suspended-${args.subscriptionId}`,
+    label: "subscription_suspended",
+    metadata: { subscription_id: args.subscriptionId, amount: args.amount },
+  });
+}

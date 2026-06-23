@@ -55,6 +55,19 @@ export const cancelSubscriptionAtPeriodEnd = createServerFn({ method: "POST" })
       .eq("id", sub.id);
     if (error) throw new Error(error.message);
 
+    // Audit the cancellation.
+    try {
+      const { logAuditServer } = await import("@/lib/audit.server");
+      await logAuditServer({
+        organizationId: sub.organization_id as string,
+        actorId: userId,
+        action: "subscription.cancelled",
+        entityType: "subscription",
+        entityId: sub.id as string,
+        metadata: { end_at: sub.end_at, renewal_at: sub.renewal_at },
+      });
+    } catch {}
+
     // Fire the cancellation notification. Never fail the cancel itself
     // if the email queue is momentarily unavailable.
     try {
@@ -80,3 +93,43 @@ export const cancelSubscriptionAtPeriodEnd = createServerFn({ method: "POST" })
     }
     return { ok: true as const };
   });
+
+const RetrySchema = z.object({ subscriptionId: z.string().uuid() });
+
+/**
+ * Manually trigger a dunning retry for a past_due subscription. Used by
+ * the "Retry now" button in the billing UI. Verifies the caller is a
+ * member of the subscription's organization before kicking off the
+ * charge attempt.
+ */
+export const retryFailedPaymentNow = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => RetrySchema.parse(data))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: sub } = await supabase
+      .from("subscriptions")
+      .select("id, organization_id, dunning_status")
+      .eq("id", data.subscriptionId)
+      .maybeSingle();
+    if (!sub) throw new Error("Subscription not found");
+
+    const { data: member } = await supabase
+      .from("user_roles")
+      .select("user_id, role")
+      .eq("user_id", userId)
+      .eq("organization_id", sub.organization_id)
+      .maybeSingle();
+    if (!member || (member as any).role !== "admin") {
+      throw new Error("Only org admins can retry payments");
+    }
+
+    const { processSubscriptionRenewal } = await import("@/lib/dunning.server");
+    const r = await processSubscriptionRenewal(sub.id as string);
+    return {
+      ok: r.ok,
+      status: r.status,
+      message: r.message ?? null,
+    };
+  });
+

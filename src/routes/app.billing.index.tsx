@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
-import { getCurrentSubscription, cancelSubscriptionAtPeriodEnd } from "@/lib/billing.functions";
+import { getCurrentSubscription, cancelSubscriptionAtPeriodEnd, retryFailedPaymentNow } from "@/lib/billing.functions";
 import { getOrgUsage, type OrgUsage } from "@/lib/quota";
 import { useTrialStatus } from "@/lib/use-trial-status";
 import { getInvoiceDownloadUrl, listMyInvoices, getDefaultPaymentMethod } from "@/lib/invoice.functions";
@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { toast } from "sonner";
-import { ExternalLink, Download, CreditCard, ArrowUpRight } from "lucide-react";
+import { ExternalLink, Download, CreditCard, ArrowUpRight, AlertTriangle, RefreshCw } from "lucide-react";
 
 export const Route = createFileRoute("/app/billing/")({
   component: BillingPage,
@@ -29,6 +29,8 @@ function BillingPage() {
   const listInvoices = useServerFn(listMyInvoices);
   const getMethod = useServerFn(getDefaultPaymentMethod);
   const getDownload = useServerFn(getInvoiceDownloadUrl);
+  const retryFn = useServerFn(retryFailedPaymentNow);
+  const [retrying, setRetrying] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [sub, setSub] = useState<any>(null);
@@ -81,13 +83,89 @@ function BillingPage() {
     }
   }
 
+  async function handleRetry() {
+    if (!sub?.id) return;
+    try {
+      setRetrying(true);
+      const r = await retryFn({ data: { subscriptionId: sub.id } });
+      if (r.ok) toast.success(t("dunning_retry_now") + " ✓");
+      else toast.error(r.message || "Retry failed");
+      // Refresh subscription state
+      const fresh = await getSub({ data: { organizationId: organizationId! } });
+      setSub(fresh.subscription);
+    } catch (e: any) {
+      toast.error(e?.message || "Retry failed");
+    } finally {
+      setRetrying(false);
+    }
+  }
+
   if (loading) return <div className="p-6 text-sm text-muted-foreground">Loading…</div>;
 
   const isActive = sub?.status === "active";
+  const dunningStatus = sub?.dunning_status as string | undefined;
+  const inDunning = dunningStatus === "past_due";
+  const suspended = dunningStatus === "suspended";
 
   return (
     <div className="space-y-6 p-4 md:p-6">
       <PaymentTestModeBanner />
+
+      {(inDunning || suspended) && (
+        <div className={`rounded-lg border p-4 flex items-start gap-3 ${suspended ? "border-destructive/40 bg-destructive/5" : "border-orange-300 bg-orange-50 dark:bg-orange-950/20"}`}>
+          <AlertTriangle className={`w-5 h-5 mt-0.5 ${suspended ? "text-destructive" : "text-orange-600"}`} />
+          <div className="flex-1 space-y-2">
+            <div className="font-semibold">
+              {suspended ? t("dunning_suspended_title") : t("dunning_banner_title")}
+            </div>
+            <div className="text-sm text-muted-foreground">
+              {suspended ? t("dunning_suspended_desc") : t("dunning_banner_desc")}
+            </div>
+            {!suspended && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs pt-1">
+                <div>
+                  <div className="text-muted-foreground">{t("dunning_attempts")}</div>
+                  <div className="font-medium tabular-nums">{sub?.dunning_attempts ?? 0}</div>
+                </div>
+                {sub?.dunning_next_retry_at && (
+                  <div>
+                    <div className="text-muted-foreground">{t("dunning_next_retry")}</div>
+                    <div className="font-medium" dir="ltr">{fmtDate(sub.dunning_next_retry_at, locale)}</div>
+                  </div>
+                )}
+                {sub?.dunning_last_error && (
+                  <div className="col-span-2 sm:col-span-1 truncate">
+                    <div className="text-muted-foreground">{t("dunning_last_error")}</div>
+                    <div className="font-mono text-[11px] truncate" title={sub.dunning_last_error}>{sub.dunning_last_error}</div>
+                  </div>
+                )}
+              </div>
+            )}
+            <div className="flex flex-wrap gap-2 pt-1">
+              {!suspended && (
+                <Button size="sm" onClick={handleRetry} disabled={retrying}>
+                  <RefreshCw className={`w-3.5 h-3.5 me-1 ${retrying ? "animate-spin" : ""}`} />
+                  {t("dunning_retry_now")}
+                </Button>
+              )}
+              <Button size="sm" variant="outline" asChild>
+                <Link
+                  to="/checkout"
+                  search={{
+                    product: sub.plan?.slug ?? "plan",
+                    amount: Number(sub.amount ?? 0),
+                    title: t("dunning_update_card"),
+                  }}
+                >
+                  <CreditCard className="w-3.5 h-3.5 me-1" />
+                  {t("dunning_update_card")}
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div>
         <h1 className="text-2xl font-semibold">{t("billing_title")}</h1>
         <p className="text-sm text-muted-foreground">{t("billing_sub")}</p>

@@ -25,6 +25,22 @@ const ACTION_BADGE: Record<string, string> = {
   run_cycle: "bg-warning/15 text-warning",
 };
 
+function categoryFor(action: string): "billing" | "security" | "system" | "data" {
+  if (action.startsWith("payment.") || action.startsWith("subscription.") || action.startsWith("dunning.") || action.startsWith("invoice.")) return "billing";
+  if (action.startsWith("auth.") || action.startsWith("role.") || action.startsWith("invitation.") || action.startsWith("mfa.")) return "security";
+  if (action.startsWith("system.") || action.startsWith("cron.")) return "system";
+  return "data";
+}
+
+function categoryBadgeClass(cat: string) {
+  switch (cat) {
+    case "billing": return "bg-amber-500/15 text-amber-700 dark:text-amber-300";
+    case "security": return "bg-red-500/15 text-red-700 dark:text-red-300";
+    case "system": return "bg-slate-500/15 text-slate-700 dark:text-slate-300";
+    default: return "bg-primary/15 text-primary";
+  }
+}
+
 function AuditPage() {
   const { organizationId } = useAuth();
   const { t, locale } = useI18n();
@@ -128,28 +144,34 @@ function AuditPage() {
                     <th className="text-start px-4 py-2.5">{t("col_action")}</th>
                     <th className="text-start px-4 py-2.5">{t("col_entity")}</th>
                     <th className="text-start px-4 py-2.5">{t("col_label")}</th>
+                    <th className="text-start px-4 py-2.5">{t("audit_col_ip")}</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.map((r) => (
-                    <tr key={r.id} className="border-t hover:bg-muted/20">
-                      <td className="px-4 py-2.5 text-xs text-muted-foreground whitespace-nowrap">
-                        {fmtDateTime(r.created_at, locale)}
-                      </td>
-                      <td className="px-4 py-2.5 text-xs">{r.actor_email ?? "—"}</td>
-                      <td className="px-4 py-2.5">
-                        <span
-                          className={`text-xs px-2 py-0.5 rounded-full ${
-                            ACTION_BADGE[r.action] ?? "bg-muted"
-                          }`}
-                        >
-                          {r.action}
-                        </span>
-                      </td>
-                      <td className="px-4 py-2.5 text-xs text-muted-foreground">{r.entity_type}</td>
-                      <td className="px-4 py-2.5 text-sm">{r.entity_label ?? "—"}</td>
-                    </tr>
-                  ))}
+                  {rows.map((r) => {
+                    const cat = categoryFor(r.action);
+                    return (
+                      <tr key={r.id} className="border-t hover:bg-muted/20">
+                        <td className="px-4 py-2.5 text-xs text-muted-foreground whitespace-nowrap">
+                          {fmtDateTime(r.created_at, locale)}
+                        </td>
+                        <td className="px-4 py-2.5 text-xs">{r.actor_email ?? <span className="text-muted-foreground italic">system</span>}</td>
+                        <td className="px-4 py-2.5">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded ${categoryBadgeClass(cat)}`}>
+                              {t(`audit_category_${cat}` as any)}
+                            </span>
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${ACTION_BADGE[r.action] ?? "bg-muted"}`}>
+                              {r.action}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-2.5 text-xs text-muted-foreground">{r.entity_type}</td>
+                        <td className="px-4 py-2.5 text-sm">{r.entity_label ?? "—"}</td>
+                        <td className="px-4 py-2.5 text-xs font-mono text-muted-foreground" dir="ltr">{(r as any).ip_address ?? "—"}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
