@@ -19,6 +19,13 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+const PRICING_FAQS = [
+  { q: "Can I change plans later?", a: "Yes. You can upgrade or downgrade at any time — changes take effect immediately and are prorated." },
+  { q: "Is there a free trial?", a: "Most plans include a free trial period. No credit card is required to get started." },
+  { q: "What currencies are supported?", a: "Plans are billed in the currency shown on the plan card. Contact us if you need local pricing." },
+  { q: "What happens when I reach my employee limit?", a: "You'll be prompted to upgrade to a higher plan. Your existing data is never deleted." },
+];
+
 export const Route = createFileRoute("/pricing")({
   component: PricingPage,
   head: () => ({
@@ -31,6 +38,20 @@ export const Route = createFileRoute("/pricing")({
       { property: "og:type", content: "website" },
     ],
     links: [{ rel: "canonical", href: "https://totalreward.app/pricing" }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: PRICING_FAQS.map((f) => ({
+            "@type": "Question",
+            name: f.q,
+            acceptedAnswer: { "@type": "Answer", text: f.a },
+          })),
+        }),
+      },
+    ],
   }),
 });
 

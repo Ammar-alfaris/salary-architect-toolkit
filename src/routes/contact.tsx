@@ -31,6 +31,30 @@ export const Route = createFileRoute("/contact")({
     links: [
       { rel: "canonical", href: "https://totalreward.app/contact" },
     ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          name: "Total Reward",
+          url: "https://totalreward.app",
+          email: "support@totalreward.app",
+          telephone: "+966-55-555-5555",
+          contactPoint: [{
+            "@type": "ContactPoint",
+            contactType: "customer support",
+            email: "support@totalreward.app",
+            telephone: "+966-55-555-5555",
+            availableLanguage: ["English", "Arabic"],
+          }],
+          address: {
+            "@type": "PostalAddress",
+            addressCountry: "SA",
+          },
+        }),
+      },
+    ],
   }),
 });
 
