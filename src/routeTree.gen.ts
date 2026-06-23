@@ -77,6 +77,7 @@ import { Route as ApiPublicPaylinkWebhookRouteImport } from './routes/api/public
 import { Route as ApiPublicInvoicesOrderIdRouteImport } from './routes/api/public/invoices.$orderId'
 import { Route as ApiPublicErrorsReportRouteImport } from './routes/api/public/errors/report'
 import { Route as ApiPublicCronLifecycleNoticesRouteImport } from './routes/api/public/cron/lifecycle-notices'
+import { Route as ApiPublicCronFxRefreshRouteImport } from './routes/api/public/cron/fx-refresh'
 import { Route as ApiPublicCronBillingEngineRouteImport } from './routes/api/public/cron/billing-engine'
 
 const TrustRoute = TrustRouteImport.update({
@@ -422,6 +423,11 @@ const ApiPublicCronLifecycleNoticesRoute =
     path: '/api/public/cron/lifecycle-notices',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicCronFxRefreshRoute = ApiPublicCronFxRefreshRouteImport.update({
+  id: '/api/public/cron/fx-refresh',
+  path: '/api/public/cron/fx-refresh',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicCronBillingEngineRoute =
   ApiPublicCronBillingEngineRouteImport.update({
     id: '/api/public/cron/billing-engine',
@@ -492,6 +498,7 @@ export interface FileRoutesByFullPath {
   '/admin/tickets/': typeof AdminTicketsIndexRoute
   '/app/billing/': typeof AppBillingIndexRoute
   '/api/public/cron/billing-engine': typeof ApiPublicCronBillingEngineRoute
+  '/api/public/cron/fx-refresh': typeof ApiPublicCronFxRefreshRoute
   '/api/public/cron/lifecycle-notices': typeof ApiPublicCronLifecycleNoticesRoute
   '/api/public/errors/report': typeof ApiPublicErrorsReportRoute
   '/api/public/invoices/$orderId': typeof ApiPublicInvoicesOrderIdRoute
@@ -558,6 +565,7 @@ export interface FileRoutesByTo {
   '/admin/tickets': typeof AdminTicketsIndexRoute
   '/app/billing': typeof AppBillingIndexRoute
   '/api/public/cron/billing-engine': typeof ApiPublicCronBillingEngineRoute
+  '/api/public/cron/fx-refresh': typeof ApiPublicCronFxRefreshRoute
   '/api/public/cron/lifecycle-notices': typeof ApiPublicCronLifecycleNoticesRoute
   '/api/public/errors/report': typeof ApiPublicErrorsReportRoute
   '/api/public/invoices/$orderId': typeof ApiPublicInvoicesOrderIdRoute
@@ -630,6 +638,7 @@ export interface FileRoutesById {
   '/admin/tickets/': typeof AdminTicketsIndexRoute
   '/app/billing/': typeof AppBillingIndexRoute
   '/api/public/cron/billing-engine': typeof ApiPublicCronBillingEngineRoute
+  '/api/public/cron/fx-refresh': typeof ApiPublicCronFxRefreshRoute
   '/api/public/cron/lifecycle-notices': typeof ApiPublicCronLifecycleNoticesRoute
   '/api/public/errors/report': typeof ApiPublicErrorsReportRoute
   '/api/public/invoices/$orderId': typeof ApiPublicInvoicesOrderIdRoute
@@ -703,6 +712,7 @@ export interface FileRouteTypes {
     | '/admin/tickets/'
     | '/app/billing/'
     | '/api/public/cron/billing-engine'
+    | '/api/public/cron/fx-refresh'
     | '/api/public/cron/lifecycle-notices'
     | '/api/public/errors/report'
     | '/api/public/invoices/$orderId'
@@ -769,6 +779,7 @@ export interface FileRouteTypes {
     | '/admin/tickets'
     | '/app/billing'
     | '/api/public/cron/billing-engine'
+    | '/api/public/cron/fx-refresh'
     | '/api/public/cron/lifecycle-notices'
     | '/api/public/errors/report'
     | '/api/public/invoices/$orderId'
@@ -840,6 +851,7 @@ export interface FileRouteTypes {
     | '/admin/tickets/'
     | '/app/billing/'
     | '/api/public/cron/billing-engine'
+    | '/api/public/cron/fx-refresh'
     | '/api/public/cron/lifecycle-notices'
     | '/api/public/errors/report'
     | '/api/public/invoices/$orderId'
@@ -868,6 +880,7 @@ export interface RootRouteChildren {
   ApiPublicBlogWebhookRoute: typeof ApiPublicBlogWebhookRoute
   PaymentPaylinkCallbackRoute: typeof PaymentPaylinkCallbackRoute
   ApiPublicCronBillingEngineRoute: typeof ApiPublicCronBillingEngineRoute
+  ApiPublicCronFxRefreshRoute: typeof ApiPublicCronFxRefreshRoute
   ApiPublicCronLifecycleNoticesRoute: typeof ApiPublicCronLifecycleNoticesRoute
   ApiPublicErrorsReportRoute: typeof ApiPublicErrorsReportRoute
   ApiPublicInvoicesOrderIdRoute: typeof ApiPublicInvoicesOrderIdRoute
@@ -1355,6 +1368,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCronLifecycleNoticesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/cron/fx-refresh': {
+      id: '/api/public/cron/fx-refresh'
+      path: '/api/public/cron/fx-refresh'
+      fullPath: '/api/public/cron/fx-refresh'
+      preLoaderRoute: typeof ApiPublicCronFxRefreshRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/cron/billing-engine': {
       id: '/api/public/cron/billing-engine'
       path: '/api/public/cron/billing-engine'
@@ -1537,6 +1557,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicBlogWebhookRoute: ApiPublicBlogWebhookRoute,
   PaymentPaylinkCallbackRoute: PaymentPaylinkCallbackRoute,
   ApiPublicCronBillingEngineRoute: ApiPublicCronBillingEngineRoute,
+  ApiPublicCronFxRefreshRoute: ApiPublicCronFxRefreshRoute,
   ApiPublicCronLifecycleNoticesRoute: ApiPublicCronLifecycleNoticesRoute,
   ApiPublicErrorsReportRoute: ApiPublicErrorsReportRoute,
   ApiPublicInvoicesOrderIdRoute: ApiPublicInvoicesOrderIdRoute,
