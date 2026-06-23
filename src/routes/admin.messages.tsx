@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { fmtDateTime } from "@/lib/format";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminPageHeader } from "@/components/admin/admin-shell";
@@ -49,7 +50,7 @@ function MessagesPage() {
   };
 
   const columns: Column<Msg>[] = [
-    { key: "created_at", header: "Received", sortable: true, cell: (r) => <span className="text-xs tabular-nums">{new Date(r.created_at).toLocaleString()}</span> },
+    { key: "created_at", header: "Received", sortable: true, cell: (r) => <span className="text-xs tabular-nums">{fmtDateTime(r.created_at)}</span> },
     { key: "name", header: "From", cell: (r) => <div><div className="font-medium text-sm">{r.name}</div><div className="text-xs text-muted-foreground">{r.email}</div></div> },
     { key: "subject", header: "Subject", cell: (r) => <span className="text-sm">{r.subject || "(no subject)"}</span> },
     { key: "source_form", header: "Source", cell: (r) => <span className="text-xs">{r.source_form || "—"}</span> },

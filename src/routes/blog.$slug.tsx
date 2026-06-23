@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { fmtDate } from "@/lib/format";
 import { useEffect, useMemo, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -173,7 +174,7 @@ function BlogPost() {
       <article className="container mx-auto px-4 max-w-6xl" dir={postDir} lang={postLang}>
         <div className="pt-10 md:pt-14 pb-6 max-w-3xl mx-auto">
           <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground mb-4">
-            {post.publish_at && <span>{new Date(post.publish_at).toLocaleDateString(ar ? "ar-SA" : "en-US", { year: "numeric", month: "long", day: "numeric" })}</span>}
+            {post.publish_at && <span>{fmtDate(post.publish_at, ar ? "ar" : "en")}</span>}
             <span>·</span>
             <span className="inline-flex items-center gap-1"><Clock className="w-3 h-3" />{readingTime(post.content)} {ar ? "د قراءة" : "min read"}</span>
             {post.tags?.length > 0 && <>

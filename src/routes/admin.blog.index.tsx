@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { fmtDate, fmtDateTime } from "@/lib/format";
 import { useEffect, useRef, useState } from "react";
 import Papa from "papaparse";
 import { supabase } from "@/integrations/supabase/client";
@@ -132,8 +133,8 @@ function BlogList() {
     ) },
     { key: "slug", header: "Slug", cell: (r) => <code className="text-xs">{r.slug}</code> },
     { key: "status", header: "Status", cell: (r) => <StatusBadge value={r.status} /> },
-    { key: "publish_at", header: "Publish", cell: (r) => r.publish_at ? <span className="text-xs tabular-nums">{new Date(r.publish_at).toLocaleString()}</span> : "—" },
-    { key: "updated_at", header: "Updated", sortable: true, cell: (r) => <span className="text-xs tabular-nums" dir="ltr">{new Date(r.updated_at).toLocaleDateString("en-GB")}</span> },
+    { key: "publish_at", header: "Publish", cell: (r) => r.publish_at ? <span className="text-xs tabular-nums">{fmtDateTime(r.publish_at)}</span> : "—" },
+    { key: "updated_at", header: "Updated", sortable: true, cell: (r) => <span className="text-xs tabular-nums">{fmtDate(r.updated_at)}</span> },
     { key: "a", header: "", cell: (r) => (
       <div className="flex gap-1">
         <Button asChild variant="ghost" size="icon"><Link to="/admin/blog/$id" params={{ id: r.id }}><Pencil className="w-4 h-4" /></Link></Button>

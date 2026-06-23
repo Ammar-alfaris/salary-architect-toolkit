@@ -50,15 +50,25 @@ export function fmtPercent(value: number | null | undefined, locale = "en", digi
  * Wrap the return value in `<span dir="ltr">` (or `<bdi>`) when rendered
  * inside an RTL container to keep the slashes from getting reordered.
  */
+// Unicode bidi isolate wrappers so dates render LTR even inside RTL containers
+// without needing a <span dir="ltr"> wrapper at every call site. U+2066 = LRI,
+// U+2069 = PDI. Prevents "232026/7/" style reorderings under Arabic UI.
+const LRI = "\u2066";
+const PDI = "\u2069";
+
+function wrapLtr(s: string): string {
+  return `${LRI}${s}${PDI}`;
+}
+
 export function fmtDate(value: Date | string | number | null | undefined, locale: string = "en"): string {
   if (value == null) return "—";
   const d = value instanceof Date ? value : new Date(value);
   if (isNaN(d.getTime())) return "—";
   const tag = locale === "ar" ? "ar-SA-u-ca-gregory-nu-latn" : "en-GB";
   try {
-    return new Intl.DateTimeFormat(tag, { year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
+    return wrapLtr(new Intl.DateTimeFormat(tag, { year: "numeric", month: "2-digit", day: "2-digit" }).format(d));
   } catch {
-    return d.toISOString().slice(0, 10);
+    return wrapLtr(d.toISOString().slice(0, 10));
   }
 }
 
@@ -68,11 +78,11 @@ export function fmtDateTime(value: Date | string | number | null | undefined, lo
   if (isNaN(d.getTime())) return "—";
   const tag = locale === "ar" ? "ar-SA-u-ca-gregory-nu-latn" : "en-GB";
   try {
-    return new Intl.DateTimeFormat(tag, {
+    return wrapLtr(new Intl.DateTimeFormat(tag, {
       year: "numeric", month: "2-digit", day: "2-digit",
       hour: "2-digit", minute: "2-digit", hour12: false,
-    }).format(d);
+    }).format(d));
   } catch {
-    return d.toISOString().slice(0, 16).replace("T", " ");
+    return wrapLtr(d.toISOString().slice(0, 16).replace("T", " "));
   }
 }

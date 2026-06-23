@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { fmtDateTime } from "@/lib/format";
 import { useEffect, useMemo, useState } from "react";
 import { PageHeader } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
@@ -153,7 +154,7 @@ function ApprovalsPage() {
     } catch (e: any) { toast.error(e.message); }
   };
 
-  const fmt = (iso: string) => new Date(iso).toLocaleString(locale === "ar" ? "ar" : "en");
+  const fmt = (iso: string) => fmtDateTime(iso, locale);
 
   const counts = useMemo(() => ({
     pending: requests.filter((r) => r.status === "pending").length,

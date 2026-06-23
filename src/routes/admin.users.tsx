@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { fmtDate, fmtDateTime } from "@/lib/format";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminPageHeader } from "@/components/admin/admin-shell";
@@ -89,7 +90,7 @@ function UsersPage() {
     { key: "email", header: "Email", sortable: true, cell: (r) => <span className="font-mono text-xs">{r.email}</span> },
     { key: "org_name", header: "Organization", cell: (r) => r.org_name || "—" },
     { key: "role", header: "Role", cell: (r) => r.role ? <StatusBadge value={r.role} /> : "—" },
-    { key: "created_at", header: "Joined", sortable: true, cell: (r) => <span className="text-xs text-muted-foreground tabular-nums" dir="ltr">{new Date(r.created_at).toLocaleDateString("en-GB")}</span> },
+    { key: "created_at", header: "Joined", sortable: true, cell: (r) => <span className="text-xs text-muted-foreground tabular-nums">{fmtDate(r.created_at)}</span> },
     { key: "actions", header: "", cell: (r) => <Button variant="ghost" size="icon" onClick={() => setActive(r)}><Eye className="w-4 h-4" /></Button> },
   ];
 
@@ -127,7 +128,7 @@ function UsersPage() {
             <Field label="Organization" value={active?.org_name || "—"} />
             <Field label="Role" value={active?.role || "—"} />
             <Field label="Platform admin" value={active?.is_platform_admin ? (active.platform_role || "yes") : "no"} />
-            <Field label="Joined" value={active ? new Date(active.created_at).toLocaleString() : "—"} />
+            <Field label="Joined" value={active ? fmtDateTime(active.created_at) : "—"} />
             <Field label="User ID" value={<code className="text-xs">{active?.id}</code>} />
             {active?.org_id && (
               <div className="pt-3 border-t space-y-1.5">

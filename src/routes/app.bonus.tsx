@@ -10,7 +10,7 @@ import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { calculateBonus, exportCSV } from "@/lib/comp";
-import { fmtCurrency, fmtPercent } from "@/lib/format";
+import {fmtCurrency, fmtDateTime, fmtPercent} from "@/lib/format";
 import { Download, Calculator, Save } from "lucide-react";
 import { ApplyOrApprove } from "@/components/apply-or-approve";
 import { snapshotVersion } from "@/lib/governance";
@@ -221,7 +221,7 @@ function BonusPage() {
                       <div className="min-w-0">
                         <h4 className="font-semibold">{c.name}</h4>
                         <p className="text-xs text-muted-foreground">
-                          {t("status_approved")} · {c.approved_by_email ?? "—"} · {c.approved_at ? new Date(c.approved_at).toLocaleString(locale === "ar" ? "ar" : "en") : ""}
+                          {t("status_approved")} · {c.approved_by_email ?? "—"} · {c.approved_at ? fmtDateTime(c.approved_at, locale) : ""}
                         </p>
                       </div>
                       <div className="flex flex-wrap gap-2">

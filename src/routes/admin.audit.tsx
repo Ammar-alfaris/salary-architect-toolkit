@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { fmtDateTime } from "@/lib/format";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminPageHeader } from "@/components/admin/admin-shell";
@@ -24,7 +25,7 @@ function AuditPage() {
   const filtered = actionF === "all" ? rows : rows.filter((r) => r.action === actionF);
 
   const columns: Column<Log>[] = [
-    { key: "created_at", header: "When", sortable: true, cell: (r) => <span className="text-xs tabular-nums">{new Date(r.created_at).toLocaleString()}</span> },
+    { key: "created_at", header: "When", sortable: true, cell: (r) => <span className="text-xs tabular-nums">{fmtDateTime(r.created_at)}</span> },
     { key: "actor_email", header: "Actor", cell: (r) => <span className="font-mono text-xs">{r.actor_email || "system"}</span> },
     { key: "action", header: "Action", cell: (r) => <StatusBadge value={r.action} /> },
     { key: "entity_type", header: "Entity", cell: (r) => <span className="text-xs capitalize">{r.entity_type}</span> },

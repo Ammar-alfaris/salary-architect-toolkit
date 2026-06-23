@@ -10,7 +10,7 @@ import { useAuth } from "@/lib/auth";
 import { usePermissions } from "@/lib/rbac";
 import { supabase } from "@/integrations/supabase/client";
 import { compaRatio, rangePenetration, rangePosition, PERFORMANCE_RATINGS } from "@/lib/comp";
-import { fmtCurrency } from "@/lib/format";
+import {fmtCurrency, fmtDate} from "@/lib/format";
 import { logAudit } from "@/lib/audit";
 import { ArrowLeft, Pencil, Plus, Save, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
@@ -439,7 +439,7 @@ function EmployeeProfile() {
                   <tbody>
                     {salaryHistory.map((h) => (
                       <tr key={h.id} className="border-b last:border-0">
-                        <td className="py-2 pe-3 text-muted-foreground whitespace-nowrap">{new Date(h.created_at).toLocaleDateString(locale === "ar" ? "ar" : "en")}</td>
+                        <td className="py-2 pe-3 text-muted-foreground whitespace-nowrap">{fmtDate(h.created_at, locale)}</td>
                         <td className="py-2 px-3 text-end num">{h.previous_salary != null ? fmtCurrency(Number(h.previous_salary), h.currency || cur, locale) : "—"}</td>
                         <td className="py-2 px-3 text-end num font-medium">{fmtCurrency(Number(h.new_salary), h.currency || cur, locale)}</td>
                         <td className={`py-2 px-3 text-end num ${Number(h.change_amount) > 0 ? "text-success" : Number(h.change_amount) < 0 ? "text-destructive" : ""}`}>

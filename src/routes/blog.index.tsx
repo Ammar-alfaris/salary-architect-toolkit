@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { fmtDate } from "@/lib/format";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -151,7 +152,7 @@ function BlogIndex() {
                   </div>
                   <div className="p-6 md:p-10 flex flex-col justify-center">
                     <div className="flex items-center gap-3 text-xs text-muted-foreground mb-3">
-                      {featured.publish_at && <span>{new Date(featured.publish_at).toLocaleDateString(ar ? "ar-SA" : "en-US", { year: "numeric", month: "long", day: "numeric" })}</span>}
+                      {featured.publish_at && <span>{fmtDate(featured.publish_at, ar ? "ar" : "en")}</span>}
                       <span className="inline-flex items-center gap-1"><Clock className="w-3 h-3" />{readingTime(featured.content)} {ar ? "د قراءة" : "min read"}</span>
                     </div>
                     <h2 className="text-2xl md:text-3xl font-semibold tracking-tight group-hover:text-primary transition-colors">{featured.title}</h2>
@@ -176,7 +177,7 @@ function BlogIndex() {
                   </div>
                   <div className="p-5 flex-1 flex flex-col">
                     <div className="flex items-center gap-2 text-[11px] text-muted-foreground mb-2">
-                      {p.publish_at && <span>{new Date(p.publish_at).toLocaleDateString(ar ? "ar-SA" : "en-US")}</span>}
+                      {p.publish_at && <span>{fmtDate(p.publish_at, ar ? "ar" : "en")}</span>}
                       <span className="inline-flex items-center gap-1"><Clock className="w-3 h-3" />{readingTime(p.content)}m</span>
                     </div>
                     <h3 className="font-semibold text-base leading-snug group-hover:text-primary transition-colors line-clamp-2">{p.title}</h3>

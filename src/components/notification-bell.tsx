@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { fmtDateTime } from "@/lib/format";
 import { Link } from "@tanstack/react-router";
 import { Bell, CheckCircle2, Clock, XCircle, Inbox } from "lucide-react";
 import { toast } from "sonner";
@@ -24,7 +25,7 @@ export function NotificationBell() {
   });
   const seen = useRef<Set<string>>(new Set());
 
-  const fmt = useCallback((s: string) => new Date(s).toLocaleString(locale === "ar" ? "ar" : "en"), [locale]);
+  const fmt = useCallback((s: string) => fmtDateTime(s, locale), [locale]);
 
   const buildItem = useCallback(async (r: any): Promise<Item | null> => {
     if (!user) return null;

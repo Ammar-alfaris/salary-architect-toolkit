@@ -6,7 +6,7 @@ import { useI18n } from "@/lib/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { Users, Layers, DollarSign, BarChart3, Gift, TrendingUp, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { fmtCurrency, fmtNumber, fmtPercent } from "@/lib/format";
+import {fmtCurrency, fmtDate, fmtNumber, fmtPercent} from "@/lib/format";
 import { compaRatio } from "@/lib/comp";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, PieChart, Pie, Cell, Legend } from "recharts";
 import { ApprovalNotifications } from "@/components/approval-notifications";
@@ -177,7 +177,7 @@ function Dashboard() {
                           <div className="text-sm font-medium">{s.name}</div>
                           <div className="text-xs text-muted-foreground">{t("grades_count", { n: s.grade_count })} • {s.currency}</div>
                         </div>
-                        <div className="text-xs text-muted-foreground">{new Date(s.effective_date).toLocaleDateString(locale === "ar" ? "ar" : "en-US")}</div>
+                        <div className="text-xs text-muted-foreground">{fmtDate(s.effective_date, locale)}</div>
                       </Link>
                     ))}
                   </div>

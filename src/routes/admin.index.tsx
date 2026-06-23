@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { fmtDateTime } from "@/lib/format";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminPageHeader } from "@/components/admin/admin-shell";
@@ -157,10 +158,10 @@ function Dashboard() {
 
         <div className="grid lg:grid-cols-3 gap-4">
           <ListCard title="Recent signups" empty="No new users" items={signups.map((u) => ({
-            id: u.id, primary: u.full_name || u.email, secondary: new Date(u.created_at).toLocaleString(),
+            id: u.id, primary: u.full_name || u.email, secondary: fmtDateTime(u.created_at),
           }))} />
           <ListCard title="Latest tickets" empty="No tickets" items={tickets.map((t) => ({
-            id: t.id, primary: t.subject, secondary: new Date(t.created_at).toLocaleString(), badge: t.status,
+            id: t.id, primary: t.subject, secondary: fmtDateTime(t.created_at), badge: t.status,
           }))} />
           <ListCard title="Recent messages" empty="Inbox empty" items={messages.map((m) => ({
             id: m.id, primary: m.subject || m.name, secondary: m.name, badge: m.status,
