@@ -27,7 +27,7 @@ const ACTION_BADGE: Record<string, string> = {
 
 function AuditPage() {
   const { organizationId } = useAuth();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [search, setSearch] = useState("");
   const [entityFilter, setEntityFilter] = useState("all");
 
