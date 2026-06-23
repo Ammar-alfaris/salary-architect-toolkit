@@ -33,6 +33,16 @@ async function handle(request: Request) {
   if (!apiKey || apiKey !== process.env.SUPABASE_PUBLISHABLE_KEY) {
     return json({ ok: false, error: "unauthorized" }, 401);
   }
+  try {
+    return await run();
+  } catch (err) {
+    const { captureServerError } = await import("@/lib/error-tracking.server");
+    await captureServerError(err, { source: "cron:billing-engine", route: "/api/public/cron/billing-engine" });
+    return json({ ok: false, error: "internal_error" }, 500);
+  }
+}
+
+async function run() {
 
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { processSubscriptionRenewal } = await import("@/lib/dunning.server");

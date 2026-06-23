@@ -1281,6 +1281,60 @@ export type Database = {
         }
         Relationships: []
       }
+      error_logs: {
+        Row: {
+          created_at: string
+          fingerprint: string | null
+          id: string
+          ip_address: unknown
+          level: string
+          message: string
+          metadata: Json
+          occurred_at: string
+          organization_id: string | null
+          route: string | null
+          source: string
+          stack: string | null
+          url: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          fingerprint?: string | null
+          id?: string
+          ip_address?: unknown
+          level?: string
+          message: string
+          metadata?: Json
+          occurred_at?: string
+          organization_id?: string | null
+          route?: string | null
+          source?: string
+          stack?: string | null
+          url?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          fingerprint?: string | null
+          id?: string
+          ip_address?: unknown
+          level?: string
+          message?: string
+          metadata?: Json
+          occurred_at?: string
+          organization_id?: string | null
+          route?: string | null
+          source?: string
+          stack?: string | null
+          url?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       merit_cycles: {
         Row: {
           approved_at: string | null
@@ -2346,6 +2400,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_error_groups: {
+        Args: { _since?: string }
+        Returns: {
+          affected_users: number
+          count: number
+          fingerprint: string
+          first_seen: string
+          last_seen: string
+          level: string
+          message: string
+          source: string
+        }[]
+      }
       admin_list_cron_jobs: {
         Args: never
         Returns: {

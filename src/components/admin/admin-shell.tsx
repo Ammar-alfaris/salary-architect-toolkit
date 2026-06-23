@@ -3,7 +3,7 @@ import { useState } from "react";
 import {
   LayoutDashboard, Users, Building2, Package, CreditCard, FileText, Inbox,
   LifeBuoy, Megaphone, ScrollText, Settings as SettingsIcon, LogOut, Moon, Sun,
-  Languages, Search, Bell, Menu, ShieldCheck, ArrowLeft, Mail, Activity,
+  Languages, Search, Bell, Menu, ShieldCheck, ArrowLeft, Mail, Activity, AlertOctagon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +31,7 @@ const NAV: { to: string; icon: any; label: string; module: AdminModule }[] = [
   { to: "/admin/announcements", icon: Megaphone, label: "Announcements", module: "announcements" },
   { to: "/admin/audit", icon: ScrollText, label: "Audit Logs", module: "audit" },
   { to: "/admin/monitoring", icon: Activity, label: "Monitoring", module: "monitoring" },
+  { to: "/admin/errors", icon: AlertOctagon, label: "Error Tracking", module: "errors" },
   { to: "/admin/settings", icon: SettingsIcon, label: "Settings", module: "settings" },
 ];
 
