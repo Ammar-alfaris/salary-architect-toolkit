@@ -118,6 +118,8 @@ function PricingPage() {
     setShowLocal(next);
     if (typeof window !== "undefined") localStorage.setItem("pricing_show_local", next ? "1" : "0");
   };
+
+  useEffect(() => {
     supabase.from("plans").select("*").eq("is_visible", true).eq("status", "active").order("sort_order")
       .then(({ data }) => {
         const list = (data as unknown as Plan[]) || [];
