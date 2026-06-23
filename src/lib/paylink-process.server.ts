@@ -238,8 +238,12 @@ async function sendPaymentReceiptEmail(args: {
   renewalAt: string;
   billingCycle: string;
 }) {
-  if (!args.customerEmail) return;
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  if (!args.customerEmail) {
+    console.warn(JSON.stringify({
+      scope: "paylink", step: "email.noRecipient", orderId: args.orderId,
+    }));
+    return;
+  }
   const { signInvoiceToken } = await import("@/lib/invoice-pdf.server");
   const { brandedWrap } = await import("@/lib/email-templates");
 
@@ -272,30 +276,15 @@ async function sendPaymentReceiptEmail(args: {
   const html = brandedWrap({ subject, bodyHtml: body, locale: "en" });
   const messageId = `receipt-${args.orderId}`;
 
-  const { error } = await supabaseAdmin.rpc("enqueue_email", {
-    queue_name: "transactional_emails",
-    payload: {
-      to: args.customerEmail,
-      from: "Total Reward <noreply@totalreward.app>",
-      sender_domain: "notify.totalreward.app",
-      subject,
-      html,
-      text: `Payment received — ${args.invoiceNumber}. Amount: ${args.currency} ${args.paidAmount.toFixed(2)}. Manage your subscription at ${base}/app/billing.`,
-      message_id: messageId,
-      label: "payment_receipt",
-      purpose: "transactional",
-      idempotency_key: messageId,
-      queued_at: new Date().toISOString(),
-      metadata: { invoice_number: args.invoiceNumber, amount: args.paidAmount },
-    },
-  });
-  if (error) throw new Error(error.message);
-
-  await supabaseAdmin.from("email_send_log").insert({
-    message_id: messageId,
-    template_name: "payment_receipt",
-    recipient_email: args.customerEmail,
-    status: "pending",
-    metadata: { invoice_number: args.invoiceNumber, order_id: args.orderId },
+  // Reuse the central enqueue helper so we get unsubscribe_token, plain-text
+  // fallback, and email_send_log entries for free.
+  const { enqueueRawTransactionalEmail } = await import("@/lib/notify.server");
+  await enqueueRawTransactionalEmail({
+    to: args.customerEmail,
+    subject,
+    html,
+    messageId,
+    label: "payment_receipt",
+    metadata: { invoice_number: args.invoiceNumber, order_id: args.orderId, amount: args.paidAmount },
   });
 }
