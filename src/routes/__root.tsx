@@ -36,6 +36,7 @@ export const Route = createRootRoute({
       { property: "og:site_name", content: "Total Reward" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "google-site-verification", content: "SHzpadfotJNj8WX3cUOIalDXRKe4450zH2xo4g0lhKA" },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
