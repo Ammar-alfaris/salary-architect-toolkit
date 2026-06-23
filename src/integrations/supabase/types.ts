@@ -1335,6 +1335,27 @@ export type Database = {
         }
         Relationships: []
       }
+      fx_rates: {
+        Row: {
+          base_currency: string
+          fetched_at: string
+          quote_currency: string
+          rate: number
+        }
+        Insert: {
+          base_currency?: string
+          fetched_at?: string
+          quote_currency: string
+          rate: number
+        }
+        Update: {
+          base_currency?: string
+          fetched_at?: string
+          quote_currency?: string
+          rate?: number
+        }
+        Relationships: []
+      }
       merit_cycles: {
         Row: {
           approved_at: string | null

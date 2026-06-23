@@ -5,7 +5,9 @@ import { useI18n } from "@/lib/i18n";
 import { useTheme } from "@/lib/theme";
 import { useAuth } from "@/lib/auth";
 import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
 import { startTrial } from "@/lib/trial.functions";
+import { getVisitorCurrency } from "@/lib/pricing-locale.functions";
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -97,6 +99,25 @@ function PricingPage() {
   const [hasActiveSub, setHasActiveSub] = useState<boolean>(false);
 
   const startTrialFn = useServerFn(startTrial);
+  const getVisitorCurrencyFn = useServerFn(getVisitorCurrency);
+
+  // Geo-based currency. Lets users override via toggle (stored in localStorage).
+  const [showLocal, setShowLocal] = useState<boolean>(() => {
+    if (typeof window === "undefined") return true;
+    return localStorage.getItem("pricing_show_local") !== "0";
+  });
+  const fx = useQuery({
+    queryKey: ["visitor-currency"],
+    queryFn: () => getVisitorCurrencyFn(),
+    staleTime: 60 * 60 * 1000,
+  });
+  const visitor = fx.data;
+  const useLocal = showLocal && !!visitor && visitor.currency !== "SAR" && visitor.rate > 0;
+  const toggleShowLocal = () => {
+    const next = !showLocal;
+    setShowLocal(next);
+    if (typeof window !== "undefined") localStorage.setItem("pricing_show_local", next ? "1" : "0");
+  };
 
   useEffect(() => {
     supabase.from("plans").select("*").eq("is_visible", true).eq("status", "active").order("sort_order")
@@ -171,9 +192,30 @@ function PricingPage() {
   }
 
 
-  const formatPrice = (plan: Plan) => {
-    const price = billing === "annual" ? plan.annual_price : plan.monthly_price;
-    return `${plan.currency} ${price.toLocaleString()}`;
+  // Currencies that conventionally show no fractional digits.
+  const noDecimal = (c: string) => ["JPY", "KRW", "VND", "CLP"].includes(c);
+  const formatMoney = (amount: number, currency: string) => {
+    const digits = noDecimal(currency) ? 0 : 0; // we round to whole units for display
+    try {
+      return new Intl.NumberFormat(ar ? "ar" : "en", {
+        style: "currency", currency, maximumFractionDigits: digits, minimumFractionDigits: digits,
+      }).format(amount);
+    } catch {
+      return `${currency} ${Math.round(amount).toLocaleString()}`;
+    }
+  };
+  const priceFor = (plan: Plan) => billing === "annual" ? plan.annual_price : plan.monthly_price;
+  const renderPrimary = (plan: Plan) => {
+    const sar = priceFor(plan);
+    if (useLocal && visitor) {
+      return formatMoney(Math.round(sar * visitor.rate), visitor.currency);
+    }
+    return formatMoney(sar, plan.currency || "SAR");
+  };
+  const renderSecondary = (plan: Plan) => {
+    const sar = priceFor(plan);
+    // Always remind users SAR is the billing currency when showing local.
+    return `${t("approx_symbol")} ${formatMoney(sar, plan.currency || "SAR")} · ${t("billed_in_sar")}`;
   };
 
   const savePct = (plan: Plan) => {
@@ -255,6 +297,21 @@ function PricingPage() {
             </span>
           </button>
         </div>
+
+        {visitor && visitor.currency !== "SAR" && visitor.rate > 0 && (
+          <div className="mt-4 flex items-center justify-center gap-2 text-xs text-muted-foreground">
+            <span>{t("show_in_currency")}</span>
+            <button
+              type="button"
+              onClick={toggleShowLocal}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border bg-card hover:bg-muted transition-colors font-medium text-foreground"
+            >
+              <span className={cn(useLocal && "text-primary")}>{visitor.currency}</span>
+              <span className="text-muted-foreground">⇄</span>
+              <span className={cn(!useLocal && "text-primary")}>SAR</span>
+            </button>
+          </div>
+        )}
       </section>
 
       {/* All-in features banner */}
@@ -315,11 +372,14 @@ function PricingPage() {
 
                   <div className="mb-5">
                     <div className="flex items-end gap-1.5">
-                      <span className="text-3xl font-bold tabular-nums">{formatPrice(plan)}</span>
+                      <span className="text-3xl font-bold tabular-nums">{renderPrimary(plan)}</span>
                       <span className="text-muted-foreground text-xs mb-1.5">
                         {billing === "annual" ? t("per_year") : t("per_month")}
                       </span>
                     </div>
+                    {useLocal && (
+                      <p className="text-[11px] text-muted-foreground mt-1 tabular-nums">{renderSecondary(plan)}</p>
+                    )}
                     {billing === "annual" && save > 0 && (
                       <p className="text-xs text-accent font-medium mt-0.5">{t("billing_save")} {save}%</p>
                     )}

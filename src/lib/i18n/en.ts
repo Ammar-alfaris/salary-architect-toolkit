@@ -84,7 +84,10 @@ export const en: Dict = {
   pricing_faq_2_q: "Is there a free trial?",
   pricing_faq_2_a: "Most plans include a free trial period. No credit card is required to get started.",
   pricing_faq_3_q: "What currencies are supported?",
-  pricing_faq_3_a: "Plans are billed in the currency shown on the plan card. Contact us if you need local pricing.",
+  pricing_faq_3_a: "Prices are shown in your local currency for convenience, but all billing is processed in Saudi Riyals (SAR) via Paylink. Your card issuer will apply its own conversion rate.",
+  billed_in_sar: "Billed in SAR",
+  show_in_currency: "Show in",
+  approx_symbol: "≈",
   pricing_faq_4_q: "What happens when I reach my employee limit?",
   pricing_faq_4_a: "You'll be prompted to upgrade to a higher plan. Your existing data is never deleted.",
 
