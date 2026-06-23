@@ -144,28 +144,34 @@ function AuditPage() {
                     <th className="text-start px-4 py-2.5">{t("col_action")}</th>
                     <th className="text-start px-4 py-2.5">{t("col_entity")}</th>
                     <th className="text-start px-4 py-2.5">{t("col_label")}</th>
+                    <th className="text-start px-4 py-2.5">{t("audit_col_ip")}</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.map((r) => (
-                    <tr key={r.id} className="border-t hover:bg-muted/20">
-                      <td className="px-4 py-2.5 text-xs text-muted-foreground whitespace-nowrap">
-                        {fmtDateTime(r.created_at, locale)}
-                      </td>
-                      <td className="px-4 py-2.5 text-xs">{r.actor_email ?? "—"}</td>
-                      <td className="px-4 py-2.5">
-                        <span
-                          className={`text-xs px-2 py-0.5 rounded-full ${
-                            ACTION_BADGE[r.action] ?? "bg-muted"
-                          }`}
-                        >
-                          {r.action}
-                        </span>
-                      </td>
-                      <td className="px-4 py-2.5 text-xs text-muted-foreground">{r.entity_type}</td>
-                      <td className="px-4 py-2.5 text-sm">{r.entity_label ?? "—"}</td>
-                    </tr>
-                  ))}
+                  {rows.map((r) => {
+                    const cat = categoryFor(r.action);
+                    return (
+                      <tr key={r.id} className="border-t hover:bg-muted/20">
+                        <td className="px-4 py-2.5 text-xs text-muted-foreground whitespace-nowrap">
+                          {fmtDateTime(r.created_at, locale)}
+                        </td>
+                        <td className="px-4 py-2.5 text-xs">{r.actor_email ?? <span className="text-muted-foreground italic">system</span>}</td>
+                        <td className="px-4 py-2.5">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded ${categoryBadgeClass(cat)}`}>
+                              {t(`audit_category_${cat}` as any)}
+                            </span>
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${ACTION_BADGE[r.action] ?? "bg-muted"}`}>
+                              {r.action}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-2.5 text-xs text-muted-foreground">{r.entity_type}</td>
+                        <td className="px-4 py-2.5 text-sm">{r.entity_label ?? "—"}</td>
+                        <td className="px-4 py-2.5 text-xs font-mono text-muted-foreground" dir="ltr">{(r as any).ip_address ?? "—"}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
