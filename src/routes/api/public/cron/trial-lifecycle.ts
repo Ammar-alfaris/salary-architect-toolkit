@@ -3,14 +3,15 @@ import { createFileRoute } from "@tanstack/react-router";
 /**
  * Daily lifecycle sweep — called by pg_cron.
  * Updates subscriptions.status to reflect trial → grace → restricted → dormant.
- * Auth: requires Supabase anon key in `apikey` header.
+ * Auth: requires the server-only CRON_SECRET in the `apikey` header.
  */
 export const Route = createFileRoute("/api/public/cron/trial-lifecycle")({
   server: {
     handlers: {
       POST: async ({ request }) => {
         const apiKey = request.headers.get("apikey");
-        if (!apiKey || apiKey !== process.env.SUPABASE_PUBLISHABLE_KEY) {
+        const expected = process.env.CRON_SECRET;
+        if (!expected || !apiKey || apiKey !== expected) {
           return new Response("Unauthorized", { status: 401 });
         }
 
