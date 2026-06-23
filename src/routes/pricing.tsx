@@ -192,9 +192,30 @@ function PricingPage() {
   }
 
 
-  const formatPrice = (plan: Plan) => {
-    const price = billing === "annual" ? plan.annual_price : plan.monthly_price;
-    return `${plan.currency} ${price.toLocaleString()}`;
+  // Currencies that conventionally show no fractional digits.
+  const noDecimal = (c: string) => ["JPY", "KRW", "VND", "CLP"].includes(c);
+  const formatMoney = (amount: number, currency: string) => {
+    const digits = noDecimal(currency) ? 0 : 0; // we round to whole units for display
+    try {
+      return new Intl.NumberFormat(ar ? "ar" : "en", {
+        style: "currency", currency, maximumFractionDigits: digits, minimumFractionDigits: digits,
+      }).format(amount);
+    } catch {
+      return `${currency} ${Math.round(amount).toLocaleString()}`;
+    }
+  };
+  const priceFor = (plan: Plan) => billing === "annual" ? plan.annual_price : plan.monthly_price;
+  const renderPrimary = (plan: Plan) => {
+    const sar = priceFor(plan);
+    if (useLocal && visitor) {
+      return formatMoney(Math.round(sar * visitor.rate), visitor.currency);
+    }
+    return formatMoney(sar, plan.currency || "SAR");
+  };
+  const renderSecondary = (plan: Plan) => {
+    const sar = priceFor(plan);
+    // Always remind users SAR is the billing currency when showing local.
+    return `${t("approx_symbol")} ${formatMoney(sar, plan.currency || "SAR")} · ${t("billed_in_sar")}`;
   };
 
   const savePct = (plan: Plan) => {
