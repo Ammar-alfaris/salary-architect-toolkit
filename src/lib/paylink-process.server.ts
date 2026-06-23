@@ -75,6 +75,17 @@ export async function processPaylinkTransaction(args: {
   // 4) Activate subscription once.
   const alreadyProcessed = !!order.invoice_number;
   if (paymentStatus === "paid" && !alreadyProcessed) {
+    // Fallback: if checkout didn't capture an email, use the org primary admin.
+    let receiptEmail = (order.customer_email as string | null) ?? null;
+    let receiptName = (order.customer_name as string | null) ?? null;
+    if (!receiptEmail && order.organization_id) {
+      try {
+        const { resolveOrgPrimaryEmail } = await import("@/lib/notify.server");
+        const fb = await resolveOrgPrimaryEmail(order.organization_id as string);
+        receiptEmail = fb.email;
+        receiptName = receiptName ?? fb.name;
+      } catch {}
+    }
     await activateOrderAsSubscription({
       orderId: order.id as string,
       organizationId: order.organization_id as string | null,
@@ -82,9 +93,36 @@ export async function processPaylinkTransaction(args: {
       billingCycle: (order.billing_cycle as string | null) ?? "monthly",
       paidAmount,
       invoice,
-      customerEmail: (order.customer_email as string | null) ?? null,
-      customerName: (order.customer_name as string | null) ?? null,
+      customerEmail: receiptEmail,
+      customerName: receiptName,
     });
+  } else if (
+    (paymentStatus === "failed" || paymentStatus === "cancelled") &&
+    !alreadyProcessed &&
+    order.organization_id
+  ) {
+    try {
+      const { resolveOrgPrimaryEmail, sendPaymentFailedEmail } = await import(
+        "@/lib/notify.server"
+      );
+      const fb = await resolveOrgPrimaryEmail(order.organization_id as string);
+      const to = (order.customer_email as string | null) ?? fb.email;
+      if (to) {
+        await sendPaymentFailedEmail({
+          to,
+          name: (order.customer_name as string | null) ?? fb.name,
+          locale: fb.locale,
+          invoiceNumber: (order.invoice_number as string | null) ?? null,
+          amount: paidAmount,
+          orderId: order.id as string,
+        });
+      }
+    } catch (e) {
+      console.error(JSON.stringify({
+        scope: "paylink", step: "email.failedNotify",
+        orderId: order.id, message: (e as Error).message,
+      }));
+    }
   }
 
   return {
