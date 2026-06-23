@@ -15,12 +15,6 @@ import { Progress } from "@/components/ui/progress";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { toast } from "sonner";
 import { ExternalLink, Download, CreditCard, ArrowUpRight, AlertTriangle, RefreshCw } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
-import { toast } from "sonner";
-import { ExternalLink, Download, CreditCard, ArrowUpRight } from "lucide-react";
 
 export const Route = createFileRoute("/app/billing/")({
   component: BillingPage,
