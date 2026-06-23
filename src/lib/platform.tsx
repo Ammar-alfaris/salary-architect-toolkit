@@ -12,15 +12,15 @@ export type PlatformRole =
 
 export type AdminModule =
   | "dashboard" | "users" | "organizations" | "plans" | "subscriptions"
-  | "blog" | "messages" | "tickets" | "announcements" | "audit" | "settings";
+  | "blog" | "messages" | "tickets" | "announcements" | "audit" | "monitoring" | "settings";
 
 const ACCESS: Record<PlatformRole, AdminModule[] | "all"> = {
   super_admin: "all",
-  platform_admin: ["dashboard", "users", "organizations", "announcements", "audit", "settings"],
+  platform_admin: ["dashboard", "users", "organizations", "announcements", "audit", "monitoring", "settings"],
   content_manager: ["dashboard", "blog"],
-  support_manager: ["dashboard", "messages", "tickets"],
-  billing_manager: ["dashboard", "organizations", "plans", "subscriptions"],
-  viewer: ["dashboard", "audit"],
+  support_manager: ["dashboard", "messages", "tickets", "monitoring"],
+  billing_manager: ["dashboard", "organizations", "plans", "subscriptions", "monitoring"],
+  viewer: ["dashboard", "audit", "monitoring"],
 };
 
 export interface PlatformPermissions {

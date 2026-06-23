@@ -47,6 +47,7 @@ import { Route as AdminSubscriptionsRouteImport } from './routes/admin.subscript
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AdminPlansRouteImport } from './routes/admin.plans'
 import { Route as AdminOrganizationsRouteImport } from './routes/admin.organizations'
+import { Route as AdminMonitoringRouteImport } from './routes/admin.monitoring'
 import { Route as AdminMessagesRouteImport } from './routes/admin.messages'
 import { Route as AdminEmailsRouteImport } from './routes/admin.emails'
 import { Route as AdminBlogRouteImport } from './routes/admin.blog'
@@ -266,6 +267,11 @@ const AdminOrganizationsRoute = AdminOrganizationsRouteImport.update({
   path: '/organizations',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminMonitoringRoute = AdminMonitoringRouteImport.update({
+  id: '/monitoring',
+  path: '/monitoring',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminMessagesRoute = AdminMessagesRouteImport.update({
   id: '/messages',
   path: '/messages',
@@ -430,6 +436,7 @@ export interface FileRoutesByFullPath {
   '/admin/blog': typeof AdminBlogRouteWithChildren
   '/admin/emails': typeof AdminEmailsRouteWithChildren
   '/admin/messages': typeof AdminMessagesRoute
+  '/admin/monitoring': typeof AdminMonitoringRoute
   '/admin/organizations': typeof AdminOrganizationsRouteWithChildren
   '/admin/plans': typeof AdminPlansRoute
   '/admin/settings': typeof AdminSettingsRoute
@@ -494,6 +501,7 @@ export interface FileRoutesByTo {
   '/admin/announcements': typeof AdminAnnouncementsRoute
   '/admin/audit': typeof AdminAuditRoute
   '/admin/messages': typeof AdminMessagesRoute
+  '/admin/monitoring': typeof AdminMonitoringRoute
   '/admin/organizations': typeof AdminOrganizationsRouteWithChildren
   '/admin/plans': typeof AdminPlansRoute
   '/admin/settings': typeof AdminSettingsRoute
@@ -562,6 +570,7 @@ export interface FileRoutesById {
   '/admin/blog': typeof AdminBlogRouteWithChildren
   '/admin/emails': typeof AdminEmailsRouteWithChildren
   '/admin/messages': typeof AdminMessagesRoute
+  '/admin/monitoring': typeof AdminMonitoringRoute
   '/admin/organizations': typeof AdminOrganizationsRouteWithChildren
   '/admin/plans': typeof AdminPlansRoute
   '/admin/settings': typeof AdminSettingsRoute
@@ -632,6 +641,7 @@ export interface FileRouteTypes {
     | '/admin/blog'
     | '/admin/emails'
     | '/admin/messages'
+    | '/admin/monitoring'
     | '/admin/organizations'
     | '/admin/plans'
     | '/admin/settings'
@@ -696,6 +706,7 @@ export interface FileRouteTypes {
     | '/admin/announcements'
     | '/admin/audit'
     | '/admin/messages'
+    | '/admin/monitoring'
     | '/admin/organizations'
     | '/admin/plans'
     | '/admin/settings'
@@ -763,6 +774,7 @@ export interface FileRouteTypes {
     | '/admin/blog'
     | '/admin/emails'
     | '/admin/messages'
+    | '/admin/monitoring'
     | '/admin/organizations'
     | '/admin/plans'
     | '/admin/settings'
@@ -1108,6 +1120,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminOrganizationsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/monitoring': {
+      id: '/admin/monitoring'
+      path: '/monitoring'
+      fullPath: '/admin/monitoring'
+      preLoaderRoute: typeof AdminMonitoringRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/messages': {
       id: '/admin/messages'
       path: '/messages'
@@ -1368,6 +1387,7 @@ interface AdminRouteChildren {
   AdminBlogRoute: typeof AdminBlogRouteWithChildren
   AdminEmailsRoute: typeof AdminEmailsRouteWithChildren
   AdminMessagesRoute: typeof AdminMessagesRoute
+  AdminMonitoringRoute: typeof AdminMonitoringRoute
   AdminOrganizationsRoute: typeof AdminOrganizationsRouteWithChildren
   AdminPlansRoute: typeof AdminPlansRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
@@ -1384,6 +1404,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminBlogRoute: AdminBlogRouteWithChildren,
   AdminEmailsRoute: AdminEmailsRouteWithChildren,
   AdminMessagesRoute: AdminMessagesRoute,
+  AdminMonitoringRoute: AdminMonitoringRoute,
   AdminOrganizationsRoute: AdminOrganizationsRouteWithChildren,
   AdminPlansRoute: AdminPlansRoute,
   AdminSettingsRoute: AdminSettingsRoute,

@@ -2346,6 +2346,28 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_list_cron_jobs: {
+        Args: never
+        Returns: {
+          active: boolean
+          command: string
+          jobid: number
+          jobname: string
+          schedule: string
+        }[]
+      }
+      admin_list_cron_runs: {
+        Args: { _limit?: number }
+        Returns: {
+          end_time: string
+          jobid: number
+          jobname: string
+          return_message: string
+          runid: number
+          start_time: string
+          status: string
+        }[]
+      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
@@ -2363,13 +2385,15 @@ export type Database = {
         Args: { _org_id: string; _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
       }
-      has_platform_role: {
-        Args: {
-          _role: Database["public"]["Enums"]["platform_role"]
-          _uid: string
-        }
-        Returns: boolean
-      }
+      has_platform_role:
+        | {
+            Args: {
+              _role: Database["public"]["Enums"]["platform_role"]
+              _uid: string
+            }
+            Returns: boolean
+          }
+        | { Args: { _user_id: string }; Returns: boolean }
       has_role: {
         Args: {
           _org_id: string
