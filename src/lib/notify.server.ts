@@ -48,8 +48,8 @@ async function enqueue(args: {
       purpose: "transactional",
       idempotency_key: args.messageId,
       queued_at: new Date().toISOString(),
-      metadata: args.metadata ?? {},
-    },
+      metadata: (args.metadata ?? {}) as Record<string, unknown>,
+    } as never,
   });
   if (error) throw new Error(error.message);
   await supabaseAdmin.from("email_send_log").insert({
