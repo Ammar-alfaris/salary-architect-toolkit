@@ -35,7 +35,7 @@ export const cancelSubscriptionAtPeriodEnd = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { data: sub } = await supabase
       .from("subscriptions")
-      .select("id, organization_id")
+      .select("id, organization_id, end_at, renewal_at")
       .eq("id", data.subscriptionId)
       .maybeSingle();
     if (!sub) throw new Error("Subscription not found");
@@ -54,5 +54,29 @@ export const cancelSubscriptionAtPeriodEnd = createServerFn({ method: "POST" })
       .update({ cancel_at_period_end: true, auto_renew: false } as never)
       .eq("id", sub.id);
     if (error) throw new Error(error.message);
+
+    // Fire the cancellation notification. Never fail the cancel itself
+    // if the email queue is momentarily unavailable.
+    try {
+      const { resolveOrgPrimaryEmail, sendSubscriptionCancelledEmail } =
+        await import("@/lib/notify.server");
+      const recipient = await resolveOrgPrimaryEmail(
+        sub.organization_id as string,
+      );
+      if (recipient.email) {
+        await sendSubscriptionCancelledEmail({
+          to: recipient.email,
+          name: recipient.name,
+          locale: recipient.locale,
+          endAt: (sub.end_at ?? sub.renewal_at) as string | null,
+          subscriptionId: sub.id as string,
+        });
+      }
+    } catch (e) {
+      console.error(JSON.stringify({
+        scope: "billing.cancel", step: "email.failed",
+        subscriptionId: sub.id, message: (e as Error).message,
+      }));
+    }
     return { ok: true as const };
   });
