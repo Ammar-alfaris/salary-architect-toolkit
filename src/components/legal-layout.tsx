@@ -60,6 +60,7 @@ export function LegalLayout({ eyebrow, title, lastUpdated, children }: LegalLayo
             <Link to="/" className="hover:text-foreground">{t("back_home")}</Link>
             <Link to="/privacy" className="hover:text-foreground">{t("privacy")}</Link>
             <Link to="/terms" className="hover:text-foreground">{t("terms")}</Link>
+            <Link to="/dpa" className="hover:text-foreground">DPA</Link>
             <Link to="/refund" className="hover:text-foreground">{t("refund")}</Link>
             <Link to="/contact" className="hover:text-foreground">{t("contact")}</Link>
           </div>
