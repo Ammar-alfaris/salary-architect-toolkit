@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useI18n } from "@/lib/i18n";
+import { detectPostLocale } from "@/lib/blog-locale";
 import { useTheme } from "@/lib/theme";
 import { ArrowRight, Clock, Search, Layers, Languages, Moon, Sun, Sparkles } from "lucide-react";
 import { Logo } from "@/components/logo";
@@ -58,15 +59,16 @@ function BlogIndex() {
   }, []);
 
   const filtered = useMemo(() => {
+    const byLocale = posts.filter((p) => detectPostLocale(p) === locale);
     const s = q.trim().toLowerCase();
-    if (!s) return posts;
-    return posts.filter(
+    if (!s) return byLocale;
+    return byLocale.filter(
       (p) =>
         p.title.toLowerCase().includes(s) ||
         (p.excerpt || "").toLowerCase().includes(s) ||
         p.tags.some((t) => t.toLowerCase().includes(s))
     );
-  }, [posts, q]);
+  }, [posts, q, locale]);
 
   const featured = filtered.find((p) => p.is_featured) || filtered[0];
   const rest = filtered.filter((p) => p.id !== featured?.id);
