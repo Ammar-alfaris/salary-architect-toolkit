@@ -76,7 +76,7 @@ export const createPaylinkInvoice = createServerFn({ method: "POST" })
         currency: data.currency ?? "SAR",
         customer_name: data.customerName,
         customer_phone: data.customerPhone,
-        customer_email: data.customerEmail ?? null,
+        customer_email: customerEmail,
         items: data.items as never,
         status: "pending",
       } as never)
