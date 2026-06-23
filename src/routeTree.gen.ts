@@ -36,7 +36,6 @@ import { Route as AppMatrixRouteImport } from './routes/app.matrix'
 import { Route as AppHelpRouteImport } from './routes/app.help'
 import { Route as AppEmployeesRouteImport } from './routes/app.employees'
 import { Route as AppBonusRouteImport } from './routes/app.bonus'
-import { Route as AppBillingRouteImport } from './routes/app.billing'
 import { Route as AppAuditRouteImport } from './routes/app.audit'
 import { Route as AppApprovalsRouteImport } from './routes/app.approvals'
 import { Route as AppAllowancesRouteImport } from './routes/app.allowances'
@@ -52,6 +51,7 @@ import { Route as AdminEmailsRouteImport } from './routes/admin.emails'
 import { Route as AdminBlogRouteImport } from './routes/admin.blog'
 import { Route as AdminAuditRouteImport } from './routes/admin.audit'
 import { Route as AdminAnnouncementsRouteImport } from './routes/admin.announcements'
+import { Route as AppBillingIndexRouteImport } from './routes/app.billing.index'
 import { Route as AdminTicketsIndexRouteImport } from './routes/admin.tickets.index'
 import { Route as AdminEmailsIndexRouteImport } from './routes/admin.emails.index'
 import { Route as AdminBlogIndexRouteImport } from './routes/admin.blog.index'
@@ -209,11 +209,6 @@ const AppBonusRoute = AppBonusRouteImport.update({
   path: '/bonus',
   getParentRoute: () => AppRoute,
 } as any)
-const AppBillingRoute = AppBillingRouteImport.update({
-  id: '/billing',
-  path: '/billing',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppAuditRoute = AppAuditRouteImport.update({
   id: '/audit',
   path: '/audit',
@@ -289,6 +284,11 @@ const AdminAnnouncementsRoute = AdminAnnouncementsRouteImport.update({
   path: '/announcements',
   getParentRoute: () => AdminRoute,
 } as any)
+const AppBillingIndexRoute = AppBillingIndexRouteImport.update({
+  id: '/billing/',
+  path: '/billing/',
+  getParentRoute: () => AppRoute,
+} as any)
 const AdminTicketsIndexRoute = AdminTicketsIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -315,9 +315,9 @@ const AppEmployeesIdRoute = AppEmployeesIdRouteImport.update({
   getParentRoute: () => AppEmployeesRoute,
 } as any)
 const AppBillingUpgradeRoute = AppBillingUpgradeRouteImport.update({
-  id: '/upgrade',
-  path: '/upgrade',
-  getParentRoute: () => AppBillingRoute,
+  id: '/billing/upgrade',
+  path: '/billing/upgrade',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppAnalyticsPenetrationRoute = AppAnalyticsPenetrationRouteImport.update({
   id: '/analytics/penetration',
@@ -426,7 +426,6 @@ export interface FileRoutesByFullPath {
   '/app/allowances': typeof AppAllowancesRoute
   '/app/approvals': typeof AppApprovalsRoute
   '/app/audit': typeof AppAuditRoute
-  '/app/billing': typeof AppBillingRouteWithChildren
   '/app/bonus': typeof AppBonusRoute
   '/app/employees': typeof AppEmployeesRouteWithChildren
   '/app/help': typeof AppHelpRoute
@@ -457,6 +456,7 @@ export interface FileRoutesByFullPath {
   '/admin/blog/': typeof AdminBlogIndexRoute
   '/admin/emails/': typeof AdminEmailsIndexRoute
   '/admin/tickets/': typeof AdminTicketsIndexRoute
+  '/app/billing/': typeof AppBillingIndexRoute
   '/api/public/cron/trial-lifecycle': typeof ApiPublicCronTrialLifecycleRoute
   '/api/public/invoices/$orderId': typeof ApiPublicInvoicesOrderIdRoute
   '/api/public/paylink/webhook': typeof ApiPublicPaylinkWebhookRoute
@@ -487,7 +487,6 @@ export interface FileRoutesByTo {
   '/app/allowances': typeof AppAllowancesRoute
   '/app/approvals': typeof AppApprovalsRoute
   '/app/audit': typeof AppAuditRoute
-  '/app/billing': typeof AppBillingRouteWithChildren
   '/app/bonus': typeof AppBonusRoute
   '/app/employees': typeof AppEmployeesRouteWithChildren
   '/app/help': typeof AppHelpRoute
@@ -518,6 +517,7 @@ export interface FileRoutesByTo {
   '/admin/blog': typeof AdminBlogIndexRoute
   '/admin/emails': typeof AdminEmailsIndexRoute
   '/admin/tickets': typeof AdminTicketsIndexRoute
+  '/app/billing': typeof AppBillingIndexRoute
   '/api/public/cron/trial-lifecycle': typeof ApiPublicCronTrialLifecycleRoute
   '/api/public/invoices/$orderId': typeof ApiPublicInvoicesOrderIdRoute
   '/api/public/paylink/webhook': typeof ApiPublicPaylinkWebhookRoute
@@ -554,7 +554,6 @@ export interface FileRoutesById {
   '/app/allowances': typeof AppAllowancesRoute
   '/app/approvals': typeof AppApprovalsRoute
   '/app/audit': typeof AppAuditRoute
-  '/app/billing': typeof AppBillingRouteWithChildren
   '/app/bonus': typeof AppBonusRoute
   '/app/employees': typeof AppEmployeesRouteWithChildren
   '/app/help': typeof AppHelpRoute
@@ -585,6 +584,7 @@ export interface FileRoutesById {
   '/admin/blog/': typeof AdminBlogIndexRoute
   '/admin/emails/': typeof AdminEmailsIndexRoute
   '/admin/tickets/': typeof AdminTicketsIndexRoute
+  '/app/billing/': typeof AppBillingIndexRoute
   '/api/public/cron/trial-lifecycle': typeof ApiPublicCronTrialLifecycleRoute
   '/api/public/invoices/$orderId': typeof ApiPublicInvoicesOrderIdRoute
   '/api/public/paylink/webhook': typeof ApiPublicPaylinkWebhookRoute
@@ -622,7 +622,6 @@ export interface FileRouteTypes {
     | '/app/allowances'
     | '/app/approvals'
     | '/app/audit'
-    | '/app/billing'
     | '/app/bonus'
     | '/app/employees'
     | '/app/help'
@@ -653,6 +652,7 @@ export interface FileRouteTypes {
     | '/admin/blog/'
     | '/admin/emails/'
     | '/admin/tickets/'
+    | '/app/billing/'
     | '/api/public/cron/trial-lifecycle'
     | '/api/public/invoices/$orderId'
     | '/api/public/paylink/webhook'
@@ -683,7 +683,6 @@ export interface FileRouteTypes {
     | '/app/allowances'
     | '/app/approvals'
     | '/app/audit'
-    | '/app/billing'
     | '/app/bonus'
     | '/app/employees'
     | '/app/help'
@@ -714,6 +713,7 @@ export interface FileRouteTypes {
     | '/admin/blog'
     | '/admin/emails'
     | '/admin/tickets'
+    | '/app/billing'
     | '/api/public/cron/trial-lifecycle'
     | '/api/public/invoices/$orderId'
     | '/api/public/paylink/webhook'
@@ -749,7 +749,6 @@ export interface FileRouteTypes {
     | '/app/allowances'
     | '/app/approvals'
     | '/app/audit'
-    | '/app/billing'
     | '/app/bonus'
     | '/app/employees'
     | '/app/help'
@@ -780,6 +779,7 @@ export interface FileRouteTypes {
     | '/admin/blog/'
     | '/admin/emails/'
     | '/admin/tickets/'
+    | '/app/billing/'
     | '/api/public/cron/trial-lifecycle'
     | '/api/public/invoices/$orderId'
     | '/api/public/paylink/webhook'
@@ -1004,13 +1004,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppBonusRouteImport
       parentRoute: typeof AppRoute
     }
-    '/app/billing': {
-      id: '/app/billing'
-      path: '/billing'
-      fullPath: '/app/billing'
-      preLoaderRoute: typeof AppBillingRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/app/audit': {
       id: '/app/audit'
       path: '/audit'
@@ -1116,6 +1109,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAnnouncementsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/app/billing/': {
+      id: '/app/billing/'
+      path: '/billing'
+      fullPath: '/app/billing/'
+      preLoaderRoute: typeof AppBillingIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/admin/tickets/': {
       id: '/admin/tickets/'
       path: '/'
@@ -1153,10 +1153,10 @@ declare module '@tanstack/react-router' {
     }
     '/app/billing/upgrade': {
       id: '/app/billing/upgrade'
-      path: '/upgrade'
+      path: '/billing/upgrade'
       fullPath: '/app/billing/upgrade'
       preLoaderRoute: typeof AppBillingUpgradeRouteImport
-      parentRoute: typeof AppBillingRoute
+      parentRoute: typeof AppRoute
     }
     '/app/analytics/penetration': {
       id: '/app/analytics/penetration'
@@ -1355,18 +1355,6 @@ const AdminRouteChildren: AdminRouteChildren = {
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
-interface AppBillingRouteChildren {
-  AppBillingUpgradeRoute: typeof AppBillingUpgradeRoute
-}
-
-const AppBillingRouteChildren: AppBillingRouteChildren = {
-  AppBillingUpgradeRoute: AppBillingUpgradeRoute,
-}
-
-const AppBillingRouteWithChildren = AppBillingRoute._addFileChildren(
-  AppBillingRouteChildren,
-)
-
 interface AppEmployeesRouteChildren {
   AppEmployeesIdRoute: typeof AppEmployeesIdRoute
 }
@@ -1383,7 +1371,6 @@ interface AppRouteChildren {
   AppAllowancesRoute: typeof AppAllowancesRoute
   AppApprovalsRoute: typeof AppApprovalsRoute
   AppAuditRoute: typeof AppAuditRoute
-  AppBillingRoute: typeof AppBillingRouteWithChildren
   AppBonusRoute: typeof AppBonusRoute
   AppEmployeesRoute: typeof AppEmployeesRouteWithChildren
   AppHelpRoute: typeof AppHelpRoute
@@ -1399,13 +1386,14 @@ interface AppRouteChildren {
   AppAnalyticsCompaRoute: typeof AppAnalyticsCompaRoute
   AppAnalyticsEquityRoute: typeof AppAnalyticsEquityRoute
   AppAnalyticsPenetrationRoute: typeof AppAnalyticsPenetrationRoute
+  AppBillingUpgradeRoute: typeof AppBillingUpgradeRoute
+  AppBillingIndexRoute: typeof AppBillingIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppAllowancesRoute: AppAllowancesRoute,
   AppApprovalsRoute: AppApprovalsRoute,
   AppAuditRoute: AppAuditRoute,
-  AppBillingRoute: AppBillingRouteWithChildren,
   AppBonusRoute: AppBonusRoute,
   AppEmployeesRoute: AppEmployeesRouteWithChildren,
   AppHelpRoute: AppHelpRoute,
@@ -1421,6 +1409,8 @@ const AppRouteChildren: AppRouteChildren = {
   AppAnalyticsCompaRoute: AppAnalyticsCompaRoute,
   AppAnalyticsEquityRoute: AppAnalyticsEquityRoute,
   AppAnalyticsPenetrationRoute: AppAnalyticsPenetrationRoute,
+  AppBillingUpgradeRoute: AppBillingUpgradeRoute,
+  AppBillingIndexRoute: AppBillingIndexRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
@@ -1452,13 +1442,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
