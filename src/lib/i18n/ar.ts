@@ -183,7 +183,7 @@ export const ar: Dict = {
   confirm_password: "تأكيد كلمة المرور",
   continue_google: "المتابعة عبر Google",
   forgot_password: "نسيت كلمة المرور؟",
-  back_home: "العودة إلى الرئيسية",
+  
   welcome_to: "مرحبًا بك في",
   or: "أو",
   terms_agree: "بالمتابعة فإنك توافق على الشروط وسياسة الخصوصية.",
