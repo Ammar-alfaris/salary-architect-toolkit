@@ -43,6 +43,9 @@ export const en: Dict = {
   terms: "Terms",
   contact: "Contact",
   back_home: "Back to home",
+  refund: "Refund",
+  legal: "Legal",
+  last_updated: "Last updated",
 
   // Invite & auth flow
   accepting_invitation: "Setting up your account…",
