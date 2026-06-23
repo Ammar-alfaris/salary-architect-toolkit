@@ -27,6 +27,18 @@ export const createPaylinkInvoice = createServerFn({ method: "POST" })
     const appBaseUrl = process.env.APP_BASE_URL;
     if (!appBaseUrl) throw new Error("APP_BASE_URL not configured");
 
+    // Default the customer email to the authenticated user's address so
+    // every order can receive a receipt even if the checkout form skipped it.
+    let customerEmail = data.customerEmail ?? null;
+    if (!customerEmail) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("email")
+        .eq("id", userId)
+        .maybeSingle();
+      customerEmail = ((profile as any)?.email as string | null) ?? null;
+    }
+
     const { data: role } = await supabase
       .from("user_roles")
       .select("organization_id")
