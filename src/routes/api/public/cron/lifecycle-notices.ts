@@ -55,7 +55,7 @@ async function handle(request: Request) {
   // ── Renewal reminders (T-7) ──
   const { data: subsForRenewal } = await supabaseAdmin
     .from("subscriptions")
-    .select("id, organization_id, renewal_at, amount, plan_id, plan:plans(name)")
+    .select("id, organization_id, renewal_at, amount, plan_id, last_renewal_notice_at, plan:plans(name)")
     .eq("status", "active")
     .eq("auto_renew", true)
     .eq("cancel_at_period_end", false)
@@ -64,6 +64,11 @@ async function handle(request: Request) {
 
   for (const sub of (subsForRenewal ?? []) as any[]) {
     if (!sub.organization_id) continue;
+    // Skip if we already notified within the past 14 days for this cycle.
+    if (sub.last_renewal_notice_at) {
+      const since = Date.now() - Date.parse(sub.last_renewal_notice_at);
+      if (since < 14 * 86_400_000) continue;
+    }
     const recipient = await resolveOrgPrimaryEmail(sub.organization_id);
     if (!recipient.email) continue;
     const { data: pm } = await supabaseAdmin
@@ -84,6 +89,10 @@ async function handle(request: Request) {
         planName: (sub.plan?.name as string | undefined) ?? null,
         subscriptionId: sub.id,
       });
+      await supabaseAdmin
+        .from("subscriptions")
+        .update({ last_renewal_notice_at: new Date().toISOString() } as never)
+        .eq("id", sub.id);
       renewals++;
     } catch (e) {
       console.error(JSON.stringify({
