@@ -49,6 +49,7 @@ import { Route as AdminPlansRouteImport } from './routes/admin.plans'
 import { Route as AdminOrganizationsRouteImport } from './routes/admin.organizations'
 import { Route as AdminMonitoringRouteImport } from './routes/admin.monitoring'
 import { Route as AdminMessagesRouteImport } from './routes/admin.messages'
+import { Route as AdminErrorsRouteImport } from './routes/admin.errors'
 import { Route as AdminEmailsRouteImport } from './routes/admin.emails'
 import { Route as AdminBlogRouteImport } from './routes/admin.blog'
 import { Route as AdminAuditRouteImport } from './routes/admin.audit'
@@ -74,6 +75,7 @@ import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/em
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as ApiPublicPaylinkWebhookRouteImport } from './routes/api/public/paylink/webhook'
 import { Route as ApiPublicInvoicesOrderIdRouteImport } from './routes/api/public/invoices.$orderId'
+import { Route as ApiPublicErrorsReportRouteImport } from './routes/api/public/errors/report'
 import { Route as ApiPublicCronLifecycleNoticesRouteImport } from './routes/api/public/cron/lifecycle-notices'
 import { Route as ApiPublicCronBillingEngineRouteImport } from './routes/api/public/cron/billing-engine'
 
@@ -277,6 +279,11 @@ const AdminMessagesRoute = AdminMessagesRouteImport.update({
   path: '/messages',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminErrorsRoute = AdminErrorsRouteImport.update({
+  id: '/errors',
+  path: '/errors',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminEmailsRoute = AdminEmailsRouteImport.update({
   id: '/emails',
   path: '/emails',
@@ -404,6 +411,11 @@ const ApiPublicInvoicesOrderIdRoute =
     path: '/api/public/invoices/$orderId',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicErrorsReportRoute = ApiPublicErrorsReportRouteImport.update({
+  id: '/api/public/errors/report',
+  path: '/api/public/errors/report',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicCronLifecycleNoticesRoute =
   ApiPublicCronLifecycleNoticesRouteImport.update({
     id: '/api/public/cron/lifecycle-notices',
@@ -435,6 +447,7 @@ export interface FileRoutesByFullPath {
   '/admin/audit': typeof AdminAuditRoute
   '/admin/blog': typeof AdminBlogRouteWithChildren
   '/admin/emails': typeof AdminEmailsRouteWithChildren
+  '/admin/errors': typeof AdminErrorsRoute
   '/admin/messages': typeof AdminMessagesRoute
   '/admin/monitoring': typeof AdminMonitoringRoute
   '/admin/organizations': typeof AdminOrganizationsRouteWithChildren
@@ -480,6 +493,7 @@ export interface FileRoutesByFullPath {
   '/app/billing/': typeof AppBillingIndexRoute
   '/api/public/cron/billing-engine': typeof ApiPublicCronBillingEngineRoute
   '/api/public/cron/lifecycle-notices': typeof ApiPublicCronLifecycleNoticesRoute
+  '/api/public/errors/report': typeof ApiPublicErrorsReportRoute
   '/api/public/invoices/$orderId': typeof ApiPublicInvoicesOrderIdRoute
   '/api/public/paylink/webhook': typeof ApiPublicPaylinkWebhookRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -500,6 +514,7 @@ export interface FileRoutesByTo {
   '/trust': typeof TrustRoute
   '/admin/announcements': typeof AdminAnnouncementsRoute
   '/admin/audit': typeof AdminAuditRoute
+  '/admin/errors': typeof AdminErrorsRoute
   '/admin/messages': typeof AdminMessagesRoute
   '/admin/monitoring': typeof AdminMonitoringRoute
   '/admin/organizations': typeof AdminOrganizationsRouteWithChildren
@@ -544,6 +559,7 @@ export interface FileRoutesByTo {
   '/app/billing': typeof AppBillingIndexRoute
   '/api/public/cron/billing-engine': typeof ApiPublicCronBillingEngineRoute
   '/api/public/cron/lifecycle-notices': typeof ApiPublicCronLifecycleNoticesRoute
+  '/api/public/errors/report': typeof ApiPublicErrorsReportRoute
   '/api/public/invoices/$orderId': typeof ApiPublicInvoicesOrderIdRoute
   '/api/public/paylink/webhook': typeof ApiPublicPaylinkWebhookRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -569,6 +585,7 @@ export interface FileRoutesById {
   '/admin/audit': typeof AdminAuditRoute
   '/admin/blog': typeof AdminBlogRouteWithChildren
   '/admin/emails': typeof AdminEmailsRouteWithChildren
+  '/admin/errors': typeof AdminErrorsRoute
   '/admin/messages': typeof AdminMessagesRoute
   '/admin/monitoring': typeof AdminMonitoringRoute
   '/admin/organizations': typeof AdminOrganizationsRouteWithChildren
@@ -614,6 +631,7 @@ export interface FileRoutesById {
   '/app/billing/': typeof AppBillingIndexRoute
   '/api/public/cron/billing-engine': typeof ApiPublicCronBillingEngineRoute
   '/api/public/cron/lifecycle-notices': typeof ApiPublicCronLifecycleNoticesRoute
+  '/api/public/errors/report': typeof ApiPublicErrorsReportRoute
   '/api/public/invoices/$orderId': typeof ApiPublicInvoicesOrderIdRoute
   '/api/public/paylink/webhook': typeof ApiPublicPaylinkWebhookRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -640,6 +658,7 @@ export interface FileRouteTypes {
     | '/admin/audit'
     | '/admin/blog'
     | '/admin/emails'
+    | '/admin/errors'
     | '/admin/messages'
     | '/admin/monitoring'
     | '/admin/organizations'
@@ -685,6 +704,7 @@ export interface FileRouteTypes {
     | '/app/billing/'
     | '/api/public/cron/billing-engine'
     | '/api/public/cron/lifecycle-notices'
+    | '/api/public/errors/report'
     | '/api/public/invoices/$orderId'
     | '/api/public/paylink/webhook'
     | '/lovable/email/auth/preview'
@@ -705,6 +725,7 @@ export interface FileRouteTypes {
     | '/trust'
     | '/admin/announcements'
     | '/admin/audit'
+    | '/admin/errors'
     | '/admin/messages'
     | '/admin/monitoring'
     | '/admin/organizations'
@@ -749,6 +770,7 @@ export interface FileRouteTypes {
     | '/app/billing'
     | '/api/public/cron/billing-engine'
     | '/api/public/cron/lifecycle-notices'
+    | '/api/public/errors/report'
     | '/api/public/invoices/$orderId'
     | '/api/public/paylink/webhook'
     | '/lovable/email/auth/preview'
@@ -773,6 +795,7 @@ export interface FileRouteTypes {
     | '/admin/audit'
     | '/admin/blog'
     | '/admin/emails'
+    | '/admin/errors'
     | '/admin/messages'
     | '/admin/monitoring'
     | '/admin/organizations'
@@ -818,6 +841,7 @@ export interface FileRouteTypes {
     | '/app/billing/'
     | '/api/public/cron/billing-engine'
     | '/api/public/cron/lifecycle-notices'
+    | '/api/public/errors/report'
     | '/api/public/invoices/$orderId'
     | '/api/public/paylink/webhook'
     | '/lovable/email/auth/preview'
@@ -845,6 +869,7 @@ export interface RootRouteChildren {
   PaymentPaylinkCallbackRoute: typeof PaymentPaylinkCallbackRoute
   ApiPublicCronBillingEngineRoute: typeof ApiPublicCronBillingEngineRoute
   ApiPublicCronLifecycleNoticesRoute: typeof ApiPublicCronLifecycleNoticesRoute
+  ApiPublicErrorsReportRoute: typeof ApiPublicErrorsReportRoute
   ApiPublicInvoicesOrderIdRoute: typeof ApiPublicInvoicesOrderIdRoute
   ApiPublicPaylinkWebhookRoute: typeof ApiPublicPaylinkWebhookRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
@@ -1134,6 +1159,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminMessagesRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/errors': {
+      id: '/admin/errors'
+      path: '/errors'
+      fullPath: '/admin/errors'
+      preLoaderRoute: typeof AdminErrorsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/emails': {
       id: '/admin/emails'
       path: '/emails'
@@ -1309,6 +1341,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicInvoicesOrderIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/errors/report': {
+      id: '/api/public/errors/report'
+      path: '/api/public/errors/report'
+      fullPath: '/api/public/errors/report'
+      preLoaderRoute: typeof ApiPublicErrorsReportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/cron/lifecycle-notices': {
       id: '/api/public/cron/lifecycle-notices'
       path: '/api/public/cron/lifecycle-notices'
@@ -1386,6 +1425,7 @@ interface AdminRouteChildren {
   AdminAuditRoute: typeof AdminAuditRoute
   AdminBlogRoute: typeof AdminBlogRouteWithChildren
   AdminEmailsRoute: typeof AdminEmailsRouteWithChildren
+  AdminErrorsRoute: typeof AdminErrorsRoute
   AdminMessagesRoute: typeof AdminMessagesRoute
   AdminMonitoringRoute: typeof AdminMonitoringRoute
   AdminOrganizationsRoute: typeof AdminOrganizationsRouteWithChildren
@@ -1403,6 +1443,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAuditRoute: AdminAuditRoute,
   AdminBlogRoute: AdminBlogRouteWithChildren,
   AdminEmailsRoute: AdminEmailsRouteWithChildren,
+  AdminErrorsRoute: AdminErrorsRoute,
   AdminMessagesRoute: AdminMessagesRoute,
   AdminMonitoringRoute: AdminMonitoringRoute,
   AdminOrganizationsRoute: AdminOrganizationsRouteWithChildren,
@@ -1497,6 +1538,7 @@ const rootRouteChildren: RootRouteChildren = {
   PaymentPaylinkCallbackRoute: PaymentPaylinkCallbackRoute,
   ApiPublicCronBillingEngineRoute: ApiPublicCronBillingEngineRoute,
   ApiPublicCronLifecycleNoticesRoute: ApiPublicCronLifecycleNoticesRoute,
+  ApiPublicErrorsReportRoute: ApiPublicErrorsReportRoute,
   ApiPublicInvoicesOrderIdRoute: ApiPublicInvoicesOrderIdRoute,
   ApiPublicPaylinkWebhookRoute: ApiPublicPaylinkWebhookRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
