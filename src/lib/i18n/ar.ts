@@ -42,6 +42,10 @@ export const ar: Dict = {
   privacy: "الخصوصية",
   terms: "الشروط",
   contact: "تواصل معنا",
+  back_home: "العودة للرئيسية",
+  refund: "الاسترداد",
+  legal: "قانوني",
+  last_updated: "آخر تحديث",
 
   // Invite & auth flow
   accepting_invitation: "جارٍ إعداد حسابك…",
