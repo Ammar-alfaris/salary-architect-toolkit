@@ -44,6 +44,29 @@ function htmlToText(html: string): string {
 }
 
 
+async function getOrCreateUnsubscribeToken(email: string): Promise<string> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const normalized = email.trim().toLowerCase();
+  const { data: existing } = await supabaseAdmin
+    .from("email_unsubscribe_tokens")
+    .select("token")
+    .eq("email", normalized)
+    .maybeSingle();
+  if ((existing as any)?.token) return (existing as any).token as string;
+  const token = crypto.randomUUID();
+  const { error } = await supabaseAdmin
+    .from("email_unsubscribe_tokens")
+    .insert({ email: normalized, token } as never);
+  if (!error) return token;
+  const { data: retry } = await supabaseAdmin
+    .from("email_unsubscribe_tokens")
+    .select("token")
+    .eq("email", normalized)
+    .maybeSingle();
+  if ((retry as any)?.token) return (retry as any).token as string;
+  throw new Error(error.message);
+}
+
 async function enqueue(args: {
   to: string;
   subject: string;
@@ -53,6 +76,7 @@ async function enqueue(args: {
   metadata?: Record<string, unknown>;
 }) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const unsubscribeToken = await getOrCreateUnsubscribeToken(args.to);
   const { error } = await supabaseAdmin.rpc("enqueue_email", {
     queue_name: "transactional_emails",
     payload: {
@@ -62,6 +86,7 @@ async function enqueue(args: {
       subject: args.subject,
       html: args.html,
       text: htmlToText(args.html),
+      unsubscribe_token: unsubscribeToken,
       message_id: args.messageId,
       label: args.label,
       purpose: "transactional",
