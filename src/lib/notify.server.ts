@@ -43,6 +43,7 @@ async function enqueue(args: {
       sender_domain: SENDER_DOMAIN,
       subject: args.subject,
       html: args.html,
+      text: htmlToText(args.html),
       message_id: args.messageId,
       label: args.label,
       purpose: "transactional",
