@@ -1,83 +1,60 @@
+اضافةً على التعديلات هذه اريد الحرض على تكامل نظام الاشعار بالايميل للمستخدم بحيث يغطي جميع الامور المتعارف عليها والتي يجب فيها اشعار العميل بالايميل وليس فقط التجديد والالغاء ، لذا قم باضافة ذلك الى الخطة مثلاً خيار اعادةتعيين كلمة المرور او غيرها من الاشعارات الضرورية
 
-# خطة معالجة مشاكل الدفع والاشتراكات
+&nbsp;
 
-سأعالج النقاط الستّ التي ذكرتها قبل الانتقال لبقية خطة التحسين.
+## Problem confirmed
 
-## 1) فشل الدفع بالبطاقة (يعمل Apple Pay فقط)
+I checked your account `mikov87496@zemyai.com`:
 
-السبب الجذري: في `src/lib/paylink.functions.ts` نمرّر `supportedCardBrands: ["mada", "visaMastercard"]` افتراضياً، ورسالة Paylink الحمراء "Please pay with cards from local Banks" تظهر لأن الحساب يقيد البطاقات بحسب الإعدادات، وApple Pay يتجاوز هذا القيد لأنه يُمرّر رمز توكن مختلف.
+- Subscription is **active** (Starter, renews 2026-07-23, auto-renew ON).
+- Invoice `INV-2026-00002` was generated successfully.
+- **But `customer_email` on the order row is empty**, so the receipt email code returned early without sending. Nothing was queued, nothing in `email_send_log`.
 
-الحل:
-- إزالة تمرير `supportedCardBrands` نهائياً عند إنشاء الفاتورة، وترك Paylink يستخدم القائمة الكاملة المفعّلة على الحساب (mada + visa + master + amex حسب التفعيل).
-- التحقق من الحساب في لوحة Paylink (سأنبّهك إن كان التفعيل يتطلب إجراءً منك على حسابك).
-- إضافة `accountFundedTransfer: false` ورفع `displayPending` ليتسق سلوك الفاتورة.
+There are also two governance gaps you asked about:
 
-## 2) صفحة إدارة الاشتراكات للسوبر أدمن
+1. No email is sent when a user cancels the subscription.
+2. No email is sent before auto-renewal charges the card next month.
 
-الصفحة `/admin/subscriptions` موجودة لكن سطحية. سأحوّلها إلى مركز تحكم شامل:
-- بطاقات ملخّص: إجمالي الاشتراكات النشطة، التجريبية، الملغية، MRR، ARR، عدد المدفوعات هذا الشهر.
-- جدول مفصّل مع: المنظمة، الباقة، الحالة، الدورة، المبلغ، تاريخ التجديد، آخر دفعة، طريقة الدفع.
-- فلاتر متقدمة (الحالة، الباقة، الدورة، التاريخ).
-- تفاصيل الاشتراك في Drawer جانبي: سجل المدفوعات، الفواتير، تغييرات الباقة، التحويل اليدوي للحالة (تفعيل/تمديد/تعليق/إلغاء فوري).
-- إجراءات: تمديد التجربة يدوياً، تعديل تاريخ التجديد، إضافة ملاحظة داخلية، إعادة إرسال الفاتورة.
+## Plan
 
-## 3) عرض التواريخ بالإنجليزي معكوس (`232026/7/`)
+### 1. Receipt email always reaches the customer
 
-السبب: استخدام `toLocaleDateString()` بدون locale ثابت يجعل المتصفح يخلط تنسيق `en-US` مع اتجاه `rtl` فيظهر اليوم ملتصقاً بالسنة.
+- In `createPaylinkInvoice` (`src/lib/paylink.functions.ts`): if `customerEmail` is not provided by the form, fall back to the authenticated user's email (from `auth.users` via admin client). This guarantees every order has a recipient.
+- In `paylink-process.server.ts`: if `customerEmail` is still null at activation time, look up the org's primary admin email as a second fallback before giving up. Log a clear warning when both fail.
+- Backfill: send the missed receipt for order `INV-2026-00002` to `mikov87496@zemyai.com` once the fix is live (one-off enqueue).
 
-الحل:
-- إنشاء helper موحّد `formatDate(date, lang)` في `src/lib/format.ts` يستخدم `Intl.DateTimeFormat` مع locale صريح (`ar-SA` بتقويم gregorian أو `en-GB` للإنجليزي) ومرفقاً بـ `<bdi>` لمنع كسر الاتجاه.
-- استبدال كل `new Date(...).toLocaleDateString()` في صفحات `app.billing`, `admin.subscriptions`, `trial-banner`, `notification-bell`, جداول الفواتير… بالـ helper الجديد.
+### 2. Cancellation email
 
-## 4) خيار "تغيير الباقة" يجب أن يصبح "ترقية الباقة" + صفحة مخصّصة
+- Extend `cancelSubscriptionAtPeriodEnd` in `src/lib/billing.functions.ts`:
+  - After flipping `cancel_at_period_end=true` / `auto_renew=false`, enqueue a branded email (AR + EN) to the org admin: "Your subscription is canceled — access continues until `renewal_at`, no further charges will be made."
+  - Log to `email_send_log` like the receipt does.
 
-الوضع الحالي: زر "Change plan" في `/app/billing` يحوّل إلى `/pricing` العامة التي تعرض "اشترك الآن" رغم أنه مشترك.
+### 3. Auto-renewal notice + reminder
 
-الحل:
-- إنشاء صفحة جديدة `/app/billing/upgrade` تعرض الباقات في سياق المشترك:
-  - تمييز الباقة الحالية.
-  - أزرار "ترقية" للباقات الأعلى مع حساب الفرق التناسبي (proration estimate).
-  - "تخفيض" للباقات الأدنى مع تنبيه بتاريخ السريان (نهاية الدورة).
-  - مقارنة جنباً إلى جنب للمميزات الإضافية.
-- استبدال زر "Change plan" بزر "ترقية الباقة" يحوّل لهذه الصفحة.
-- تعديل صفحة `/pricing` لاكتشاف المستخدم المشترك وتغيير CTA إلى "أنت على هذه الباقة" أو "ترقّ إلى…".
+- Add a small SQL cron job (pg_cron, pure SQL via `pg_net`) that runs daily and calls a new public route `/api/public/cron/renewal-notices` (authenticated via `apikey` anon header).
+- Route enqueues two emails per active subscription:
+  - **T-7 days** before `renewal_at`: "Your subscription renews on {date}. Card on file ending {last4} will be charged {amount} {currency}. Cancel anytime before then to avoid the charge."
+  - **T-0 (day of renewal succeeded)**: handled by the existing receipt flow once Paylink charges — no new template needed, just ensure renewal charge uses the same `processPaylinkTransaction` path.
+- Idempotency: store a `last_renewal_notice_at` column on `subscriptions` (migration) so the same notice isn't sent twice.
 
-## 5) تكرار الأزرار في صفحة المدفوعات/الفوترة
+### 4. Make the renewal behavior visible in the UI
 
-في الصورة الثانية (`IMG_5897`): يوجد زرّان:
-- "فعّل الاشتراك الآن" في بانر التجربة → يحوّل لصفحة الأسعار (غير صحيح).
-- "ادفع الآن وفعّل الاشتراك" في بطاقة الباقة الحالية → يحوّل للـ checkout (صحيح).
+- On `/app/billing`: show a clear governance block in both languages:
+  - "Auto-renewal: ON/OFF, next charge on {date} for {amount}."
+  - "Cancel subscription" button with a confirm dialog explaining: access stays until `renewal_at`, no further charges, confirmation email sent.
 
-الحل:
-- تعديل `TrialBanner` و`TrialStatusCard` بحيث يحوّل CTA "فعّل الاشتراك الآن" مباشرة إلى `/checkout` بمعطيات الباقة الحالية (نفس عمل الزر الثاني)، بدل `/pricing`.
-- إزالة التكرار بدمج البانرين أو إخفاء بانر التجربة داخل صفحة الفوترة (يبقى فقط على باقي الصفحات).
+### 5. Verification after build
 
-## 6) لوحة السوبر أدمن لا تعرض المبيعات/الأرباح
+- Trigger the cancel path for a test sub → confirm row in `email_send_log` and inbox delivery.
+- Manually invoke the renewal-notices route → confirm correct T-7 selection and idempotency.
+- Re-send the missed receipt for the existing user and confirm delivery.
 
-السبب: `KpiCard "MRR (est.)"` يحسب فقط `subscriptions.amount` للحالة `active`، بينما الاشتراكات التجريبية المدفوعة (paid trial) أو التي حالتها `trial` مع `payment_status = paid` لا تُحتسب. أيضاً لا يوجد KPI للمبيعات الفعلية من جدول `orders`.
+## Technical details
 
-الحل:
-- إعادة كتابة استعلامات الـ KPIs في `src/routes/admin.index.tsx`:
-  - **إيرادات اليوم/الشهر/السنة**: SUM من `orders` حيث `status = 'paid'` ضمن النطاق الزمني.
-  - **MRR حقيقي**: مجموع `amount` للاشتراكات النشطة + التجريبية المدفوعة، مع تحويل السنوي إلى شهري (÷12).
-  - **عدد المدفوعات الناجحة** هذا الشهر.
-  - **متوسط قيمة الصفقة (ARPU)**.
-- إضافة رسم بياني خطي لإيرادات آخر 30 يوماً ومخطط أعمدة للمدفوعات حسب الباقة.
-- إضافة قسم "آخر المدفوعات" يعرض آخر 10 طلبات مدفوعة مع رابط لتفاصيل الاشتراك.
+- Migration adds `subscriptions.last_renewal_notice_at timestamptz` + index on `(auto_renew, renewal_at)` for the cron scan.
+- New file `src/routes/api/public/cron/renewal-notices.ts` (auth via `apikey` header per scheduled-jobs guide), loads `@/integrations/supabase/client.server` inside the handler, uses `brandedWrap` and `enqueue_email` exactly like the receipt path.
+- New helper `sendCancellationEmail(...)` lives next to `sendPaymentReceiptEmail` in `paylink-process.server.ts` (renamed file is fine to keep as-is — it's already the email helper module).
+- AR + EN copy uses the same brand wrapper already in `src/lib/email-templates.ts`.
+- No new secrets needed; uses existing `SUPABASE_PUBLISHABLE_KEY` for cron auth.
 
----
-
-## ترتيب التنفيذ
-1. إصلاح Paylink card brands (سريع، حرج).
-2. helper التواريخ + استبدال شامل.
-3. توحيد أزرار التفعيل (إزالة التكرار).
-4. صفحة `/app/billing/upgrade` + تعديل `/pricing`.
-5. إعادة بناء `admin.index` بإيرادات حقيقية.
-6. إعادة بناء `admin.subscriptions` بمركز تحكم كامل.
-
-## ملاحظات تقنية
-- جميع التغييرات في الواجهة + `paylink.functions.ts` فقط، بدون migrations للقاعدة (الحقول موجودة في `orders` و`subscriptions`).
-- سأبقي اللغتين العربية والإنجليزية متزامنتين في كل النصوص الجديدة.
-- سأتحقق بعد كل إصلاح ببناء سريع وفحص الصفحة المعنية.
-
-هل أبدأ التنفيذ بهذا الترتيب؟
+Approve to switch to build mode and I'll implement all four changes plus backfill the missing receipt.

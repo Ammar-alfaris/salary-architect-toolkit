@@ -31,7 +31,7 @@ const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
 }
 
 // Configuration
-const SITE_NAME = "salary-architect-toolkit"
+const SITE_NAME = "Total Reward"
 const SENDER_DOMAIN = "notify.totalreward.app"
 const ROOT_DOMAIN = "totalreward.app"
 const FROM_DOMAIN = "totalreward.app"

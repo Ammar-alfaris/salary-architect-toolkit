@@ -75,6 +75,17 @@ export async function processPaylinkTransaction(args: {
   // 4) Activate subscription once.
   const alreadyProcessed = !!order.invoice_number;
   if (paymentStatus === "paid" && !alreadyProcessed) {
+    // Fallback: if checkout didn't capture an email, use the org primary admin.
+    let receiptEmail = (order.customer_email as string | null) ?? null;
+    let receiptName = (order.customer_name as string | null) ?? null;
+    if (!receiptEmail && order.organization_id) {
+      try {
+        const { resolveOrgPrimaryEmail } = await import("@/lib/notify.server");
+        const fb = await resolveOrgPrimaryEmail(order.organization_id as string);
+        receiptEmail = fb.email;
+        receiptName = receiptName ?? fb.name;
+      } catch {}
+    }
     await activateOrderAsSubscription({
       orderId: order.id as string,
       organizationId: order.organization_id as string | null,
@@ -82,9 +93,36 @@ export async function processPaylinkTransaction(args: {
       billingCycle: (order.billing_cycle as string | null) ?? "monthly",
       paidAmount,
       invoice,
-      customerEmail: (order.customer_email as string | null) ?? null,
-      customerName: (order.customer_name as string | null) ?? null,
+      customerEmail: receiptEmail,
+      customerName: receiptName,
     });
+  } else if (
+    (paymentStatus === "failed" || paymentStatus === "cancelled") &&
+    !alreadyProcessed &&
+    order.organization_id
+  ) {
+    try {
+      const { resolveOrgPrimaryEmail, sendPaymentFailedEmail } = await import(
+        "@/lib/notify.server"
+      );
+      const fb = await resolveOrgPrimaryEmail(order.organization_id as string);
+      const to = (order.customer_email as string | null) ?? fb.email;
+      if (to) {
+        await sendPaymentFailedEmail({
+          to,
+          name: (order.customer_name as string | null) ?? fb.name,
+          locale: fb.locale,
+          invoiceNumber: (order.invoice_number as string | null) ?? null,
+          amount: paidAmount,
+          orderId: order.id as string,
+        });
+      }
+    } catch (e) {
+      console.error(JSON.stringify({
+        scope: "paylink", step: "email.failedNotify",
+        orderId: order.id, message: (e as Error).message,
+      }));
+    }
   }
 
   return {
@@ -200,8 +238,12 @@ async function sendPaymentReceiptEmail(args: {
   renewalAt: string;
   billingCycle: string;
 }) {
-  if (!args.customerEmail) return;
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  if (!args.customerEmail) {
+    console.warn(JSON.stringify({
+      scope: "paylink", step: "email.noRecipient", orderId: args.orderId,
+    }));
+    return;
+  }
   const { signInvoiceToken } = await import("@/lib/invoice-pdf.server");
   const { brandedWrap } = await import("@/lib/email-templates");
 
@@ -234,29 +276,15 @@ async function sendPaymentReceiptEmail(args: {
   const html = brandedWrap({ subject, bodyHtml: body, locale: "en" });
   const messageId = `receipt-${args.orderId}`;
 
-  const { error } = await supabaseAdmin.rpc("enqueue_email", {
-    queue_name: "transactional_emails",
-    payload: {
-      to: args.customerEmail,
-      from: "Total Reward <noreply@totalreward.app>",
-      sender_domain: "notify.totalreward.app",
-      subject,
-      html,
-      message_id: messageId,
-      label: "payment_receipt",
-      purpose: "transactional",
-      idempotency_key: messageId,
-      queued_at: new Date().toISOString(),
-      metadata: { invoice_number: args.invoiceNumber, amount: args.paidAmount },
-    },
-  });
-  if (error) throw new Error(error.message);
-
-  await supabaseAdmin.from("email_send_log").insert({
-    message_id: messageId,
-    template_name: "payment_receipt",
-    recipient_email: args.customerEmail,
-    status: "pending",
-    metadata: { invoice_number: args.invoiceNumber, order_id: args.orderId },
+  // Reuse the central enqueue helper so we get unsubscribe_token, plain-text
+  // fallback, and email_send_log entries for free.
+  const { enqueueRawTransactionalEmail } = await import("@/lib/notify.server");
+  await enqueueRawTransactionalEmail({
+    to: args.customerEmail,
+    subject,
+    html,
+    messageId,
+    label: "payment_receipt",
+    metadata: { invoice_number: args.invoiceNumber, order_id: args.orderId, amount: args.paidAmount },
   });
 }
