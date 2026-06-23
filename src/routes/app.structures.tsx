@@ -10,7 +10,7 @@ import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { generateGrades } from "@/lib/comp";
-import { fmtCurrency } from "@/lib/format";
+import {fmtCurrency, fmtDate} from "@/lib/format";
 import { logAudit } from "@/lib/audit";
 import { usePermissions } from "@/lib/rbac";
 import { exportXLSX } from "@/lib/excel";
@@ -303,7 +303,7 @@ function StructuresPage() {
                       <td className="px-4 py-2.5">{s.currency}</td>
                       <td className="px-4 py-2.5 text-end num">{s.grade_count}</td>
                       <td className="px-4 py-2.5 text-end num">{fmtCurrency(Number(s.starting_midpoint), s.currency, locale)}</td>
-                      <td className="px-4 py-2.5 text-end text-muted-foreground">{new Date(s.effective_date).toLocaleDateString(locale === "ar" ? "ar" : "en-US")}</td>
+                      <td className="px-4 py-2.5 text-end text-muted-foreground">{fmtDate(s.effective_date, locale)}</td>
                       <td className="px-4 py-2.5 text-end"><span className={`text-xs px-2 py-0.5 rounded-full ${s.archived ? "bg-muted" : "bg-success/15 text-success"}`}>{s.archived ? t("archived") : t("active")}</span></td>
                       <td className="px-4 py-2.5 text-end">
                         <div className="flex gap-1 justify-end">

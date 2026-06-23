@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { fmtDate, fmtDateTime } from "@/lib/format";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminPageHeader } from "@/components/admin/admin-shell";
@@ -49,7 +50,7 @@ function OrgDetail() {
             <Row label="Name" value={org.name} />
             <Row label="Currency" value={<span className="font-mono">{org.default_currency}</span>} />
             <Row label="Locale" value={org.locale} />
-            <Row label="Created" value={new Date(org.created_at).toLocaleString()} />
+            <Row label="Created" value={fmtDateTime(org.created_at)} />
           </CardContent>
         </Card>
         <Card>
@@ -61,7 +62,7 @@ function OrgDetail() {
                 <Row label="Status" value={<StatusBadge value={sub.status} />} />
                 <Row label="Cycle" value={sub.billing_cycle} />
                 <Row label="Amount" value={`${sub.plans?.currency || ""} ${sub.amount}`} />
-                <Row label="Renewal" value={sub.renewal_at ? <span dir="ltr">{new Date(sub.renewal_at).toLocaleDateString("en-GB")}</span> : "—"} />
+                <Row label="Renewal" value={sub.renewal_at ? <>{fmtDate(sub.renewal_at)}</> : "—"} />
               </>
             ) : <p className="text-muted-foreground text-xs">No active subscription</p>}
             <div className="pt-2 flex gap-2">

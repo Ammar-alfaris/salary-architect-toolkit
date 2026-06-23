@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { fmtDateTime } from "@/lib/format";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminPageHeader } from "@/components/admin/admin-shell";
@@ -74,7 +75,7 @@ function TicketDetail() {
                   <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
                     {m.is_internal && <Lock className="w-3 h-3" />}
                     <span className="font-medium">{m.sender_name || m.sender_type}</span>
-                    <span>· {new Date(m.created_at).toLocaleString()}</span>
+                    <span>· {fmtDateTime(m.created_at)}</span>
                   </div>
                   <div className="whitespace-pre-wrap">{m.message}</div>
                 </div>

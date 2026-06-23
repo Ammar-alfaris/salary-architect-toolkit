@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { fmtDate } from "@/lib/format";
 import { useEffect, useMemo, useState } from "react";
 import { PageHeader } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
@@ -162,7 +163,7 @@ function TeamPage() {
     load();
   };
 
-  const fmt = (iso: string) => new Date(iso).toLocaleDateString(locale === "ar" ? "ar" : "en");
+  const fmt = (iso: string) => fmtDate(iso, locale);
 
   const sortedMembers = useMemo(
     () => [...members].sort((a, b) => (a.profile?.email ?? "").localeCompare(b.profile?.email ?? "")),

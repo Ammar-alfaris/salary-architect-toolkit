@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { fmtDateTime } from "@/lib/format";
 import { Link } from "@tanstack/react-router";
 import { Bell, CheckCircle2, Clock, XCircle } from "lucide-react";
 import { toast } from "sonner";
@@ -23,7 +24,7 @@ export function ApprovalNotifications() {
   const seenIds = useRef<Set<string>>(new Set());
 
   const fmt = useCallback(
-    (s: string) => new Date(s).toLocaleString(locale === "ar" ? "ar" : "en"),
+    (s: string) => fmtDateTime(s, locale),
     [locale],
   );
 

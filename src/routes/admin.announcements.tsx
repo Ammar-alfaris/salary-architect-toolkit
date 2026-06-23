@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { fmtDate } from "@/lib/format";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminPageHeader } from "@/components/admin/admin-shell";
@@ -56,7 +57,7 @@ function AnnouncementsPage() {
     { key: "type", header: "Type", cell: (r) => <StatusBadge value={r.type} /> },
     { key: "audience", header: "Audience", cell: (r) => <span className="text-xs capitalize">{r.audience}</span> },
     { key: "is_active", header: "Active", cell: (r) => <Switch checked={r.is_active} onCheckedChange={() => toggle(r)} /> },
-    { key: "created_at", header: "Created", cell: (r) => <span className="text-xs tabular-nums" dir="ltr">{new Date(r.created_at).toLocaleDateString("en-GB")}</span> },
+    { key: "created_at", header: "Created", cell: (r) => <span className="text-xs tabular-nums">{fmtDate(r.created_at)}</span> },
     { key: "a", header: "", cell: (r) => <Button variant="ghost" size="icon" onClick={() => remove(r.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button> },
   ];
 

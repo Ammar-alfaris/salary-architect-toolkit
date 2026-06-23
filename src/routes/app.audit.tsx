@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { fmtDateTime } from "@/lib/format";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { PageHeader } from "@/components/app-shell";
@@ -59,7 +60,7 @@ function AuditPage() {
     exportXLSX(
       "audit-logs.xlsx",
       rows.map((r) => ({
-        Date: new Date(r.created_at).toLocaleString(),
+        Date: fmtDateTime(r.created_at, locale),
         Actor: r.actor_email,
         Action: r.action,
         Entity: r.entity_type,
@@ -133,7 +134,7 @@ function AuditPage() {
                   {rows.map((r) => (
                     <tr key={r.id} className="border-t hover:bg-muted/20">
                       <td className="px-4 py-2.5 text-xs text-muted-foreground whitespace-nowrap">
-                        {new Date(r.created_at).toLocaleString()}
+                        {fmtDateTime(r.created_at, locale)}
                       </td>
                       <td className="px-4 py-2.5 text-xs">{r.actor_email ?? "—"}</td>
                       <td className="px-4 py-2.5">
