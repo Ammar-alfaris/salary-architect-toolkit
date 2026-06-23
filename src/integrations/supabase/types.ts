@@ -2023,6 +2023,7 @@ export type Database = {
           environment: string
           grace_end_at: string | null
           id: string
+          last_renewal_notice_at: string | null
           last_trial_email_at: string | null
           last_trial_email_stage: string | null
           notes: string | null
@@ -2052,6 +2053,7 @@ export type Database = {
           environment?: string
           grace_end_at?: string | null
           id?: string
+          last_renewal_notice_at?: string | null
           last_trial_email_at?: string | null
           last_trial_email_stage?: string | null
           notes?: string | null
@@ -2081,6 +2083,7 @@ export type Database = {
           environment?: string
           grace_end_at?: string | null
           id?: string
+          last_renewal_notice_at?: string | null
           last_trial_email_at?: string | null
           last_trial_email_stage?: string | null
           notes?: string | null
