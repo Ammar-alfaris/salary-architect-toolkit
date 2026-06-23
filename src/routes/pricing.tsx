@@ -357,11 +357,14 @@ function PricingPage() {
 
                   <div className="mb-5">
                     <div className="flex items-end gap-1.5">
-                      <span className="text-3xl font-bold tabular-nums">{formatPrice(plan)}</span>
+                      <span className="text-3xl font-bold tabular-nums">{renderPrimary(plan)}</span>
                       <span className="text-muted-foreground text-xs mb-1.5">
                         {billing === "annual" ? t("per_year") : t("per_month")}
                       </span>
                     </div>
+                    {useLocal && (
+                      <p className="text-[11px] text-muted-foreground mt-1 tabular-nums">{renderSecondary(plan)}</p>
+                    )}
                     {billing === "annual" && save > 0 && (
                       <p className="text-xs text-accent font-medium mt-0.5">{t("billing_save")} {save}%</p>
                     )}
