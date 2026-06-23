@@ -6,6 +6,7 @@ import { AuthProvider } from "@/lib/auth";
 import { QueryProvider } from "@/lib/query";
 import { Toaster } from "@/components/ui/sonner";
 import { ScrollToTop } from "@/components/scroll-to-top";
+import { CookieConsentBanner } from "@/components/cookie-consent";
 
 function NotFoundComponent() {
   return (
@@ -89,6 +90,7 @@ function RootComponent() {
             <ScrollToTop />
             <Outlet />
             <Toaster />
+            <CookieConsentBanner />
           </AuthProvider>
         </QueryProvider>
       </I18nProvider>

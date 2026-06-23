@@ -1,60 +1,85 @@
-اضافةً على التعديلات هذه اريد الحرض على تكامل نظام الاشعار بالايميل للمستخدم بحيث يغطي جميع الامور المتعارف عليها والتي يجب فيها اشعار العميل بالايميل وليس فقط التجديد والالغاء ، لذا قم باضافة ذلك الى الخطة مثلاً خيار اعادةتعيين كلمة المرور او غيرها من الاشعارات الضرورية
+# خطة جاهزية الإطلاق — Total Reward
 
 &nbsp;
 
-## Problem confirmed
+ابدء بحسب الاولوية والاهمية من التالي الذي لم احذفه
 
-I checked your account `mikov87496@zemyai.com`:
+بعد التحقق من الدفع والإشعارات، إليك الفجوات الأساسية المتبقية قبل الإطلاق العام، مرتبة حسب الأولوية.
 
-- Subscription is **active** (Starter, renews 2026-07-23, auto-renew ON).
-- Invoice `INV-2026-00002` was generated successfully.
-- **But `customer_email` on the order row is empty**, so the receipt email code returned early without sending. Nothing was queued, nothing in `email_send_log`.
+## 1) أساسيات قانونية وامتثال (حرجة)
 
-There are also two governance gaps you asked about:
+- **اتفاقية معالجة البيانات (DPA)** ووصف واضح لمكان تخزين البيانات (السعودية/الاتحاد الأوروبي).
+- **سياسة الاحتفاظ بالبيانات والحذف**: مدد الاحتفاظ لكل جدول + زر "حذف حسابي" يحذف فعلياً (لا soft-delete فقط).
+- **سجل الموافقة على ملفات تعريف الارتباط (Cookie Consent)** متوافق مع PDPL السعودي/GDPR، مع تصنيف Strictly necessary / Analytics / Marketing.
+  &nbsp;
+- &nbsp;
 
-1. No email is sent when a user cancels the subscription.
-2. No email is sent before auto-renewal charges the card next month.
+## 2) الأمان والحوكمة (حرجة)
 
-## Plan
+- **مسح أمني نهائي** + إصلاح كل النتائج الحرجة قبل الإطلاق.
+- **تفعيل HIBP** (حماية كلمات المرور المسربة) في Auth.
+- **سياسة كلمات مرور** قوية (≥10 أحرف، تعقيد).
+- **MFA اختياري** للحسابات الإدارية على الأقل.
+- **Rate limiting** على نقاط حساسة: /auth، /checkout، /api/public/*.
+- **مراجعة RLS** لجميع الجداول العامة + اختبار اختراق بسيط (محاولة قراءة بيانات منظمة أخرى).
+- **سجل تدقيق (Audit log)** للعمليات الحساسة: تغيير الباقة، إلغاء الاشتراك، حذف موظف، تغيير صلاحية.
 
-### 1. Receipt email always reaches the customer
+## 3) موثوقية وعمليات (حرجة)
 
-- In `createPaylinkInvoice` (`src/lib/paylink.functions.ts`): if `customerEmail` is not provided by the form, fall back to the authenticated user's email (from `auth.users` via admin client). This guarantees every order has a recipient.
-- In `paylink-process.server.ts`: if `customerEmail` is still null at activation time, look up the org's primary admin email as a second fallback before giving up. Log a clear warning when both fail.
-- Backfill: send the missed receipt for order `INV-2026-00002` to `mikov87496@zemyai.com` once the fix is live (one-off enqueue).
+- **مراقبة الأخطاء**: ربط Sentry أو ما يكافئه للواجهة والـ server functions.
+- **مراقبة قائمة البريد**: لوحة لمتابعة `email_send_log` والـ DLQ، وتنبيه إذا تراكمت رسائل فاشلة.
+- **مراقبة Cron jobs**: تأكيد عمل `lifecycle-notices-daily` و`paylink-renew` يومياً، مع تنبيه عند الفشل.
+- **نسخ احتياطي**: التأكد من تفعيل النسخ الاحتياطي اليومي + اختبار استعادة فعلية مرة واحدة.
+- **خطة استجابة للحوادث**: من يُتصل به، كيف نعلن downtime، صفحة status.
 
-### 2. Cancellation email
+## 4) فجوات وظيفية مرتبطة بالاشتراك
 
-- Extend `cancelSubscriptionAtPeriodEnd` in `src/lib/billing.functions.ts`:
-  - After flipping `cancel_at_period_end=true` / `auto_renew=false`, enqueue a branded email (AR + EN) to the org admin: "Your subscription is canceled — access continues until `renewal_at`, no further charges will be made."
-  - Log to `email_send_log` like the receipt does.
+- **التعامل مع فشل الدفع التلقائي عند التجديد**: dunning (3 محاولات على مدى 7 أيام) ثم تحويل الاشتراك إلى `grace` ثم `restricted`. حالياً يوجد `sendPaymentFailedEmail` لكن المنطق التلقائي غير مفعّل.
+- **تغيير الباقة (Upgrade/Downgrade)** مع احتساب proration واضح.
+- **استرداد فعلي عبر Paylink** (refund API) مع توليد إشعار دائن.
+- **حد المقاعد/الموظفين** لكل باقة + رسالة واضحة عند التجاوز.
 
-### 3. Auto-renewal notice + reminder
+## 5) المحتوى والتسويق
 
-- Add a small SQL cron job (pg_cron, pure SQL via `pg_net`) that runs daily and calls a new public route `/api/public/cron/renewal-notices` (authenticated via `apikey` anon header).
-- Route enqueues two emails per active subscription:
-  - **T-7 days** before `renewal_at`: "Your subscription renews on {date}. Card on file ending {last4} will be charged {amount} {currency}. Cancel anytime before then to avoid the charge."
-  - **T-0 (day of renewal succeeded)**: handled by the existing receipt flow once Paylink charges — no new template needed, just ensure renewal charge uses the same `processPaylinkTransaction` path.
-- Idempotency: store a `last_renewal_notice_at` column on `subscriptions` (migration) so the same notice isn't sent twice.
+- **محتوى الصفحة الرئيسية**: مراجعة نهائية للنصوص، إزالة أي placeholder.
+- **SEO**: title/description/OG لكل صفحة عامة، sitemap.xml محدّث، robots.txt، JSON-LD للمنظمة والـ Pricing.
+- &nbsp;
+- &nbsp;
+  &nbsp;
 
-### 4. Make the renewal behavior visible in the UI
+## 6) تجربة المستخدم
 
-- On `/app/billing`: show a clear governance block in both languages:
-  - "Auto-renewal: ON/OFF, next charge on {date} for {amount}."
-  - "Cancel subscription" button with a confirm dialog explaining: access stays until `renewal_at`, no further charges, confirmation email sent.
+- **Onboarding موجَّه** للمستخدم الجديد: استيراد أول موظفين، إنشاء أول هيكل رواتب.
+- **استيراد Excel/CSV** للموظفين مع تحقق وأخطاء واضحة.
+- **دعم اللغتين كاملاً**: مراجعة كل سلاسل i18n، اتجاه RTL في كل المكونات، تنسيق التواريخ والأرقام بالعربية.
+- **الوصولية (a11y)**: تباين الألوان، تنقل لوحة المفاتيح، aria-labels، اختبار قارئ شاشة سريع.
+- **استجابة الموبايل**: مراجعة كل صفحات /app على شاشة 390px.
 
-### 5. Verification after build
+## 7) الدعم والتوثيق
 
-- Trigger the cancel path for a test sub → confirm row in `email_send_log` and inbox delivery.
-- Manually invoke the renewal-notices route → confirm correct T-7 selection and idempotency.
-- Re-send the missed receipt for the existing user and confirm delivery.
+- **مركز مساعدة** بأسئلة شائعة (FAQ) ومقالات "كيف تبدأ".
+- **قناة دعم**: بريد + نموذج تذاكر داخل التطبيق (موجود — يحتاج SLA معلن).
+- &nbsp;
 
-## Technical details
+## 8) قبل الضغط على Launch (Checklist يوم الإطلاق)
 
-- Migration adds `subscriptions.last_renewal_notice_at timestamptz` + index on `(auto_renew, renewal_at)` for the cron scan.
-- New file `src/routes/api/public/cron/renewal-notices.ts` (auth via `apikey` header per scheduled-jobs guide), loads `@/integrations/supabase/client.server` inside the handler, uses `brandedWrap` and `enqueue_email` exactly like the receipt path.
-- New helper `sendCancellationEmail(...)` lives next to `sendPaymentReceiptEmail` in `paylink-process.server.ts` (renamed file is fine to keep as-is — it's already the email helper module).
-- AR + EN copy uses the same brand wrapper already in `src/lib/email-templates.ts`.
-- No new secrets needed; uses existing `SUPABASE_PUBLISHABLE_KEY` for cron auth.
+- &nbsp;
+- التأكد من DNS للبريد (`notify.totalreward.app`) في حالة active وليس awaiting_dns.
+- التأكد من ربط النطاق المخصص totalreward.app + SSL فعّال.
+- إزالة أي حسابات/منظمات تجريبية من قاعدة البيانات.
+- التأكد من أن `VITE_PAYMENTS_CLIENT_TOKEN` في .env.production يطابق حساب Paylink الحي.
+- مسح أمني أخير = صفر نتائج حرجة.
 
-Approve to switch to build mode and I'll implement all four changes plus backfill the missing receipt.
+---
+
+## ماذا أقترح أن نبدأ به الآن؟
+
+أوصي بالترتيب التالي للجولات القادمة:
+
+1.  **DPA + Cookie consent** (قانوني — يعطّل الإطلاق إن غاب).
+2. **Dunning للدفع التلقائي الفاشل + Audit log موسّع** (حوكمة مالية).
+3. **مراقبة Sentry + لوحة email/cron health** (موثوقية).
+4. **Onboarding + استيراد Excel** (تجربة أول استخدام).
+5. **محتوى المدونة + SEO النهائي + OG images** (تسويق).
+
+أخبرني بأي بند تريد البدء به وسأعدّ خطة تنفيذ تفصيلية له.
