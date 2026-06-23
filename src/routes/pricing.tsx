@@ -297,6 +297,21 @@ function PricingPage() {
             </span>
           </button>
         </div>
+
+        {visitor && visitor.currency !== "SAR" && visitor.rate > 0 && (
+          <div className="mt-4 flex items-center justify-center gap-2 text-xs text-muted-foreground">
+            <span>{t("show_in_currency")}</span>
+            <button
+              type="button"
+              onClick={toggleShowLocal}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border bg-card hover:bg-muted transition-colors font-medium text-foreground"
+            >
+              <span className={cn(useLocal && "text-primary")}>{visitor.currency}</span>
+              <span className="text-muted-foreground">⇄</span>
+              <span className={cn(!useLocal && "text-primary")}>SAR</span>
+            </button>
+          </div>
+        )}
       </section>
 
       {/* All-in features banner */}
