@@ -280,6 +280,7 @@ async function sendPaymentReceiptEmail(args: {
       sender_domain: "notify.totalreward.app",
       subject,
       html,
+      text: `Payment received — ${args.invoiceNumber}. Amount: ${args.currency} ${args.paidAmount.toFixed(2)}. Manage your subscription at ${base}/app/billing.`,
       message_id: messageId,
       label: "payment_receipt",
       purpose: "transactional",
