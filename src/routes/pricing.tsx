@@ -5,7 +5,9 @@ import { useI18n } from "@/lib/i18n";
 import { useTheme } from "@/lib/theme";
 import { useAuth } from "@/lib/auth";
 import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
 import { startTrial } from "@/lib/trial.functions";
+import { getVisitorCurrency } from "@/lib/pricing-locale.functions";
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -97,8 +99,25 @@ function PricingPage() {
   const [hasActiveSub, setHasActiveSub] = useState<boolean>(false);
 
   const startTrialFn = useServerFn(startTrial);
+  const getVisitorCurrencyFn = useServerFn(getVisitorCurrency);
 
-  useEffect(() => {
+  // Geo-based currency. Lets users override via toggle (stored in localStorage).
+  const [showLocal, setShowLocal] = useState<boolean>(() => {
+    if (typeof window === "undefined") return true;
+    return localStorage.getItem("pricing_show_local") !== "0";
+  });
+  const fx = useQuery({
+    queryKey: ["visitor-currency"],
+    queryFn: () => getVisitorCurrencyFn(),
+    staleTime: 60 * 60 * 1000,
+  });
+  const visitor = fx.data;
+  const useLocal = showLocal && !!visitor && visitor.currency !== "SAR" && visitor.rate > 0;
+  const toggleShowLocal = () => {
+    const next = !showLocal;
+    setShowLocal(next);
+    if (typeof window !== "undefined") localStorage.setItem("pricing_show_local", next ? "1" : "0");
+  };
     supabase.from("plans").select("*").eq("is_visible", true).eq("status", "active").order("sort_order")
       .then(({ data }) => {
         const list = (data as unknown as Plan[]) || [];
