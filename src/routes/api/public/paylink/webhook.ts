@@ -87,6 +87,12 @@ export const Route = createFileRoute("/api/public/paylink/webhook")({
             transactionNo,
             message: (err as Error).message,
           }));
+          const { captureServerError } = await import("@/lib/error-tracking.server");
+          await captureServerError(err, {
+            source: "paylink-webhook",
+            route: "/api/public/paylink/webhook",
+            metadata: { transactionNo },
+          });
           // Still return 200 — we will rely on the browser callback or a
           // manual sync to recover. Returning 500 would cause infinite retries.
           return json({ ok: false, error: "processing_failed" });
