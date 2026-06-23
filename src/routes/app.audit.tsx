@@ -25,6 +25,22 @@ const ACTION_BADGE: Record<string, string> = {
   run_cycle: "bg-warning/15 text-warning",
 };
 
+function categoryFor(action: string): "billing" | "security" | "system" | "data" {
+  if (action.startsWith("payment.") || action.startsWith("subscription.") || action.startsWith("dunning.") || action.startsWith("invoice.")) return "billing";
+  if (action.startsWith("auth.") || action.startsWith("role.") || action.startsWith("invitation.") || action.startsWith("mfa.")) return "security";
+  if (action.startsWith("system.") || action.startsWith("cron.")) return "system";
+  return "data";
+}
+
+function categoryBadgeClass(cat: string) {
+  switch (cat) {
+    case "billing": return "bg-amber-500/15 text-amber-700 dark:text-amber-300";
+    case "security": return "bg-red-500/15 text-red-700 dark:text-red-300";
+    case "system": return "bg-slate-500/15 text-slate-700 dark:text-slate-300";
+    default: return "bg-primary/15 text-primary";
+  }
+}
+
 function AuditPage() {
   const { organizationId } = useAuth();
   const { t, locale } = useI18n();
