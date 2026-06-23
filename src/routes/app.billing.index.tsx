@@ -16,7 +16,7 @@ import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { toast } from "sonner";
 import { ExternalLink, Download, CreditCard, ArrowUpRight } from "lucide-react";
 
-export const Route = createFileRoute("/app/billing")({
+export const Route = createFileRoute("/app/billing/")({
   component: BillingPage,
 });
 
