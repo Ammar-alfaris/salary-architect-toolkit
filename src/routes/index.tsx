@@ -9,6 +9,7 @@ import {
   Moon, Sun, Languages, ArrowRight, Check, Menu, X,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
+import { SiteFooter } from "@/components/site-footer";
 
 export const Route = createFileRoute("/")({
   component: Landing,
