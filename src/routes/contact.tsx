@@ -41,12 +41,10 @@ export const Route = createFileRoute("/contact")({
           name: "Total Reward",
           url: "https://totalreward.app",
           email: "support@totalreward.app",
-          telephone: "+966-55-555-5555",
           contactPoint: [{
             "@type": "ContactPoint",
             contactType: "customer support",
             email: "support@totalreward.app",
-            telephone: "+966-55-555-5555",
             availableLanguage: ["English", "Arabic"],
           }],
           address: {
