@@ -270,17 +270,7 @@ function ContactPage() {
         </div>
       </div>
 
-      {/* Footer */}
-      <footer className="border-t">
-        <div className="container mx-auto px-4 py-6 flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
-          <div>© {new Date().getFullYear()} {t("app_name")}</div>
-          <div className="flex gap-4">
-            <Link to="/" className="hover:text-foreground">{t("back_home")}</Link>
-            <a href="#" className="hover:text-foreground">{t("privacy")}</a>
-            <a href="#" className="hover:text-foreground">{t("terms")}</a>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }
