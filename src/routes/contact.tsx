@@ -139,17 +139,20 @@ function ContactPage() {
             <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-5">{t("contact_info_heading")}</h2>
 
             {[
-              { icon: Mail, label: t("contact_info_email"), value: "support@totalreward.app" },
-              { icon: Phone, label: t("contact_info_phone"), value: "055555555" },
-              { icon: MapPin, label: t("contact_info_location"), value: t("contact_info_location_value") },
-            ].map(({ icon: Icon, label, value }) => (
+              { icon: Mail, label: t("contact_info_email"), value: "support@totalreward.app", href: "mailto:support@totalreward.app" },
+              { icon: MapPin, label: t("contact_info_location"), value: t("contact_info_location_value"), href: null as string | null },
+            ].map(({ icon: Icon, label, value, href }) => (
               <div key={label} className="flex items-start gap-4 p-4 rounded-xl border bg-card">
                 <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
                   <Icon className="w-4 h-4" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <div className="text-xs text-muted-foreground">{label}</div>
-                  <div className="text-sm font-medium mt-0.5">{value}</div>
+                  {href ? (
+                    <a href={href} className="text-sm font-medium mt-0.5 block hover:text-primary break-all">{value}</a>
+                  ) : (
+                    <div className="text-sm font-medium mt-0.5">{value}</div>
+                  )}
                 </div>
               </div>
             ))}
@@ -157,6 +160,29 @@ function ContactPage() {
             <div className="p-4 rounded-xl border bg-card">
               <div className="text-xs text-muted-foreground mb-1">{t("contact_response_time_label")}</div>
               <div className="text-sm font-medium">{t("contact_response_time_value")}</div>
+            </div>
+
+            {/* Socials */}
+            <div className="p-4 rounded-xl border bg-card">
+              <div className="text-xs text-muted-foreground mb-3">{locale === "ar" ? "تابعنا" : "Follow us"}</div>
+              <div className="flex items-center gap-2">
+                <a
+                  href="https://www.linkedin.com/company/total-reward-app/"
+                  target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"
+                  className="h-10 w-10 rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-colors flex items-center justify-center"
+                >
+                  <Linkedin className="w-4 h-4" />
+                </a>
+                <a
+                  href="https://x.com/totalrewardapp"
+                  target="_blank" rel="noopener noreferrer" aria-label="X (Twitter)"
+                  className="h-10 w-10 rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-colors flex items-center justify-center"
+                >
+                  <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" aria-hidden="true" fill="currentColor">
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231L18.244 2.25Zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77Z" />
+                  </svg>
+                </a>
+              </div>
             </div>
           </div>
 
