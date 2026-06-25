@@ -15,7 +15,7 @@ import {
   Form, FormControl, FormField, FormItem, FormLabel, FormMessage,
 } from "@/components/ui/form";
 import { toast } from "sonner";
-import { Mail, MessageSquare, Phone, MapPin, Moon, Sun, Languages, CheckCircle2, ArrowLeft } from "lucide-react";
+import { Mail, MessageSquare, MapPin, Moon, Sun, Languages, CheckCircle2, ArrowLeft, Linkedin } from "lucide-react";
 
 export const Route = createFileRoute("/contact")({
   component: ContactPage,
