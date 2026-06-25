@@ -9,6 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { startTrial } from "@/lib/trial.functions";
 import { getVisitorCurrency } from "@/lib/pricing-locale.functions";
 import { Logo } from "@/components/logo";
+import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
