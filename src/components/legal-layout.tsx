@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { useI18n } from "@/lib/i18n";
 import { useTheme } from "@/lib/theme";
 import { Logo } from "@/components/logo";
+import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
 
 interface LegalLayoutProps {
