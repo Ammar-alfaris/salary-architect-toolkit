@@ -208,9 +208,7 @@ function BlogIndex() {
         </section>
       </main>
 
-      <footer className="border-t mt-12 py-8 text-center text-xs text-muted-foreground">
-        © {new Date().getFullYear()} Total Reward
-      </footer>
+      <SiteFooter />
     </div>
   );
 }
