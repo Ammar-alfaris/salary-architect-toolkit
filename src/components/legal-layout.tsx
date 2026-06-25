@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { useI18n } from "@/lib/i18n";
 import { useTheme } from "@/lib/theme";
 import { Logo } from "@/components/logo";
+import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
 
 interface LegalLayoutProps {
@@ -53,19 +54,7 @@ export function LegalLayout({ eyebrow, title, lastUpdated, children }: LegalLayo
         </article>
       </main>
 
-      <footer className="border-t">
-        <div className="container mx-auto px-4 py-6 flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
-          <div>© {new Date().getFullYear()} {t("app_name")}</div>
-          <div className="flex gap-4">
-            <Link to="/" className="hover:text-foreground">{t("back_home")}</Link>
-            <Link to="/privacy" className="hover:text-foreground">{t("privacy")}</Link>
-            <Link to="/terms" className="hover:text-foreground">{t("terms")}</Link>
-            <Link to="/dpa" className="hover:text-foreground">DPA</Link>
-            <Link to="/refund" className="hover:text-foreground">{t("refund")}</Link>
-            <Link to="/contact" className="hover:text-foreground">{t("contact")}</Link>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

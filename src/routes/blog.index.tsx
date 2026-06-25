@@ -10,6 +10,7 @@ import { detectPostLocale } from "@/lib/blog-locale";
 import { useTheme } from "@/lib/theme";
 import { ArrowRight, Clock, Search, Layers, Languages, Moon, Sun, Sparkles } from "lucide-react";
 import { Logo } from "@/components/logo";
+import { SiteFooter } from "@/components/site-footer";
 
 export const Route = createFileRoute("/blog/")({
   component: BlogIndex,
@@ -207,9 +208,7 @@ function BlogIndex() {
         </section>
       </main>
 
-      <footer className="border-t mt-12 py-8 text-center text-xs text-muted-foreground">
-        © {new Date().getFullYear()} Total Reward
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

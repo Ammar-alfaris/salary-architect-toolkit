@@ -9,6 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { startTrial } from "@/lib/trial.functions";
 import { getVisitorCurrency } from "@/lib/pricing-locale.functions";
 import { Logo } from "@/components/logo";
+import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -432,16 +433,7 @@ function PricingPage() {
         </div>
       </section>
 
-      <footer className="border-t">
-        <div className="container mx-auto px-4 py-8 flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
-          <div>© {new Date().getFullYear()} {t("app_name")}</div>
-          <div className="flex gap-4">
-            <a href="#" className="hover:text-foreground">{t("privacy")}</a>
-            <a href="#" className="hover:text-foreground">{t("terms")}</a>
-            <Link to="/contact" className="hover:text-foreground">{t("contact")}</Link>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

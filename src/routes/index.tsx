@@ -9,6 +9,7 @@ import {
   Moon, Sun, Languages, ArrowRight, Check, Menu, X,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
+import { SiteFooter } from "@/components/site-footer";
 
 export const Route = createFileRoute("/")({
   component: Landing,
@@ -269,19 +270,7 @@ function Landing() {
       </section>
       </main>
 
-      {/* ───────── Footer ───────── */}
-      <footer className="border-t mt-12">
-        <div className="container mx-auto px-4 py-8 flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
-          <div>© {new Date().getFullYear()} {t("app_name")}</div>
-          <div className="flex flex-wrap gap-4">
-            <Link to="/privacy" className="hover:text-foreground">{t("privacy")}</Link>
-            <Link to="/terms" className="hover:text-foreground">{t("terms")}</Link>
-            <Link to="/refund" className="hover:text-foreground">Refund</Link>
-            <Link to="/trust" className="hover:text-foreground">Trust</Link>
-            <Link to="/contact" className="hover:text-foreground">{t("contact")}</Link>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }
